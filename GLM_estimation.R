@@ -78,8 +78,8 @@ dat = envdat$dat
 #########################################################################################################
 
 #read in models
-Models= read_csv(paste0("../YellowFeverModelEstimation2017/","Models.csv" ) )                                        #produces a tibble of models
-modelVec=pull(Models,fm)                                               #forces it to be a vector of strings
+
+modelVec=  "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+ERAday.mean "                                            
 
 object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec )   #fit_glm from Kevin's code, adapted to take models as input
 names(object_glm)
@@ -114,7 +114,7 @@ names(pars_ini) = parnames
 
 # GLM parameters
 ii = 2:(length(beta0)+1)
-pars_ini[1:20] =  rowMeans(cbind(StartParamFoi[ii,1], StartParamR0[ii,1])) #StartParamFoi[ii,1]#
+pars_ini = beta0
 
 
 #########################################################################################################
