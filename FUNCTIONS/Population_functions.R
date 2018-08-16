@@ -4,10 +4,7 @@
 ### LAUNCH ENVIRONMENTAL DATA ### STRAIGHT FROM ORIGINAL CODE ###
 #########################################################################################################
 
-launch_env_dat = function(env_table, c34, delete_surv_AGO = T) {
-  
-  
-  dat_full = read.csv(env_table, stringsAsFactors=F)
+launch_env_dat = function(dat_full, c34, delete_surv_AGO = TRUE) {
   
   depvar = "cas.or.out" # which presence/abence outcome to consider. Alternatives : "cases" # "outbreaks" # 
   depi = match(depvar,names(dat_full)) # column number for the chosen outcome
@@ -40,10 +37,8 @@ launch_env_dat = function(env_table, c34, delete_surv_AGO = T) {
   
   dat = dat_full[dat_full$adm0 %in% c34,]
   dat$adm05 = as.factor(as.character(dat$adm05))
-  #table(dat$adm05)
+ 
   
-  #summary(dat)
-  #str(dat)
   v1 = apply(dat,2,var)
   for(i in 8:(ncol(dat))) {
     if(!is.factor(dat[,i]) & !is.character(dat[,i])) {
@@ -51,17 +46,14 @@ launch_env_dat = function(env_table, c34, delete_surv_AGO = T) {
       dat_full[,i] = dat_full[,i]/sqrt(v1[i])  
     } 
     # Explanation:
-    # If we fit the model on dat and if we want to project estimates on dat_full, variabble from dat_full need to be expressed on the same scale than those from dat , thus we normalize dat_full relatively to dat
+    # If we fit the model on dat and if we want to project estimates on dat_full, 
+    # variabble from dat_full need to be expressed on the same scale than those from dat , thus we normalize dat_full relatively to dat
     
   }
   
-  # dat = dat[,names(dat)!="adm0"] ligne enlevee au 04/09/15, a remettre si pb
   dat = dat[,names(dat)!="surv_qual_adm0"]
   depi = match(depvar,names(dat))
-  
-  
-  dim(dat)
-  class(dat$adm0_adm1)
+
   
   # I do that because pop is ordered that way and we need to match both pop and dat
   dat = dat[ order(dat$adm0_adm1), ]
