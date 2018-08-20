@@ -90,7 +90,7 @@ dat = envdat$dat
 ### FIT GLM ###
 #########################################################################################################
                                            
-modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability " 
+modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability" 
 
 object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec )   #fit_glm from Kevin's code, adapted to take models as input
 names(object_glm)
@@ -750,7 +750,7 @@ ggplot(inf_df_df, aes(x = variable, y = value, fill = scenario)) +
 
 ```
 
-```{r burden_plot, out.extra='angle=90',fig.height = 8, fig.width =16}
+```{r burden_plot}
 P_severe = median( rbeta(1000,6.367309,44.60736) )
 
 burden_df = inf_df_df
