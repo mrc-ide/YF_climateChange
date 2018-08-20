@@ -35,19 +35,22 @@ temp_suitability_mordecai = function(Temp){
   # mu = m mortality
   mu = 1/ ifelse( quad(Temp, T0=9.16, Tm=37.73, c=-1.48e-1)<=0, 1, quad(Temp, T0=9.16, Tm=37.73, c=-1.48e-1) ) #guard against negatives and zeros
   
-  # b = propn infectious bites m->h
-  b = briere(Temp, T0=17.05, Tm=35.83, c=8.49e-4)
+  # # b = propn infectious bites m->h
+  # b = briere(Temp, T0=17.05, Tm=35.83, c=8.49e-4)
+  # 
+  # # c = propn infectious bites h->m
+  # c = briere(Temp, T0=12.22, Tm=37.46, c=4.91e-4)
   
-  # c = propn infectious bites h->m
-  c = briere(Temp, T0=12.22, Tm=37.46, c=4.91e-4)
+  bc = quad(Temp, T0 = 22.71996326, Tm = 38.37531984, c = -0.003544068)
+  bc[bc<0] = 0
   
   # PDR = parasite development rate = 1/EIP  
-  PDR = briere(Temp, T0=10.68, Tm=45.90, c=6.65e-5)
+  PDR = briere(Temp, T0=18.3, Tm=42.3, c=0.000174) #ZIKv
   
-  a[is.na(a)] = EFD[is.na(EFD)] = p_EA[is.na(p_EA)] = MDR[is.na(MDR)] = b[is.na(b)] = c[is.na(c)] = PDR[is.na(PDR)] = 0
+  a[is.na(a)] = EFD[is.na(EFD)] = p_EA[is.na(p_EA)] = MDR[is.na(MDR)] = bc[is.na(bc)] = PDR[is.na(PDR)] = 0
   
   # suitability
-  Z = (a^2 * b * c * exp(-mu / PDR) * EFD * p_EA * MDR) / mu^3 
+  Z = (a^2 * bc * exp(-mu / PDR) * EFD * p_EA * MDR) / mu^3 
   
   return(Z)
 }
