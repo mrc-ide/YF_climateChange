@@ -80,6 +80,7 @@ dat = envdat$dat
 #read in models
 #modelVec=  "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+ERAday.mean "                                            
 modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability " 
+#modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+RFE.mean" 
 
 object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec )   #fit_glm from Kevin's code, adapted to take models as input
 names(object_glm)
@@ -102,8 +103,6 @@ t= as.numeric(Sys.time())
 seed= (t - floor(t)) * 1e8 
 set.seed(seed)
 
-StartParamFoi=read.csv(paste0("../YellowFeverModelEstimation2017/","StartParam_","Foi",".csv"),header = T)
-StartParamR0=read.csv(paste0("../YellowFeverModelEstimation2017/","StartParam_","R0",".csv"),header = T)
 
 ## itialising parameters for MCMC
 parnames =  paste("log", names(beta0), sep = ".")
