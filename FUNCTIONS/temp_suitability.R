@@ -54,3 +54,31 @@ temp_suitability_mordecai = function(Temp){
   
   return(Z)
 }
+
+
+
+###########################################################
+### FUNCTION to calculate temperature suitability index ###
+###########################################################
+
+temp_suitability_hamlet = function(Temp){
+  
+  #using mean values of mordecai
+  
+  #bite rate
+  a = briere(Temp, T0=13.35, Tm=40.08, c=2.02e-4) # Mordecai Ae aegypti
+  
+  # mu = m mortality
+  mu = 1/ ifelse( quad(Temp, T0=9.16, Tm=37.73, c=-1.48e-1)<=0, 1, quad(Temp, T0=9.16, Tm=37.73, c=-1.48e-1) ) #guard against negatives and zeros
+  
+  
+  # PDR = parasite development rate = 1/EIP  
+  PDR = briere(Temp, T0=18.3, Tm=42.3, c=0.000174) #ZIKv
+  
+  a[is.na(a)] = EFD[is.na(EFD)] = p_EA[is.na(p_EA)] = MDR[is.na(MDR)] = bc[is.na(bc)] = PDR[is.na(PDR)] = 0
+  
+  # suitability
+  Z = (a^2 * exp(-mu / PDR) ) / mu 
+  
+  return(Z)
+}
