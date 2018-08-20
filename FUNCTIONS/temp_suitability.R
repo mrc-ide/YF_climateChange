@@ -21,16 +21,16 @@ temp_suitability_mordecai = function(Temp){
   #using mean values of mordecai
   
   #bite rate
-  a = briere(Temp, T0=13.35, Tm=40.08, c=2.02e-4) 
+  a = briere(Temp, T0=13.35, Tm=40.08, c=2.02e-4) # Mordecai Ae aegypti
   
   # no eggs produced in a day
-  EFD = briere(Temp, T0=14.58, Tm=34.61, c=8.56e-3) 
+  EFD = briere(Temp, T0=14.58, Tm=34.61, c=8.56e-3) # Mordecai Ae aegypti
   
   # p_EA = prob survive from egg to adult
-  p_EA = quad(Temp, T0=13.56, Tm=38.29, c=-5.99e-3)
+  p_EA = quad(Temp, T0=13.56, Tm=38.29, c=-5.99e-3) # Mordecai Ae aegypti
   
   # MDR = mosquito development rate
-  MDR = briere(Temp, T0=11.36, Tm=39.17, c=7.86e-5)
+  MDR = briere(Temp, T0=11.36, Tm=39.17, c=7.86e-5) # Mordecai Ae aegypti
   
   # mu = m mortality
   mu = 1/ ifelse( quad(Temp, T0=9.16, Tm=37.73, c=-1.48e-1)<=0, 1, quad(Temp, T0=9.16, Tm=37.73, c=-1.48e-1) ) #guard against negatives and zeros
