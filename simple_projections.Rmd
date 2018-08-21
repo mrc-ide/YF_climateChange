@@ -103,7 +103,7 @@ y = object_glm[[3]]
 
 ```{r import_glm}
 
-setwd("GLM_MCMC_chain_20180814")
+setwd("GLM_MCMC_chain_20180820_hamlet")
 
 temp = list.files(pattern="\\.csv$")
 
@@ -595,7 +595,7 @@ difference_add2 = (Foi_runs_add2 - Foi_runs)/Foi_runs *100
 difference_add4 = (Foi_runs_add4 - Foi_runs)/Foi_runs *100
 
 
-mybreaks= seq(-100,100, length.out=100)
+mybreaks= seq(-200,200, length.out=100)
 mycols =  rev( colorRampPalette(brewer.pal(11, "BrBG") )(length(mybreaks)-1) )
 mm = match(shp1$adm0_adm1,dat$adm0_adm1)
 vcols = findInterval(difference_add2,mybreaks)
@@ -764,5 +764,48 @@ ggplot(burden_df, aes(x = variable, y = value, fill = scenario)) +
   scale_fill_manual(values = colours)+
   xlab("") + ylab("Burden")
 
+
+```
+
+# Ranking countries by burden
+
+We rank each country by the expected burden under each scenario.
+
+```{r burden_rank}
+
+
+df_rank = data.frame( "baseline" = filter(burden_df, scenario == "baseline")$variable[order(filter(burden_df, scenario == "baseline")$value, decreasing = TRUE)],
+                      "warming_2"= filter(burden_df, scenario == "warming_2")$variable[order(filter(burden_df, scenario == "warming_2")$value, decreasing = TRUE)],
+                      "warming_4"= filter(burden_df, scenario == "warming_4")$variable[order(filter(burden_df, scenario == "warming_4")$value, decreasing = TRUE)])
+
+df_rank
+```
+
+```{r rank_change}
+
+df_value_change = data.frame("country" = unique(burden_df$variable),
+                             "baseline" = filter(burden_df, scenario == "baseline")$value,
+                             "warming_2" = filter(burden_df, scenario == "warming_2")$value,
+                             "warming_4" = filter(burden_df, scenario == "warming_4")$value)
+
+
+WestAfrica = c("SEN", "GMB", "MRT", "MLI", "BFA", "SLE", "NGA", "NER", "BEN", "TGO", "GHA", "CIV", "LBR", "GIN", "GNB")
+
+df_value_change$we = ifelse(df_value_change$country %in% WestAfrica, "W", "E")
+
+# ggplot(df_value_change) + geom_segment( aes(x = rep(1,34), y = log10(baseline), xend = rep(2,34), yend = log10(warming_2), colour = we), size=2) +
+#   geom_segment( aes(x = rep(2,34), y = log10(warming_2), xend = rep(3,34), yend = log10(warming_4), colour = we), size =2)
+
+df_vale_we = data.frame("Location" = c("West", "East"),
+                        "baseline" = c(sum(filter(df_value_change, we=="W")$baseline), sum(filter(df_value_change, we=="E")$baseline) ),
+                        "warming_2" = c(sum(filter(df_value_change, we=="W")$warming_2), sum(filter(df_value_change, we=="E")$warming_2) ),
+                        "warming_4" = c(sum(filter(df_value_change, we=="W")$warming_4), sum(filter(df_value_change, we=="E")$warming_4) ))
+
+
+ggplot(df_vale_we) + geom_segment( aes( x = as.factor(1), y = log10(baseline), xend = as.factor(2), yend = log10(warming_2), colour = Location), size = 1) +
+                     geom_segment( aes( x = as.factor(2), y = log10(warming_2), xend = as.factor(3), yend = log10(warming_4), colour = Location), size =1) +
+  scale_colour_manual( values = c("blue", "orange")) +
+  labs(x = "", y = "Burden (log scale)") + 
+  scale_x_discrete(breaks = c("1","2","3"),labels=c( "Baseline", "Warming +2", "Warming +3"))
 
 ```
