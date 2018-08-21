@@ -75,7 +75,7 @@ temp_suitability_hamlet = function(Temp){
   # PDR = parasite development rate = 1/EIP  
   PDR = briere(Temp, T0=18.3, Tm=42.3, c=0.000174) #ZIKv
   
-  a[is.na(a)] = EFD[is.na(EFD)] = p_EA[is.na(p_EA)] = MDR[is.na(MDR)] = bc[is.na(bc)] = PDR[is.na(PDR)] = 0
+  a[is.na(a)] = PDR[is.na(PDR)] = 0
   
   # suitability
   Z = (a^2 * exp(-mu / PDR) ) / mu 
