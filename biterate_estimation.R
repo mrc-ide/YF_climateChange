@@ -119,7 +119,7 @@ if(!dir.exists(name_dir)) dir.create(name_dir,  showWarnings = TRUE)
 
 
 #plain old mcmc on fixed model prob
-Niter = 1e5
+Niter = 1e4
 chain = posteriorProb = acceptRate = NULL
 burnin = 50
 fileIndex = 0
@@ -169,3 +169,48 @@ for (iter in iter:Niter){
   
   
 }
+
+
+
+####################################################################################
+### OUTPUT ###
+####################################################################################
+
+library(ggmcmc)
+library(mcmcplots)
+
+#remove burnin
+chain_sub1 = chain[1000:nrow(chain),]
+
+chain_sub2 = convert.mcmc.list(chain_sub1)
+
+chain_sub = ggs(chain_sub2 )
+
+ggs_traceplot(chain_sub)
+
+ggs_histogram(chain_sub)
+
+
+hpdout = HPDinterval(chain_sub2)
+
+param_est = data.frame("lower" = exp(hpdout[[1]][,1]) ,
+                       "median" = exp( apply(chain_sub1, 2, median) ),
+                       "upper" = exp(hpdout[[1]][,2]) )
+write.csv(param_est, paste0(name_dir, "/", "biterate_estimates.csv") )
+
+# plot fit
+dat = dat[order(dat$T),]
+plot(dat$T, briere(dat$T, T0 = exp( median(chain_sub1[,1]) ),
+                    Tm = exp( median(chain_sub1[,2]) ),
+                    c = exp( median(chain_sub1[,3]) )  ), type = "l", ylim = c(0,3), lwd =1, 
+     xlab = "Temperature", ylab = "Bite rate")
+
+for (i in 1:1000){
+lines(dat$T, briere(dat$T, T0 = exp( chain_sub1[sample(nrow(chain_sub1), 1),1] ),
+                           Tm = exp( chain_sub1[sample(nrow(chain_sub1), 1),2]) ,
+                            c = exp( chain_sub1[sample(nrow(chain_sub1), 1),3])   ), col = rgb(0,0,0,alpha=0.01)  )
+}
+points(dat$T, dat$bite_rate, col = "red", pch =20)
+
+dev.copy(png,paste0(name_dir, "/",'biterate_fit.png') )
+dev.off()
