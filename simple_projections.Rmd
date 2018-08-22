@@ -103,7 +103,7 @@ y = object_glm[[3]]
 
 ```{r import_glm}
 
-setwd("GLM_MCMC_chain_20180820_hamlet")
+setwd("GLM_MCMC_chain_20180822_hamlet")
 
 temp = list.files(pattern="\\.csv$")
 
@@ -114,6 +114,8 @@ l=lapply(temp,read.csv)
 for(i in 1:length(l)){l[[i]] = l[[i]][,-1]}
 
 glm_mcmc_out=data.table::rbindlist( l )
+
+glm_mcmc_out = glm_mcmc_out[1000:nrow(glm_mcmc_out),]
 
 Est_beta =  apply(glm_mcmc_out[,1:19], 2, median)
 ```
@@ -806,6 +808,6 @@ ggplot(df_vale_we) + geom_segment( aes( x = as.factor(1), y = log10(baseline), x
                      geom_segment( aes( x = as.factor(2), y = log10(warming_2), xend = as.factor(3), yend = log10(warming_4), colour = Location), size =1) +
   scale_colour_manual( values = c("blue", "orange")) +
   labs(x = "", y = "Burden (log scale)") + 
-  scale_x_discrete(breaks = c("1","2","3"),labels=c( "Baseline", "Warming +2", "Warming +3"))
+  scale_x_discrete(breaks = c("1","2","3"),labels=c( "Baseline", "Warming +2", "Warming +4"))
 
 ```
