@@ -66,14 +66,15 @@ temp_suitability_hamlet = function(Temp){
   #using mean values of mordecai
   
   #bite rate
-  a = briere(Temp, T0=8.311805, Tm=10.10016, c=2.27e-4) # new estimate medians
+  a = briere(Temp, T0=8.311805, Tm=40.10016, c=2.27e-4) # new estimate medians
   
   # mu = m mortality
   mu = 1/ ifelse( quad(Temp, T0=10.98518, Tm=38.39435, c=-0.30234)<=0, 1, quad(Temp, T0=10.98518, Tm=38.39435, c=-0.30234) ) #guard against negatives and zeros
   
   
   # PDR = parasite development rate = 1/EIP  
-  PDR = briere(Temp, T0=18.61395, Tm=42.19607, c=1.51e-4) #ZIKv
+  PDR = briere(Temp, T0=18.61395, Tm=42.19607, c=1.51e-4) #
+  PDR[PDR<0]=0
   
   a[is.na(a)] = PDR[is.na(PDR)] = 0
   
