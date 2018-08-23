@@ -1,0 +1,1 @@
+These were generated with Hamlet temp suitability and parameters fixed at those estimated by Mordecai 
