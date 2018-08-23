@@ -798,7 +798,7 @@ df_value_change$we = ifelse(df_value_change$country %in% WestAfrica, "W", "E")
 # ggplot(df_value_change) + geom_segment( aes(x = rep(1,34), y = log10(baseline), xend = rep(2,34), yend = log10(warming_2), colour = we), size=2) +
 #   geom_segment( aes(x = rep(2,34), y = log10(warming_2), xend = rep(3,34), yend = log10(warming_4), colour = we), size =2)
 
-df_vale_we = data.frame("Location" = c("West", "East"),
+df_vale_we = data.frame("Location" = c("West", "East and central"),
                         "baseline" = c(sum(filter(df_value_change, we=="W")$baseline), sum(filter(df_value_change, we=="E")$baseline) ),
                         "warming_2" = c(sum(filter(df_value_change, we=="W")$warming_2), sum(filter(df_value_change, we=="E")$warming_2) ),
                         "warming_4" = c(sum(filter(df_value_change, we=="W")$warming_4), sum(filter(df_value_change, we=="E")$warming_4) ))
