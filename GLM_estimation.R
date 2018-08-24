@@ -56,7 +56,7 @@ ageVec = c(0:maxAge)
 ### SOURCE FUNCTIONS ###
 #########################################################################################################
 
-R.utils::sourceDirectory("FUNCTIONS")
+R.utils::sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 
 #########################################################################################################
 ### LOAD ENVIRONMENTAL DATA ###
@@ -67,7 +67,7 @@ Env_Table_path = (paste0("../Data/","Environment/Africa_adm1_dat_2017.csv")) #th
 dat_full = read.csv(Env_Table_path, stringsAsFactors=F)
 
 ### TEMP SUITABILITY ###
-dat_full = cbind(dat_full, temp_suitability_mordecai(dat_full[,"ERAday.mean"]))
+dat_full = cbind(dat_full, temp_suitability_hamlet(dat_full[,"ERAday.mean"]))
 names(dat_full)[ncol(dat_full)] = "temp_suitability"
 
 envdat = launch_env_dat(dat_full,c34)
@@ -79,7 +79,7 @@ dat = envdat$dat
 
 #read in models
 #modelVec=  "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+ERAday.mean "                                            
-modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability " 
+modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability" 
 #modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+RFE.mean" 
 
 object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec )   #fit_glm from Kevin's code, adapted to take models as input
@@ -137,7 +137,7 @@ out = GLM_MCMC_step(pars_ini,
 
 #create a directory to save the output in
 date=format(Sys.time(),"%Y%m%d")
-name_dir = paste("GLM_MCMC_chain", "_", date, sep='')
+name_dir = paste0("GLM_MCMC_chain", "_", date, "_hamlet")
 if(!dir.exists(name_dir)) dir.create(name_dir,  showWarnings = TRUE)
 
 
