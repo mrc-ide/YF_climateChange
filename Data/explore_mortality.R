@@ -4,7 +4,7 @@ library(dplyr)
 library(readr)
 library(ggplot2)
 
-SurvivalData <- read_csv("Z:/YF_climateChange/Data/SurvivalData_mordecai2018.csv")
+SurvivalData <- read_csv("Z:/YF_climateChange/Data/Survival_mortality/SurvivalData_mordecai2018.csv")
 
 # we keep ZIKv infected because this is a factor we may see varying mosquito lifespan in the wild
 
