@@ -1,0 +1,143 @@
+---
+title: "The effect of climate change on disease burden"
+author: "Katy Gaythorpe"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes: 
+- \usepackage{placeins}
+output: 
+  pdf_document:
+    df_print: "kable"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
+knitr::opts_chunk$set(
+  fig.path = "ClimateChangeBurdenImages/",
+  dpi = 300
+)
+
+year_of_interest = 2050
+```
+
+```{r set_up}
+
+library(maptools)
+library(sp) 
+library(shapefiles)
+library(Hmisc)
+library(fields)
+library(dplyr)
+library(EnvStats)
+library(readr)
+library(reshape)
+library(abind)
+library(mvtnorm)
+library(RColorBrewer)
+library(truncdist)
+library(wesanderson)
+library(ggmcmc)
+library(mcmcplots)
+
+#########################################################################################################
+### SETTING THE WORKING DIRECTORY ###
+#########################################################################################################
+
+shpdir = paste0("../","shapefiles/gadm2/")
+
+#########################################################################################################
+### LOADING SHAPEFILES AND COUNTRIES ###
+#########################################################################################################
+
+#read shapefiles in
+shp0 = readShapePoly(paste0(shpdir, "Africa_adm0.shp")) #if gadm2
+shp1 = readShapePoly(paste0(shpdir, "Africa_adm1.shp"))
+
+#adjust titles
+shp1$adm0_adm1 = paste(shp1$ISO, shp1$ID_1, sep="_")
+shp1 = shp1[order(shp1$adm0_adm1),]
+
+#read countries in
+Countries = read_csv(paste0("../Data/","Countries.csv"))
+c34 = Countries$c34
+country34 = Countries$country34
+
+#########################################################################################################
+### SOURCE FUNCTIONS ###
+#########################################################################################################
+
+R.utils::sourceDirectory("FUNCTIONS/FUNCTIONS_combined", modifiedOnly = FALSE)
+source("FUNCTIONS/GLMonly_functions.R")
+
+#########################################################################################################
+### LOAD ENVIRONMENTAL DATA ###
+#########################################################################################################
+
+Env_Table_path = (paste0("../Data/","Environment/Africa_adm1_dat_2017.csv")) #this file is adapted by hand to have latest outbreaks
+
+dat_full = read.csv(Env_Table_path, stringsAsFactors=F)
+
+```
+# Introduction
+
+The purpose of this markdown is to take the predicted force of infection estimates calculated in "Full_projections" and turn them into predictions of the burden in `r toString(year_of_interest)`.
+
+We begin by comparing the force of infection predictions.
+
+# Comparing the force of infection
+
+```{r import predictions and plot}
+
+
+Foi_samples = read.csv("Foi_climate_samples_20180824.csv", stringsAsFactors = FALSE)
+
+Foi_samples_all = melt(Foi_samples, id = "scenario")
+
+Foi_samples_all$scenario = as.factor(Foi_samples_all$scenario)
+
+ggplot(Foi_samples_all) + geom_boxplot( aes(x = scenario, y = value, colour = scenario))
+```
+
+```{r compare_transmission}
+
+par(mfrow=c(1,2))
+
+Foi_runs = apply(filter(Foi_samples, scenario == 0), 2, median)
+Foi_runs_add2 = apply(filter(Foi_samples, scenario == 2), 2, median)
+Foi_runs_add4 = apply(filter(Foi_samples, scenario == 4), 2, median)
+
+difference_add2 = (Foi_runs_add2 - Foi_runs)/Foi_runs *100
+difference_add4 = (Foi_runs_add4 - Foi_runs)/Foi_runs *100
+
+
+mybreaks= seq(-200,200, length.out=100)
+mycols =  rev( colorRampPalette(brewer.pal(11, "BrBG") )(length(mybreaks)-1) )
+mm = match(shp1$adm0_adm1,dat$adm0_adm1)
+vcols = findInterval(difference_add2,mybreaks)
+
+plot(shp0, xlim=c(-15,45),ylim=c(-20,30), main= "% difference +2")
+mm0 = match(shp0$ISO,c34) #
+plot(shp0[is.na(mm0),],col="grey70",add=T) 
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+plot(shp0, lwd=2, add=T)
+
+image.plot(legend.only=TRUE,breaks=mybreaks,col=mycols,zlim=c(0,1), horizontal = TRUE, 
+           #axis.args = list(at = c(-3:1), labels =c( "0.001", "0.01", "0.1","1","10"), las =2),
+           legend.mar = 3.5)
+#############################################################################################
+
+
+mm = match(shp1$adm0_adm1,dat$adm0_adm1)
+vcols = findInterval(difference_add4,mybreaks)
+
+plot(shp0, xlim=c(-15,45),ylim=c(-20,30), main= "% difference +4")
+mm0 = match(shp0$ISO,c34) #
+plot(shp0[is.na(mm0),],col="grey70",add=T) 
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+plot(shp0, lwd=2, add=T)
+
+image.plot(legend.only=TRUE,breaks=mybreaks,col=mycols,zlim=c(0,1), horizontal = TRUE, 
+           #axis.args = list(at = c(-3:1), labels =c( "0.001", "0.01", "0.1","1","10"), las =2),
+           legend.mar = 3.5)
+
+  
+```
