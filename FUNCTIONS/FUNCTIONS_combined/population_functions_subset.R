@@ -106,3 +106,21 @@ fit_glm = function(dat, depi, models) {
   return(list(beta0=beta0, x=x, y=y))
   
 }
+##################################################################################
+### fun_calcPred ### TAKEN FROM KEVIN'S CODE fun.calcPred ###
+##################################################################################
+fun_calcPred = function(coefs,
+                        newdata,
+                        type = "response",
+                        varsin = NA) {
+  
+  if(!(type %in% c("link","response"))) stop("fun_calcPred: invalid type of predictions specified_\n")
+  if(is.na(varsin[1])) varsin = 1:length(coefs)
+  eta = newdata[,varsin] %*% coefs[varsin]
+  if(type=="link") {
+    preds = eta #X*beta
+  } else if(type=="response") {
+    preds = 1-exp(-exp(eta)) # q = 1 - exp (- exp(X*beta))
+  }
+  return(preds)
+}
