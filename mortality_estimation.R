@@ -4,10 +4,12 @@ run_id = 1
 
 library(ggplot2)
 library(dplyr)
+library(readr)
+library(mvtnorm)
 
 ### DATA ###
 
-dat <- read_csv("Z:/YF_climateChange/Data/SurvivalData_mordecai2018.csv")
+dat <- read_csv("Z:/YF_climateChange/Data/Survival_mortality/SurvivalData_mordecai2018.csv")
 
 dat = filter(dat, `Time (dpi)`>0)
 ################################################################
@@ -25,16 +27,16 @@ likelihood = function(param, dat){
   Temp = unique(dat$Temp)
   
   lf = quad(Temp, T0, Tm , c)
-  lf[lf<0] = 1e-5
+  lf[lf<0] = 0
   
-  mu = ifelse( lf<=0, 1, 1/ lf )
+  mu = ifelse( lf<=0, 1, 1/ lf ) +1e-8
   
   LL = NULL
   for (i in 1:length(Temp)){
     
     dat_sub  = filter(dat, Temp == Temp[i])
     
-    LL = rbind( LL, sum(  dbinom(dat_sub$Alive, size = dat_sub$Dead+dat_sub$Alive, prob = lf[i] , log = TRUE) , na.rm = TRUE) )
+    LL = rbind( LL, sum(  dbinom(dat_sub$Dead, size = dat_sub$Dead+dat_sub$Alive, prob = mu[i] , log = TRUE) , na.rm = TRUE) )
   }
   
   return( sum(LL, na.rm = TRUE) )
@@ -116,7 +118,7 @@ if(!dir.exists(name_dir)) dir.create(name_dir,  showWarnings = TRUE)
 
 
 #plain old mcmc on fixed model prob
-Niter = 1e4
+Niter = 5e4
 chain = posteriorProb = acceptRate = NULL
 burnin = 50
 fileIndex = 0
@@ -177,7 +179,7 @@ library(ggmcmc)
 library(mcmcplots)
 
 #remove burnin
-chain_sub1 = chain[1000:nrow(chain),]
+chain_sub1 = chain[10000:nrow(chain),]
 
 chain_sub2 = convert.mcmc.list(chain_sub1)
 
@@ -195,4 +197,16 @@ param_est = data.frame("lower" = hpdout[[1]][,1] ,
                        "upper" = hpdout[[1]][,2] )
 write.csv(param_est, paste0(name_dir, "/", "mortality_estimates.csv") )
 
+#### PLOT FIT
 
+Temp = unique(dat$Temp)
+
+lf = quad(Temp, param_est[1,2],param_est[2,2], param_est[3,2])
+lf[lf<0] = 0
+
+mu = ifelse( lf<=0, 1, 1/ lf ) +1e-8
+
+plot(dat$Temp, dat$Dead/(dat$Dead+dat$Alive), pch = 20, col="red", xlab = "Temperature", ylab = "Mortality rate")
+lines(Temp, mu)
+dev.copy(png,paste0(name_dir, "/",'fit.png') )
+dev.off()
