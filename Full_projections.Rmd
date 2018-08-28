@@ -112,7 +112,7 @@ n_samples = 1000
 
 ```{r import_chains}
 
-setwd("GLM_tempsuit_MCMC_chain_20180823_hamlet")
+setwd("GLM_tempsuit_MCMC_chain_20180824_hamlet")
 
 temp = list.files(pattern="\\.csv$")
 
@@ -124,10 +124,10 @@ for(i in 1:length(l)){l[[i]] = l[[i]][,-1]}
 
 mcmc_out=data.table::rbindlist( l )
 
-mcmc_out = as.data.frame( mcmc_out[80000:nrow(mcmc_out),1:28] )
+mcmc_out = as.data.frame( mcmc_out[1:nrow(mcmc_out),1:28] )
 
 #thin
-mcmc_out=mcmc_out[seq(1,nrow(mcmc_out),10),]
+mcmc_out=mcmc_out[seq(1,nrow(mcmc_out),100),]
 
 ```
 
@@ -591,16 +591,17 @@ scenarios = c(0, 2, 4)
 
 # then we take n_samples random samples of our posteriors to create our output.
 
-for(s in scenarios){
-  for(i in 1:n_samples){
-    
+
+for(i in 1:n_samples){
+  for(s in scenarios){
+      
     sample_ind = sample(nrow(mcmc_out), 1)
     sample_ind_f = sample(nrow(mcmc_out_f), 1)
     
-    adjusted_params = unlist(c(exp(mcmc_out_f[sample_ind_f,1]), 
-                         mcmc_out[sample_ind,1:19] , 
-                        exp(mcmc_out_f[sample_ind_f,c(2:41)]),
-                        exp(mcmc_out_f[sample_ind_f,82]) ) )
+    adjusted_params = unlist(c(exp(mcmc_out_f[sample_ind_f,1]), #vac eff
+                         mcmc_out[sample_ind,1:19] ,            #glm
+                        exp(mcmc_out_f[sample_ind_f,c(2:41)]),  #foi
+                        exp(mcmc_out_f[sample_ind_f,82]) ) )    #vc factor
     
     names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
     
@@ -617,19 +618,19 @@ for(s in scenarios){
     
        ### p detect ###
     p_detect =  fun_calc_pdetect_multi_both(x=x, 
-                                        adm1s= adm1s, 
-                                        params=adjusted_params, 
-                                        envdat$dat, 
-                                        t0_vac_africa, 
-                                        sero_studies, 
-                                        dim_year, 
-                                        dim_age, 
-                                        p_prop_3d,
-                                        P_tot_2d, 
-                                        inc_v3d, 
-                                        pop_moments_whole, 
-                                        varsin_nc,
-                                        "Foi")
+                                            adm1s= adm1s, 
+                                            params=adjusted_params, 
+                                            envdat$dat, 
+                                            t0_vac_africa, 
+                                            sero_studies, 
+                                            dim_year, 
+                                            dim_age, 
+                                            p_prop_3d,
+                                            P_tot_2d, 
+                                            inc_v3d, 
+                                            pop_moments_whole, 
+                                            varsin_nc,
+                                            "Foi")
     p_detect_link = mean(p_detect)
     
     #NOW CALC TRANSMISSION WITH TEMP CHANGE
@@ -640,11 +641,13 @@ for(s in scenarios){
     envdat_ts = launch_env_dat(dat_full_temp,c34)  
     
     ### GET x ###
-    modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability" 
-    object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
+    object_glm = fit_glm(dat =envdat_ts$dat, depi = envdat_ts$depi, modelVec ) 
     x = object_glm[[2]]
     
-    mypreds  = fun_calcPred(coefs = as.numeric(adjusted_params)[ii], newdata=x, type="link",varsin=varsin_nc)
+    mypreds  = fun_calcPred(coefs = as.numeric(adjusted_params)[ii], 
+                            newdata=x, 
+                            type="link",
+                            varsin=varsin_nc)
     
     Ninf_whole = exp( mypreds - p_detect_link)
     
@@ -676,6 +679,8 @@ for(s in scenarios){
     FOI_samples = rbind(FOI_samples, Foi_tmp)
   }
 }
+
+FOI_samples = FOI_samples[order(FOI_samples[,1]),]
 
 write.csv(FOI_samples, paste0("Foi_climate_samples_", format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
 
