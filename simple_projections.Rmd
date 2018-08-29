@@ -172,7 +172,7 @@ dat_full = cbind(dat_full, temp_suitability_mordecai(dat_full[,"ERAday.mean"]))
 names(dat_full)[ncol(dat_full)] = "temp_suitability"
 
 envdat = launch_env_dat(dat_full,c34)
-dat = envdat$dat
+
 
 object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec )   #fit_glm from Kevin's code, adapted to take models as input
 names(object_glm)
@@ -216,7 +216,7 @@ dat_full = cbind(dat_full, temp_suitability_mordecai(dat_full[,"ERAday.mean"]))
 names(dat_full)[ncol(dat_full)] = "temp_suitability"
 
 envdat = launch_env_dat(dat_full,c34)
-dat = envdat$dat
+
 
 object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec)   #fit_glm from Kevin's code, adapted to take models as input
 names(object_glm)
