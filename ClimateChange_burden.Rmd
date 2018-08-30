@@ -89,7 +89,9 @@ We begin by comparing the force of infection predictions.
 ```{r import predictions and plot}
 
 
-Foi_samples = read.csv("Foi_climate_samples_20180824.csv", stringsAsFactors = FALSE)
+Foi_samples = read.csv("Foi_climate_samples_20180830.csv", stringsAsFactors = FALSE)
+
+Foi_median_samples= read.csv("Foi_median_climate_samples_20180830.csv", stringsAsFactors = FALSE)
 
 Foi_samples_all = melt(Foi_samples, id = "scenario")
 
@@ -103,16 +105,64 @@ ggplot(Foi_samples_all) + geom_boxplot( aes(x = scenario, y = value, colour = sc
 par(mfrow=c(1,2))
 
 #get median values
-Foi_runs = apply(filter(Foi_samples, scenario == 0), 2, median)
-Foi_runs_add2 = apply(filter(Foi_samples, scenario == 2), 2, median)
-Foi_runs_add4 = apply(filter(Foi_samples, scenario == 4), 2, median)
+Foi_runs = filter(Foi_median_samples, scenario == 0)
+Foi_runs_add2 = filter(Foi_median_samples, scenario == 2)
+Foi_runs_add4 = filter(Foi_median_samples, scenario == 4)
 
 #calculate difference
-difference_add2 = (Foi_runs_add2 - Foi_runs)/Foi_runs *100
-difference_add4 = (Foi_runs_add4 - Foi_runs)/Foi_runs *100
+difference_add2 = (Foi_runs_add2[,-1] - Foi_runs[,-1])/Foi_runs[,-1] *100
+difference_add4 = (Foi_runs_add4[,-1] - Foi_runs[,-1])/Foi_runs[,-1] *100
 
 
-mybreaks= seq(-200,200, length.out=100)
+mybreaks= seq(-150,150, length.out=100)
+mycols =  rev( colorRampPalette(brewer.pal(11, "BrBG") )(length(mybreaks)-1) )
+mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
+vcols = findInterval(difference_add2,mybreaks)
+
+plot(shp0, xlim=c(-15,45),ylim=c(-20,30), main= "% difference +2")
+mm0 = match(shp0$ISO,c34) #
+plot(shp0[is.na(mm0),],col="grey70",add=T) 
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+plot(shp0, lwd=2, add=T)
+
+image.plot(legend.only=TRUE,breaks=mybreaks,col=mycols,zlim=c(0,1), horizontal = TRUE, 
+           #axis.args = list(at = c(-3:1), labels =c( "0.001", "0.01", "0.1","1","10"), las =2),
+           legend.mar = 3.5)
+#############################################################################################
+
+
+
+vcols = findInterval(difference_add4,mybreaks)
+
+plot(shp0, xlim=c(-15,45),ylim=c(-20,30), main= "% difference +4")
+mm0 = match(shp0$ISO,c34) #
+plot(shp0[is.na(mm0),],col="grey70",add=T) 
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+plot(shp0, lwd=2, add=T)
+
+image.plot(legend.only=TRUE,breaks=mybreaks,col=mycols,zlim=c(0,1), horizontal = TRUE, 
+           #axis.args = list(at = c(-3:1), labels =c( "0.001", "0.01", "0.1","1","10"), las =2),
+           legend.mar = 3.5)
+
+  
+```
+
+
+```{r compare_transmission_all}
+
+par(mfrow=c(1,2))
+
+#get median values
+Foi_runs = apply(filter(Foi_samples, scenario == 0), 2, mean)
+Foi_runs_add2 = apply(filter(Foi_samples, scenario == 2), 2, mean)
+Foi_runs_add4 = apply(filter(Foi_samples, scenario == 4), 2, mean)
+
+#calculate difference
+difference_add2 = (Foi_runs_add2[,-1] - Foi_runs[,-1])/Foi_runs[,-1] *100
+difference_add4 = (Foi_runs_add4[,-1] - Foi_runs[,-1])/Foi_runs[,-1] *100
+
+
+mybreaks= seq(-100,100, length.out=100)
 mycols =  rev( colorRampPalette(brewer.pal(11, "BrBG") )(length(mybreaks)-1) )
 mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
 vcols = findInterval(difference_add2,mybreaks)
@@ -265,5 +315,43 @@ ggplot(burden_df, aes(x = variable, y = value, fill = scenario)) +
   scale_fill_manual(values = colours)+
   xlab("") + ylab("Burden")
 
+
+```
+
+
+
+```{r rank_change}
+
+df_value_change = data.frame("country" = as.character(filter(burden_df, scenario==0)$variable),
+                             "baseline" = filter(burden_df, scenario == 0)$value,
+                             "warming_2" = filter(burden_df, scenario == 2)$value,
+                             "warming_4" = filter(burden_df, scenario == 4)$value)
+
+
+WestAfrica = c("SEN", "GMB", "MRT", "MLI", "BFA", "SLE", "NGA", "NER", "BEN", "TGO", "GHA", "CIV", "LBR", "GIN", "GNB")
+
+df_value_change$we = ifelse(df_value_change$country %in% WestAfrica, "W", "E")
+
+df_vale_we = data.frame("Location" = c("West", "East and central"),
+                        "baseline" = c(sum(filter(df_value_change, we=="W")$baseline), sum(filter(df_value_change, we=="E")$baseline,na.rm=TRUE) ),
+                        "warming_2" = c(sum(filter(df_value_change, we=="W")$warming_2), sum(filter(df_value_change, we=="E")$warming_2,na.rm=TRUE) ),
+                        "warming_4" = c(sum(filter(df_value_change, we=="W")$warming_4), sum(filter(df_value_change, we=="E")$warming_4,na.rm=TRUE) ))
+
+
+ggplot(df_vale_we) + geom_segment( aes( x = as.factor(1), y = log10(baseline), xend = as.factor(2), yend = log10(warming_2), colour = Location), size = 1) +
+                     geom_segment( aes( x = as.factor(2), y = log10(warming_2), xend = as.factor(3), yend = log10(warming_4), colour = Location), size =1) +
+  scale_colour_manual( values = c("blue", "orange")) +
+  labs(x = "", y = "Burden (log scale)") + 
+  scale_x_discrete(breaks = c("1","2","3"),labels=c( "Baseline", "Warming +2", "Warming +4"))
+
+```
+
+```{r rank_change_uncert}
+
+df_value_change_w = filter(df_value_change, we == "W")
+df_value_change_e = filter(df_value_change, we == "E")
+
+ggplot(melt(df_value_change[,2:5], id = "we")) + geom_violin( aes(x = variable, y = log10(value),  fill = we), draw_quantiles = 0.5) +   
+  scale_fill_manual(values = colours) + xlab("Scenario") + ylab("Burden (log scale)") + labs(colour = "Area")
 
 ```
