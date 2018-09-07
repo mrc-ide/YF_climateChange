@@ -37,6 +37,10 @@ library(truncdist)
 library(wesanderson)
 library(ggmcmc)
 library(mcmcplots)
+library(readr)
+library(data.table)
+library(ggplot2)
+library(RColorBrewer)
 
 #########################################################################################################
 ### SETTING THE WORKING DIRECTORY ###
@@ -153,16 +157,16 @@ image.plot(legend.only=TRUE,breaks=mybreaks,col=mycols,zlim=c(0,1), horizontal =
 par(mfrow=c(1,2))
 
 #get median values
-Foi_runs = apply(filter(Foi_samples, scenario == 0), 2, mean)
-Foi_runs_add2 = apply(filter(Foi_samples, scenario == 2), 2, mean)
-Foi_runs_add4 = apply(filter(Foi_samples, scenario == 4), 2, mean)
+Foi_runs = apply(filter(Foi_samples, scenario == 0), 2, median)
+Foi_runs_add2 = apply(filter(Foi_samples, scenario == 2), 2, median)
+Foi_runs_add4 = apply(filter(Foi_samples, scenario == 4), 2, median)
 
 #calculate difference
-difference_add2 = (Foi_runs_add2[,-1] - Foi_runs[,-1])/Foi_runs[,-1] *100
-difference_add4 = (Foi_runs_add4[,-1] - Foi_runs[,-1])/Foi_runs[,-1] *100
+difference_add2 = (Foi_runs_add2[-1] - Foi_runs[-1])/Foi_runs[-1] *100
+difference_add4 = (Foi_runs_add4[-1] - Foi_runs[-1])/Foi_runs[-1] *100
 
 
-mybreaks= seq(-100,100, length.out=100)
+mybreaks= seq(-150,150, length.out=100)
 mycols =  rev( colorRampPalette(brewer.pal(11, "BrBG") )(length(mybreaks)-1) )
 mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
 vcols = findInterval(difference_add2,mybreaks)
@@ -203,9 +207,9 @@ source('Z:/MultiModelInference/FUNCTIONS/burden_functions.R')
 
 #import coverage data for each scenario
 coverage_df_prev = read.csv(paste0("../Data/Vaccination/Outputs/", 
-                              "vaccination_coverage_country_year_", 
-                              "preventive", ".csv"), 
-                       stringsAsFactors = FALSE)
+                                   "vaccination_coverage_country_year_", 
+                                   "preventive", ".csv"), 
+                            stringsAsFactors = FALSE)
 
 ####
 
@@ -213,18 +217,18 @@ pop_all = read.csv("../Data/Population/201708/201710gavi-5_dds-201710_int_pop_bo
                    stringsAsFactors = FALSE)
 
 ## Patch it up with GAB and GNQ data
-pop_patch_GAB_GNQ = read.csv(
-  "../Data/Population/201708/201710gavi-5_dds-201710_int_pop_both_GAB_GNQ.csv", 
-  stringsAsFactors = FALSE)
+pop_patch_GAB_GNQ = read.csv("../Data/Population/201708/201710gavi-5_dds-201710_int_pop_both_GAB_GNQ.csv", 
+                             stringsAsFactors = FALSE)
 
 pop_all = rbind(pop_all, pop_patch_GAB_GNQ)
 
 pop_all = filter(pop_all, year>1939)
 
+scenarios = c(0,2,4)
 ##########################################
 
-infections =  rep(NA, nrow(Foi_samples)*34)
-dim(infections) = c(nrow(Foi_samples), 34)
+infections =  rep(NA, nrow(Foi_samples)*35)
+dim(infections) = c(nrow(Foi_samples), 35)
 
 param_country_vec = NULL
 
@@ -248,55 +252,71 @@ for (country_ind in 1: 34){
   colnames(pop_new) = c("year", 0:100)
   pop_new = pop_new[order(pop_new[,1]),]
   ############################################
+  
+  #get model type
+  model_type = "Foi"
+  
+  for( index in 1:(nrow(Foi_samples)/3)){
+    for (s in 1:3){
+      
+      Foi_samples_scenario = filter(Foi_samples, scenario == scenarios[s])
+      Foi_samples_baseline = filter(Foi_samples, scenario == 0)
     
-    #get model type
-    model_type = "Foi"
-    
-  for( index in 1:nrow(Foi_samples)){
-    
-    param = Foi_samples[index,2:480]
+    param = Foi_samples_scenario[index,2:480]
+    param_base = Foi_samples_baseline[index, 2:480]
     
     #collect transmission param for that country
     param_country = param[ grep(c34[country_ind], names(param)) ]
+    param_country_base = param_base[ grep(c34[country_ind], names(param_base)) ]
     
     #average over country
     param_country_ave = mean( as.numeric(param_country) )
+    param_country_ave_base = mean( as.numeric(param_country_base) )
     
     year_end = year_of_interest
     
-    #calculate start conditions
+    #calculate start conditions with baseline
     immunity_start = fun_immunityStart(model_type,
-                                       transmission_param = param_country_ave,
+                                       transmission_param = param_country_ave_base,
                                        age_max = 100,
                                        pop = pop_new,
                                        old_coverage = coverage_country_prev,
-                                       year_end)
-    
+                                       2017)
 
+    #calculate with new FOI
+    out_imm = run_infections_unit(model_type,
+                                   transmission_param = param_country_ave,
+                                   years = c(2017:(year_end-1)),
+                                   age.max = 100,
+                                   pop = pop_new,
+                                   coverage = coverage_country_prev,      #this is a subset of pop_moments_whole for adm1s of interest
+                                   immunityStart = immunity_start)
     
     #calculate burden in year of interest
     
     out_prev = run_infections_unit(model_type,
-                                 transmission_param = param_country_ave,
-                                 years = year_end,
-                                 age.max = 100,
-                                 pop = pop_new,
-                                 coverage = coverage_country_prev,      #this is a subset of pop_moments_whole for adm1s of interest
-                                 immunityStart = immunity_start)
+                                   transmission_param = param_country_ave,
+                                   years = year_end,
+                                   age.max = 100,
+                                   pop = pop_new,
+                                   coverage = coverage_country_prev,      #this is a subset of pop_moments_whole for adm1s of interest
+                                   immunityStart = out_imm$immunity[nrow(out_imm$immunity),])
     
     
-    infections[index, country_ind] = sum(out_prev$new.infections) 
-
+    infections[index + nrow(Foi_samples_baseline)* (s-1)  , c(country_ind, 35)] = c(sum(out_prev$new.infections) , scenarios[s])
+    
     param_country_vec = rbind(param_country_vec , c(param_country_ave, model_type, c34[country_ind]))
-  
+    }
   } 
 }
 
 infections_df = as.data.frame(infections) 
-names(infections_df)  = c34
+names(infections_df)[1:34]  = c34
 
-infections_df = cbind(infections_df, as.factor(Foi_samples$scenario) )
 names(infections_df)[ncol(infections_df)] = "scenario"
+
+
+write.csv(infections_df, paste0("infections_df_", format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
 ```
 
 
@@ -309,11 +329,11 @@ burden_df$value = burden_df$value * P_severe
 
 colours = wes_palette("GrandBudapest1")
 
-ggplot(burden_df, aes(x = variable, y = value, fill = scenario)) + 
+ggplot(burden_df, aes(x = variable, y = value, fill = as.factor(scenario))) + 
   geom_col(  position = position_dodge()) + 
   theme( axis.text.x = element_text(angle = 90, hjust = 1)) + 
   scale_fill_manual(values = colours)+
-  xlab("") + ylab("Burden")
+  xlab("") + ylab("Burden") + labs(fill = "Scenario")
 
 
 ```
@@ -348,10 +368,15 @@ ggplot(df_vale_we) + geom_segment( aes( x = as.factor(1), y = log10(baseline), x
 
 ```{r rank_change_uncert}
 
-df_value_change_w = filter(df_value_change, we == "W")
-df_value_change_e = filter(df_value_change, we == "E")
+df_melted_we = melt(df_value_change[,2:5], id = "we")
 
-ggplot(melt(df_value_change[,2:5], id = "we")) + geom_violin( aes(x = variable, y = log10(value),  fill = we), draw_quantiles = 0.5) +   
-  scale_fill_manual(values = colours) + xlab("Scenario") + ylab("Burden (log scale)") + labs(colour = "Area")
+df_melted_we$we = factor(df_melted_we$we, levels = c("W", "E") )
+
+ggplot(df_melted_we) + 
+  geom_violin( aes(x = variable, y = log10(value),  fill = we), draw_quantiles = 0.5) + 
+  scale_fill_manual(values = colours[2:1]) + 
+  xlab("Scenario") + 
+  ylab("Burden (log scale)") + 
+  labs(fill = "Area") 
 
 ```
