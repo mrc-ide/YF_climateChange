@@ -154,7 +154,7 @@ if(!dir.exists(name_dir)) dir.create(name_dir,  showWarnings = TRUE)
 
 
 #plain old mcmc on fixed model prob
-Niter = 1e5
+Niter = 1e6
 chain = posteriorProb = acceptRate = NULL
 burnin = 50
 fileIndex = 0
