@@ -5,6 +5,8 @@ run_id = 1
 library(ggplot2)
 library(dplyr)
 
+library(YFestimation)
+
 ### DATA ###
 
 mordecai_biterate <- read_csv("Z:/YF_climateChange/Data/mordecai_biterate.csv")
@@ -21,7 +23,7 @@ biterate = rbind(mordecai_biterate, hamlet_biterate)
 ### FUNCTIONS ###
 ################################################################
 source('Z:/YF_climateChange/FUNCTIONS/temp_suitability.R')
-source('Z:/YF_climateChange/FUNCTIONS/GLMonly_functions.R')
+
 
 likelihood = function(param, dat, sigma = NA){
   
@@ -50,7 +52,8 @@ prior = function(param){
   Tm = as.numeric(param[2])
   c = as.numeric(param[3])
   
-  prior_prob = log( dnorm(T0, mean = 13.35, sd = 2) ) + log( dnorm(Tm, mean = 40.08, sd = 0.05) ) +
+  prior_prob = log( dnorm(T0, mean = 13.35, sd = 2) ) + 
+               log( dnorm(Tm, mean = 40.08, sd = 0.05) ) +
                log( dnorm(c, mean = 2.02e-4, sd = 2e-5))
   
   return(prior_prob)
@@ -59,7 +62,7 @@ prior = function(param){
 MCMC_step = function(param, data, chain_cov, adapt, accCurrent){
   
   #new param
-  param_prop = proposal(as.numeric(param), chain_cov, adapt)
+  param_prop = YFestimation::GLMproposal(as.numeric(param), chain_cov, adapt)
   names(param_prop) = names(param)
   
   #prior_prop
@@ -97,8 +100,8 @@ MCMC_step = function(param, data, chain_cov, adapt, accCurrent){
 ### Setup ###
 #########################################################################################################
 pars_ini = log( data.frame("T0" = 13.35,
-                      "Tm" = 40.08,
-                      "c" = 2e-4) )
+                           "Tm" = 40.08,
+                           "c" = 2e-4) )
 
 
 #########################################################################################################
@@ -162,10 +165,10 @@ for (iter in iter:Niter){
   
   #new step
   out = MCMC_step(param,
-                      biterate,
-                      chain_cov,
-                      adapt, 
-                      accCurrent)
+                  biterate,
+                  chain_cov,
+                  adapt, 
+                  accCurrent)
   
   
 }
@@ -201,14 +204,14 @@ write.csv(param_est, paste0(name_dir, "/", "biterate_estimates.csv") )
 # plot fit
 dat = dat[order(dat$T),]
 plot(dat$T, briere(dat$T, T0 = exp( median(chain_sub1[,1]) ),
-                    Tm = exp( median(chain_sub1[,2]) ),
-                    c = exp( median(chain_sub1[,3]) )  ), type = "l", ylim = c(0,3), lwd =1, 
+                   Tm = exp( median(chain_sub1[,2]) ),
+                   c = exp( median(chain_sub1[,3]) )  ), type = "l", ylim = c(0,3), lwd =1, 
      xlab = "Temperature", ylab = "Bite rate")
 
 for (i in 1:1000){
-lines(dat$T, briere(dat$T, T0 = exp( chain_sub1[sample(nrow(chain_sub1), 1),1] ),
-                           Tm = exp( chain_sub1[sample(nrow(chain_sub1), 1),2]) ,
-                            c = exp( chain_sub1[sample(nrow(chain_sub1), 1),3])   ), col = rgb(0,0,0,alpha=0.01)  )
+  lines(dat$T, briere(dat$T, T0 = exp( chain_sub1[sample(nrow(chain_sub1), 1),1] ),
+                      Tm = exp( chain_sub1[sample(nrow(chain_sub1), 1),2]) ,
+                      c = exp( chain_sub1[sample(nrow(chain_sub1), 1),3])   ), col = rgb(0,0,0,alpha=0.01)  )
 }
 points(dat$T, dat$bite_rate, col = "red", pch =20)
 

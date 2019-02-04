@@ -7,6 +7,8 @@ library(dplyr)
 library(readr)
 library(mvtnorm)
 
+library(YFestimation)
+
 ### DATA ###
 
 dat <- read_csv("Z:/YF_climateChange/Data/Survival_mortality/SurvivalData_mordecai2018.csv")
@@ -16,7 +18,6 @@ dat = filter(dat, `Time (dpi)`>0)
 ### FUNCTIONS ###
 ################################################################
 source('Z:/YF_climateChange/FUNCTIONS/temp_suitability.R')
-source('Z:/YF_climateChange/FUNCTIONS/GLMonly_functions.R')
 
 likelihood = function(param, dat){
   
@@ -36,7 +37,11 @@ likelihood = function(param, dat){
     
     dat_sub  = filter(dat, Temp == Temp[i])
     
-    LL = rbind( LL, sum(  dbinom(dat_sub$Dead, size = dat_sub$Dead+dat_sub$Alive, prob = mu[i] , log = TRUE) , na.rm = TRUE) )
+    LL = rbind( LL, sum(  dbinom(dat_sub$Dead, 
+                                 size = dat_sub$Dead+dat_sub$Alive, 
+                                 prob = mu[i] , 
+                                 log = TRUE) , 
+                          na.rm = TRUE) )
   }
   
   return( sum(LL, na.rm = TRUE) )
@@ -58,7 +63,7 @@ prior = function(param){
 MCMC_step = function(param, dat, chain_cov, adapt, accCurrent){
   
   #new param
-  param_prop = proposal(as.numeric(param), chain_cov, adapt)
+  param_prop = YFestimation::GLMproposal(as.numeric(param), chain_cov, adapt)
   names(param_prop) = names(param)
   
   #prior_prop

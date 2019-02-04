@@ -5,6 +5,8 @@ run_id = 1
 library(ggplot2)
 library(dplyr)
 
+library(YFestimation)
+
 ### DATA ###
 
 davis_EIP <- read_csv("Z:/YF_climateChange/Data/davis_EIP.csv")
@@ -13,7 +15,6 @@ davis_EIP <- read_csv("Z:/YF_climateChange/Data/davis_EIP.csv")
 ### FUNCTIONS ###
 ################################################################
 source('Z:/YF_climateChange/FUNCTIONS/temp_suitability.R')
-source('Z:/YF_climateChange/FUNCTIONS/GLMonly_functions.R')
 
 likelihood = function(param, dat){
   
@@ -49,7 +50,7 @@ prior = function(param){
 MCMC_step = function(param, dat, chain_cov, adapt, accCurrent){
   
   #new param
-  param_prop = proposal(as.numeric(param), chain_cov, adapt)
+  param_prop = YFestimation::GLMproposal(as.numeric(param), chain_cov, adapt)
   names(param_prop) = names(param)
   
   #prior_prop
