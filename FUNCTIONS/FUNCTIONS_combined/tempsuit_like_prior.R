@@ -11,17 +11,17 @@ fun_tempsuitPrior = function( param ){
   mu_T0 = param[4]; mu_Tm = param[5]; mu_c = param[6]
   PDR_T0 = param[7]; PDR_Tm = param[8]; PDR_c = param[9]
   
-  prior_prob_a =  dnorm(a_T0, mean = 13.35, sd = 2, log = TRUE) +   #set from Mordecai
-                  dnorm(a_Tm, mean = 40.08, sd = 0.05, log = TRUE)  +
-                  log( dtrunc(a_c, "norm", a = 0, b = Inf,  mean = 2.02e-4, sd = 2e-5) ) #keep it positive
+  prior_prob_a =  dnorm(a_T0, mean = 13.35, sd = 2*2, log = TRUE) +   #set from Mordecai
+                  dnorm(a_Tm, mean = 40.08, sd = 0.05*2, log = TRUE)  +
+                  log( dtrunc(a_c, "norm", a = 0, b = Inf,  mean = 2.02e-4, sd = 2e-5*2) ) #keep it positive
   
-  prior_prob_mu = dnorm(mu_T0, mean = 11, sd = 1, log = TRUE)  +    # set from Tesla
-                  dnorm(mu_Tm, mean = 37, sd = 0.8, log = TRUE)  +
-                  log( dtrunc(mu_c, "norm", a=-Inf, b = 0, mean = -3e-1, sd = 2e-2) ) #keep it negative
+  prior_prob_mu = dnorm(mu_T0, mean = 11, sd = 1*2, log = TRUE)  +    # set from Tesla
+                  dnorm(mu_Tm, mean = 37, sd = 0.8*2, log = TRUE)  +
+                  log( dtrunc(mu_c, "norm", a=-Inf, b = 0, mean = -3e-1, sd = 2e-2*2) ) #keep it negative
   
-  prior_prob_PDR = dnorm(PDR_T0, mean = 18.3, sd = 3, log = TRUE) +  # these are set from Tesla for zikv
-                   dnorm(PDR_Tm, mean = 42.3, sd =1, log = TRUE) +
-                   log( dtrunc(PDR_c, "norm", a = 0, b = Inf, mean = 1.74e-4, sd =5e-5) )
+  prior_prob_PDR = dnorm(PDR_T0, mean = 18.3, sd = 3*2, log = TRUE) +  # these are set from Tesla for zikv
+                   dnorm(PDR_Tm, mean = 42.3, sd =1*2, log = TRUE) +
+                   log( dtrunc(PDR_c, "norm", a = 0, b = Inf, mean = 1.74e-4, sd =5e-5*2) )
   
   prior_prob = prior_prob_a + prior_prob_mu + prior_prob_PDR
   

@@ -12,10 +12,10 @@ GLM_tempsuit_MCMC_step = function(param,
                                   accCurrent) {
   
   ### propose new param ###
-  param_prop = proposal(param, chain_cov, adapt)
+  param_prop = YFestimation::GLMproposal(param, chain_cov, adapt)
   
   ### priors ###
-  prior_prop = sum( fun_GLMprior(param_prop[1:19]) ) + 
+  prior_prop = sum( YFestimation::GLMprior(param_prop[1:19]) ) + 
                     fun_tempsuitPrior( param_prop[20:28])
   
   
@@ -30,12 +30,12 @@ GLM_tempsuit_MCMC_step = function(param,
     
     ### GET x ###
     modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability" 
-    object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
+    object_glm = YFestimation::fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
     x = object_glm[[2]]
     y = object_glm[[3]]
     
     ### LIKE ###
-    like_prop = fun_glm_lnL(param_prop[1:19], x, y) + 
+    like_prop = YFestimation::GLMlike(param_prop[1:19], x, y) + 
                 fun_tempsuitLike(dat_bite, dat_mort, dat_EIP, param_prop[20:28]) 
     
     ### accept/ reject ###
