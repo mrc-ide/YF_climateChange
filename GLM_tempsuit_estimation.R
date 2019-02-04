@@ -87,78 +87,10 @@ pars_ini = pars_ini[c("Intercept","log.surv.qual.adm0","adm05AGO","adm05BDI","ad
 #########################################################################################################
 ### MCMC ###
 #########################################################################################################
-
-### find posterior probability at start ###
-out = GLM_tempsuit_MCMC_step(pars_ini,
-                             dat_full,
-                             dat_bite,
-                             dat_mort,
-                             dat_EIP,
-                             chain_cov=1,
-                             adapt=0, 
-                             accCurrent=-Inf)
-
 #create a directory to save the output in
 date=format(Sys.time(),"%Y%m%d")
 name_dir = paste0("GLM_tempsuit_MCMC_chain", "_", date, "_hamlet")
-if(!dir.exists(name_dir)) dir.create(name_dir,  showWarnings = TRUE)
 
-
-
-#plain old mcmc on fixed model prob
 Niter = 1e6
-chain = posteriorProb = acceptRate = NULL
-burnin = 50
-fileIndex = 0
-iter = 1
 
-for (iter in iter:Niter){
-  #save current step
-  param = out$param
-  names(param) = names(pars_ini)
-  accCurrent = out$accCurrent
-  accept = out$accept
-  
-  chain = rbind(chain, param)
-  posteriorProb = rbind(posteriorProb, accCurrent)
-  acceptRate = rbind(acceptRate, accept)
-  
-  
-  if(iter>100 ) plot(chain[,1] , type= "l") #plot(posteriorProb, type = 'l')
-  
-  if (iter %% 1000 == 0){
-    
-    colnames(acceptRate) = "acceptRate"
-    colnames(posteriorProb) = "posteriorProb"
-    if (iter %% 10000 == 0){
-      fileIndex  = iter/10000
-    }
-    write.csv(cbind(chain,  posteriorProb, acceptRate)[min((fileIndex * 10000+1),iter):iter,], 
-              paste0(name_dir,"/","GLM_tempsuit_chain",fileIndex,"_output",".csv") ) 
-  }
-  
-  
-  #adapt?
-  if (iter>burnin & runif(1)<0.9){ #adapt
-    adapt = 1
-    chain_cov  = cov(chain[max(nrow(chain)-10000, 1):nrow(chain),])
-  } else {
-    adapt = 0
-    chain_cov = 1
-  }
-  
-  #new step
-  out = GLM_tempsuit_MCMC_step(param,
-                               dat_full,
-                               dat_bite,
-                               dat_mort,
-                               dat_EIP,
-                               chain_cov,
-                               adapt, 
-                               accCurrent)
-  
-}
-
-
-
-
+GLM_tempsuit_MCMC(Niter, name_dir, pars_ini, dat_full, dat_bite, dat_mort, dat_EIP, plot_chain = TRUE)
