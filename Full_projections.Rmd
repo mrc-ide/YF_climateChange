@@ -12,7 +12,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
 knitr::opts_chunk$set(
-  fig.path = "FullProjectionImages/",
+  fig.path = "FullProjectionImagesNew/",
   dpi = 300
 )
 ```
@@ -112,7 +112,7 @@ n_samples = 1000
 
 ```{r import_chains}
 
-setwd("GLM_tempsuit_MCMC_chain_20180824_hamlet")
+setwd("GLM_tempsuit_MCMC_chain_20180910_hamlet")
 
 temp = list.files(pattern="\\.csv$")
 
@@ -163,7 +163,7 @@ ggs_caterpillar(chain_sub)
 
 
 ### save values 
-write.csv(ci(chain_sub), "GLM_tempsuit_parameter_estimates.csv", row.names = FALSE)
+write.csv(ci(chain_sub), paste0("GLM_tempsuit_parameter_estimates_", format(Sys.time(),"%Y%m%d"), " .csv"), row.names = FALSE)
 
 ```
 

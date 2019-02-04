@@ -23,7 +23,9 @@ GLM_tempsuit_MCMC_step = function(param,
   if (is.finite(prior_prop)) {
     
     ### TEMP SUITABILITY ###
-    dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,"ERAday.mean"] , param_prop[20:28]))
+    dat_full_temp = cbind(dat_full, 
+                          temp_suitability(dat_full[,"ERAday.mean"] , 
+                                           param_prop[20:28]))
     names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
     dat_full_temp$temp_suitability = dat_full_temp$temp_suitability    # this just dodges really zeros
     envdat = launch_env_dat(dat_full_temp,c34)  # see c34 is a global var!

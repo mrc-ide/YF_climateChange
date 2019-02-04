@@ -66,18 +66,14 @@ fun_tempsuitLike = function(dat_bite, dat_mort, dat_EIP, param){
   #bite rate
   Temp = dat_bite$T
   a = briere(Temp, 
-             param[names(param) == "a_T0"], 
-             param[names(param) == "a_Tm"] , 
-             param[names(param) == "a_c"])
+             param[ grep("^a_", names(param))])
   a[a<=0] = 1e-4
   LL_a = sum(  dexp(dat_bite$bite_rate, rate = a, log = TRUE) )
   
   #mortality
   Temp = unique(dat_mort$Temp)
   lf = quad(Temp, 
-            param[names(param) == "mu_T0"], 
-            param[names(param) == "mu_Tm"],
-            param[names(param) == "mu_c"])
+            param[ grep("^mu_", names(param))])
   lf[lf<0] = 0
   mu = ifelse( lf<=0, 1, 1/ lf )+ 1e-8
   LL_mu = NULL
@@ -94,9 +90,7 @@ fun_tempsuitLike = function(dat_bite, dat_mort, dat_EIP, param){
   #PDR
   Temp = dat_EIP$T
   PDR = briere(Temp, 
-               param[names(param) == "PDR_T0"], 
-               param[names(param) == "PDR_Tm"], 
-               param[names(param) == "PDR_c"])
+               param[ grep("^PDR_", names(param))])
   PDR[PDR<=0] = 1e-4
   LL_PDR = sum(  dnorm(dat_EIP$PDR, 
                        mean = PDR, 
