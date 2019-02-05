@@ -22,7 +22,6 @@ library(YFestimation)
 
 Countries = read_csv(paste0("../Data/","Countries.csv"))
 c34 = Countries$c34
-country34 = Countries$country34
 
 #########################################################################################################
 ### SOURCE FUNCTIONS ###
@@ -71,7 +70,7 @@ seed= (t - floor(t)) * 1e8
 set.seed(seed)
 
 
-#### INITAL PARAM ####
+#### INITIAL PARAM ####
 
 ### OR LOAD FROM PREVIOUS RUN ###
 prev_param = read.csv("GLM_tempsuit_MCMC_chain_20180823_hamlet/GLM_tempsuit_parameter_estimates.csv")
@@ -89,4 +88,4 @@ dir.create(name_dir)
 
 Niter = 1e6
 
-GLM_tempsuit_MCMC(Niter, name_dir, pars_ini, dat_full, dat_bite, dat_mort, dat_EIP, plot_chain = TRUE)
+GLM_tempsuit_MCMC(Niter, name_dir, pars_ini, dat_full, dat_bite, dat_mort, dat_EIP, c34, plot_chain = TRUE)

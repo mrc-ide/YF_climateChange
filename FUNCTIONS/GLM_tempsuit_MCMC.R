@@ -7,6 +7,7 @@ GLM_tempsuit_MCMC_step = function(param,
                                   dat_bite,
                                   dat_mort,
                                   dat_EIP,
+                                  c34,
                                   chain_cov,
                                   adapt, 
                                   accCurrent) {
@@ -28,7 +29,7 @@ GLM_tempsuit_MCMC_step = function(param,
                                            param_prop[20:28]))
     names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
     dat_full_temp$temp_suitability = dat_full_temp$temp_suitability    # this just dodges really zeros
-    envdat = launch_env_dat(dat_full_temp, c34)  # see c34 is a global var!
+    envdat = launch_env_dat(dat_full_temp, c34)  
     
     ### GET x ###
     modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability" 
@@ -77,6 +78,7 @@ GLM_tempsuit_MCMC = function(Niter,
                              dat_bite,
                              dat_mort,
                              dat_EIP,
+                             c34,
                              plot_chain = TRUE){
   
   #get in the right order
@@ -94,6 +96,7 @@ GLM_tempsuit_MCMC = function(Niter,
                                dat_bite,
                                dat_mort,
                                dat_EIP,
+                               c34,
                                chain_cov=1,
                                adapt=0, 
                                accCurrent=-Inf)
@@ -148,6 +151,7 @@ GLM_tempsuit_MCMC = function(Niter,
                                  dat_bite,
                                  dat_mort,
                                  dat_EIP,
+                                 c34,
                                  chain_cov,
                                  adapt, 
                                  accCurrent)
