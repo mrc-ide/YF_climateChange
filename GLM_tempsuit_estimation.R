@@ -79,12 +79,6 @@ prev_param = read.csv("GLM_tempsuit_MCMC_chain_20180823_hamlet/GLM_tempsuit_para
 pars_ini = c(prev_param$median)
 names(pars_ini) = prev_param$Parameter
 
-#get in the right order
-pars_ini = pars_ini[c("Intercept","log.surv.qual.adm0","adm05AGO","adm05BDI","adm05ERI","adm05ETH","adm05GNB",
-                      "adm05KEN","adm05MRT","adm05RWA" ,"adm05SDN" ,"adm05SOM" ,"adm05SSD" ,"adm05TZA",
-                      "adm05UGA","adm05ZMB" , "lon" ,"logpop","temp_suitability",
-                      "a_T0" ,"a_Tm" ,"a_c", "mu_T0","mu_Tm","mu_c" ,"PDR_T0","PDR_Tm","PDR_c") ]
-
 #########################################################################################################
 ### MCMC ###
 #########################################################################################################

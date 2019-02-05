@@ -27,7 +27,7 @@ GLM_tempsuit_MCMC_step = function(param,
                           temp_suitability(dat_full[,"ERAday.mean"] , 
                                            param_prop[20:28]))
     names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
-    dat_full_temp$temp_suitability = dat_full_temp$temp_suitability    
+    dat_full_temp$temp_suitability = dat_full_temp$temp_suitability    # this just dodges really zeros
     envdat = launch_env_dat(dat_full_temp, c34)  # see c34 is a global var!
     
     ### GET x ###
@@ -79,7 +79,14 @@ GLM_tempsuit_MCMC = function(Niter,
                              dat_EIP,
                              plot_chain = TRUE){
   
-  
+  #get in the right order
+  pars_ini = pars_ini[c("Intercept","log.surv.qual.adm0","adm05AGO",
+                        "adm05BDI","adm05ERI","adm05ETH","adm05GNB",
+                        "adm05KEN","adm05MRT","adm05RWA" ,
+                        "adm05SDN" ,"adm05SOM" ,"adm05SSD" ,"adm05TZA",
+                        "adm05UGA","adm05ZMB" , "lon" ,"logpop","temp_suitability",
+                        "a_T0" ,"a_Tm" ,"a_c", "mu_T0","mu_Tm",
+                        "mu_c" ,"PDR_T0","PDR_Tm","PDR_c") ]
   
   ### find posterior probability at start ###
   out = GLM_tempsuit_MCMC_step(pars_ini,
