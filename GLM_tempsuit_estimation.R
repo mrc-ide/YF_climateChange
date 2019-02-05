@@ -4,15 +4,13 @@
 ### LIBRARIES FOR PACKAGES USED ###
 #########################################################################################################
 
-library(Hmisc)
-library(fields)
 library(dplyr)
 library(EnvStats)
 library(readr)
 library(reshape)
-library(abind)
 library(mvtnorm)
 library(truncdist)
+library(R.utils)
 
 library(YFestimation)
 
@@ -27,7 +25,7 @@ c34 = Countries$c34
 ### SOURCE FUNCTIONS ###
 #########################################################################################################
 
-R.utils::sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
+sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 
 #########################################################################################################
 ### LOAD ENVIRONMENTAL DATA ###
