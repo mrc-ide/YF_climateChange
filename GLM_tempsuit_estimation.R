@@ -28,7 +28,7 @@ country34 = Countries$country34
 ### SOURCE FUNCTIONS ###
 #########################################################################################################
 
-R.utils::sourceDirectory("FUNCTIONS/FUNCTIONS_combined", modifiedOnly = FALSE)
+R.utils::sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 
 #########################################################################################################
 ### LOAD ENVIRONMENTAL DATA ###
@@ -36,7 +36,8 @@ R.utils::sourceDirectory("FUNCTIONS/FUNCTIONS_combined", modifiedOnly = FALSE)
 
 Env_Table_path = (paste0("../Data/","Environment/Africa_adm1_dat_2017.csv")) 
 
-dat_full = read.csv(Env_Table_path, stringsAsFactors=F)
+dat_full = read.csv(Env_Table_path, 
+                    stringsAsFactors = FALSE)
 
 #########################################################################################################
 ### LOAD TEMPSUIT DATA ###
@@ -90,6 +91,7 @@ pars_ini = pars_ini[c("Intercept","log.surv.qual.adm0","adm05AGO","adm05BDI","ad
 #create a directory to save the output in
 date=format(Sys.time(),"%Y%m%d")
 name_dir = paste0("GLM_tempsuit_MCMC_chain", "_", date, "_hamlet")
+dir.create(name_dir)
 
 Niter = 1e6
 

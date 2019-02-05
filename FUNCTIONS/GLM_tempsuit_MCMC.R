@@ -27,8 +27,8 @@ GLM_tempsuit_MCMC_step = function(param,
                           temp_suitability(dat_full[,"ERAday.mean"] , 
                                            param_prop[20:28]))
     names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
-    dat_full_temp$temp_suitability = dat_full_temp$temp_suitability    # this just dodges really zeros
-    envdat = launch_env_dat(dat_full_temp,c34)  # see c34 is a global var!
+    dat_full_temp$temp_suitability = dat_full_temp$temp_suitability    
+    envdat = launch_env_dat(dat_full_temp, c34)  # see c34 is a global var!
     
     ### GET x ###
     modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability" 

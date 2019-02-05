@@ -10,7 +10,10 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
+knitr::opts_chunk$set(echo = TRUE, 
+                      message = FALSE, 
+                      warning = FALSE, 
+                      error = FALSE)
 knitr::opts_chunk$set(
   fig.path = "images/",
   dpi = 300
@@ -40,7 +43,9 @@ library(abind)
 library(mvtnorm)
 library(RColorBrewer)
 library(truncdist)
-library(wesanderson)
+
+library(snapalette)
+library(YFestimation)
 
 #########################################################################################################
 ### SETTING THE WORKING DIRECTORY ###
@@ -77,7 +82,7 @@ R.utils::sourceDirectory("FUNCTIONS")
 
 Env_Table_path = (paste0("../Data/","Environment/Africa_adm1_dat_2017.csv")) #this file is adapted by hand to have latest outbreaks
 
-dat_full = read.csv(Env_Table_path, stringsAsFactors=F)
+dat_full = read.csv(Env_Table_path, stringsAsFactors=FALSE)
 
 ### TEMP SUITABILITY ###
 dat_full = cbind(dat_full, temp_suitability_mordecai(dat_full[,"ERAday.mean"]))
@@ -93,7 +98,6 @@ dat = envdat$dat
 modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability" 
 
 object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec )   #fit_glm from Kevin's code, adapted to take models as input
-names(object_glm)
 
 beta0 = object_glm[[1]]
 x = object_glm[[2]]
@@ -103,19 +107,9 @@ y = object_glm[[3]]
 
 ```{r import_glm}
 
-setwd("GLM_MCMC_chain_20180822_hamlet")
+path = "oldMCMC/GLM_MCMC_chain_20180822_hamlet"
 
-temp = list.files(pattern="\\.csv$")
-
-fi = file.info(temp)
-temp = temp[fi$size>5000]
-
-l=lapply(temp,read.csv)
-for(i in 1:length(l)){l[[i]] = l[[i]][,-1]}
-
-glm_mcmc_out=data.table::rbindlist( l )
-
-glm_mcmc_out = glm_mcmc_out[1000:nrow(glm_mcmc_out),]
+glm_mcmc_out = YFestimation::get_chains(path, burnin = 1000, thin = 10)
 
 Est_beta =  apply(glm_mcmc_out[,1:19], 2, median)
 ```
@@ -130,18 +124,17 @@ mm0 = match(shp0$ISO,c34) #
 plot(shp0[is.na(mm0),],col="black",add=T)
 
 pres= dat$adm0_adm1[dat$cas.or.out>0]
-mm1<-match(shp1$adm0_adm1,pres)
 mm1<-match(pres, shp1$adm0_adm1)
 
 
-plot(shp1[mm1,],col="red", add=T)
+plot(shp1[mm1,], col="red", add=T)
 plot(shp0,lwd=2, add=T)
 plot(shp1,lwd=1, add=T)
 
 ##################################################################################
 ### model ###
 
-glmpreds_tmp = fun_calcPred( Est_beta,x,type="response")
+glmpreds_tmp = YFestimation::fun_calcPred( Est_beta, x, type="response")
 
 mybreaks = seq(0,1.0001,by=0.01)
 mycols =  heat.colors(length(mybreaks)-1)
@@ -173,9 +166,8 @@ names(dat_full)[ncol(dat_full)] = "temp_suitability"
 
 envdat = launch_env_dat(dat_full,c34)
 
+object_glm = YFestimation::fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec )   #fit_glm from Kevin's code, adapted to take models as input
 
-object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec )   #fit_glm from Kevin's code, adapted to take models as input
-names(object_glm)
 
 beta0_add2 = object_glm[[1]]
 x_add2 = object_glm[[2]]
@@ -183,11 +175,9 @@ y_add2 = object_glm[[3]]
 ##################################################################################
 
 ### model ###
-glmpreds_tmp_add2 = fun_calcPred( Est_beta,x_add2,type="response")
+glmpreds_tmp_add2 = YFestimation::fun_calcPred( Est_beta,x_add2,type="response")
 
-mybreaks = seq(0,1.0001,by=0.01)
-mycols =  heat.colors(length(mybreaks)-1)
-mm = match(shp1$adm0_adm1,dat$adm0_adm1)
+
 vcols = findInterval(glmpreds_tmp_add2,mybreaks)
 vcols=101-vcols
 
@@ -218,7 +208,7 @@ names(dat_full)[ncol(dat_full)] = "temp_suitability"
 envdat = launch_env_dat(dat_full,c34)
 
 
-object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec)   #fit_glm from Kevin's code, adapted to take models as input
+object_glm = YFestimation::fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec)   
 names(object_glm)
 
 beta0_add4 = object_glm[[1]]
@@ -227,11 +217,8 @@ y_add4 = object_glm[[3]]
 ##################################################################################
 
 ### model ###
-glmpreds_tmp_add4 = fun_calcPred( Est_beta,x_add4,type="response")
+glmpreds_tmp_add4 = YFestimation::fun_calcPred( Est_beta,x_add4,type="response")
 
-mybreaks = seq(0,1.0001,by=0.01)
-mycols =  heat.colors(length(mybreaks)-1)
-mm = match(shp1$adm0_adm1,dat$adm0_adm1)
 vcols = findInterval(glmpreds_tmp_add4,mybreaks)
 vcols=101-vcols
 
@@ -240,7 +227,6 @@ mm0 = match(shp0$ISO,c34) #
 plot(shp0[is.na(mm0),],col="black",add=T) 
 plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
 plot(shp0, xlim=c(-15,45),ylim=c(-20,35), add=T)
-#image.plot(legend.only=T,breaks=mybreaks,col=rev(mycols),zlim=c(0,1), horizontal = T)
 
 
 ```
@@ -442,7 +428,7 @@ Foi_runs = fun_calc_transmission_Africa(x, ii, adjusted_params, dat, adm1s, t0_v
 
 
 mybreaks= seq(-3, 1.2, length.out=100)
-mycols =  rev( colorRampPalette(brewer.pal(11, "PuOr") )(length(mybreaks)-1) )
+mycols =  rev(snapalette("Kalypso",length(mybreaks)-1, type = "continuous"))
 mm = match(shp1$adm0_adm1,dat$adm0_adm1)
 vcols = findInterval(log10(Foi_runs*100),mybreaks)
 
@@ -565,7 +551,7 @@ Foi_runs_add4 = transmission_whole
 ###########################################
 
 mybreaks= seq(-3, 1.2, length.out=100)
-mycols =  rev( colorRampPalette(brewer.pal(11, "PuOr") )(length(mybreaks)-1) )
+mycols =  rev(snapalette("Kalypso",length(mybreaks)-1, type = "continuous"))
 mm = match(shp1$adm0_adm1,dat$adm0_adm1)
 vcols = findInterval(log10(Foi_runs_add4*100),mybreaks)
 
