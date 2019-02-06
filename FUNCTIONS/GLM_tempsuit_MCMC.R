@@ -28,8 +28,10 @@ GLM_tempsuit_MCMC_step = function(param,
                           temp_suitability(dat_full[,"ERAday.mean"] , 
                                            param_prop[20:28]))
     names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
-    dat_full_temp$temp_suitability = dat_full_temp$temp_suitability    # this just dodges really zeros
-    envdat = YFestimation::launch_env_dat(filepath = NA, dat_full = dat_full_temp, c34 = c34)  
+
+    envdat = YFestimation::launch_env_dat(filepath = NA, 
+                                          dat_full = dat_full_temp, 
+                                          c34 = c34)  
     
     ### GET x ###
     modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability" 

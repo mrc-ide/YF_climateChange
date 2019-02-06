@@ -50,7 +50,9 @@ prior = function(param){
 MCMC_step = function(param, dat, chain_cov, adapt, accCurrent){
   
   #new param
-  param_prop = YFestimation::GLMproposal(as.numeric(param), chain_cov, adapt)
+  param_prop = YFestimation::GLMproposal(as.numeric(param), 
+                                         chain_cov, 
+                                         adapt)
   names(param_prop) = names(param)
   
   #prior_prop

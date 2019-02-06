@@ -42,9 +42,13 @@ library(abind)
 library(mvtnorm)
 library(RColorBrewer)
 library(truncdist)
-library(wesanderson)
+
 library(ggmcmc)
 library(mcmcplots)
+library(R.utils)
+
+library(YFestimation)
+library(snapalette)
 
 #########################################################################################################
 ### SETTING THE WORKING DIRECTORY ###
@@ -73,8 +77,7 @@ country34 = Countries$country34
 ### SOURCE FUNCTIONS ###
 #########################################################################################################
 
-R.utils::sourceDirectory("FUNCTIONS/FUNCTIONS_combined", modifiedOnly = FALSE)
-source("FUNCTIONS/GLMonly_functions.R")
+sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 
 #########################################################################################################
 ### LOAD ENVIRONMENTAL DATA ###
@@ -82,7 +85,7 @@ source("FUNCTIONS/GLMonly_functions.R")
 
 Env_Table_path = (paste0("../Data/","Environment/Africa_adm1_dat_2017.csv")) #this file is adapted by hand to have latest outbreaks
 
-dat_full = read.csv(Env_Table_path, stringsAsFactors=F)
+dat_full = read.csv(Env_Table_path, stringsAsFactors=FALSE)
 
 #########################################################################################################
 ### LOAD TEMPSUIT DATA ###
@@ -112,22 +115,10 @@ n_samples = 1000
 
 ```{r import_chains}
 
-setwd("GLM_tempsuit_MCMC_chain_20180910_hamlet")
+path = "GLM_tempsuit_MCMC_chain_20180910_hamlet"
 
-temp = list.files(pattern="\\.csv$")
-
-fi = file.info(temp)
-temp = temp[fi$size>5000]
-
-l=lapply(temp,read.csv)
-for(i in 1:length(l)){l[[i]] = l[[i]][,-1]}
-
-mcmc_out=data.table::rbindlist( l )
-
-mcmc_out = as.data.frame( mcmc_out[1:nrow(mcmc_out),1:28] )
-
-#thin
-mcmc_out=mcmc_out[seq(1,nrow(mcmc_out),100),]
+#get_chains
+mcmc_out=get_chains(path, burnin = 1, thin = 100)[, 1:28]
 
 ```
 
@@ -177,15 +168,15 @@ We do this first for the temperature suitability parameters and then for the GLM
 ```{r bite_rate_fit, fig.cap="Estimated bite rate (black) with bite rate data (red).", fig.height = 4, fig.width = 7}
 
 dat_bite = dat_bite[order(dat_bite$T),]
-plot(dat_bite$T, briere(dat_bite$T, T0 =  median(mcmc_out$a_T0 ),
-                    Tm =  median(mcmc_out$a_Tm ),
-                    c =  median(mcmc_out$a_c )  ), type = "l", ylim = c(0,3), lwd =1, 
+plot(dat_bite$T, 
+     briere(dat_bite$T, c(median(mcmc_out$a_T0), median(mcmc_out$a_Tm) ,median(mcmc_out$a_c )  )), 
+     type = "l", ylim = c(0,3), lwd =1, 
      xlab = "Temperature", ylab = "Bite rate")
 
 for (i in 1:n_samples){
-lines(dat_bite$T, briere(dat_bite$T, T0 = mcmc_out$a_T0[sample(nrow(mcmc_out), 1)] ,
-                           Tm =  mcmc_out$a_Tm[sample(nrow(mcmc_out), 1)] ,
-                            c =  mcmc_out$a_c[sample(nrow(mcmc_out), 1)]   ), col = rgb(0,0,0,alpha=0.01)  )
+  ind = sample(nrow(mcmc_out), 1)
+  lines(dat_bite$T, briere(dat_bite$T, c(mcmc_out$a_T0[ind], mcmc_out$a_Tm[ind], mcmc_out$a_c[ind])), 
+                           col = rgb(0,0,0,alpha=0.01)  )
 }
 points(dat_bite$T, dat_bite$bite_rate, col = "red", pch =20)
 
@@ -196,15 +187,16 @@ points(dat_bite$T, dat_bite$bite_rate, col = "red", pch =20)
 
 Temp = unique(dat_mort$Temp)
 
-lf = quad(Temp, median(mcmc_out$mu_T0 ),median(mcmc_out$mu_Tm ), median(mcmc_out$mu_c ))
+lf = quad(Temp, c(median(mcmc_out$mu_T0 ),median(mcmc_out$mu_Tm ), median(mcmc_out$mu_c )))
 lf[lf<0] = 0
 mu = ifelse( lf<=0, 1, 1/ lf ) +1e-8
 plot(Temp, mu, xlab = "Temperature", ylab = "Mortality rate", type = "l", ylim = c(0,1))
 
 for (i in 1:n_samples){
-  lf = quad(Temp, mcmc_out$mu_T0[sample(nrow(mcmc_out), 1)],
-            mcmc_out$mu_Tm[sample(nrow(mcmc_out), 1)], 
-            mcmc_out$mu_c[sample(nrow(mcmc_out), 1)] )
+  ind = sample(nrow(mcmc_out), 1)
+  lf = quad(Temp, c(mcmc_out$mu_T0[ind],
+            mcmc_out$mu_Tm[ind], 
+            mcmc_out$mu_c[ind]) )
 lf[lf<0] = 0
 mu = ifelse( lf<=0, 1, 1/ lf ) + 1e-8
 lines(Temp, mu, col = rgb(0,0,0,alpha=0.1))
@@ -216,15 +208,18 @@ points(dat_mort$Temp, dat_mort$Dead/(dat_mort$Dead+dat_mort$Alive), pch = 20, co
 
 ```{r PDR_fit, fig.cap="Estimated PDR (black) with PDR data (red).", fig.height = 4, fig.width = 7}
 
-plot(dat_EIP$T, briere(dat_EIP$T, T0 =  median(mcmc_out$a_T0 ),
-                    Tm =  median(mcmc_out$a_Tm ),
-                    c =  median(mcmc_out$a_c )  ), type = "l", ylim = c(0,1), lwd =1, 
+plot(dat_EIP$T, briere(dat_EIP$T, c( median(mcmc_out$PDR_T0 ),
+                                     median(mcmc_out$PDR_Tm ),
+                                     median(mcmc_out$PDR_c ) ) ), 
+     type = "l", ylim = c(0,1), lwd =1, 
      xlab = "Temperature", ylab = "PDR")
 
 for (i in 1:n_samples){
-lines(dat_EIP$T, briere(dat_EIP$T, T0 = mcmc_out$a_T0[sample(nrow(mcmc_out), 1)] ,
-                           Tm =  mcmc_out$a_Tm[sample(nrow(mcmc_out), 1)] ,
-                            c =  mcmc_out$a_c[sample(nrow(mcmc_out), 1)]   ), col = rgb(0,0,0,alpha=0.01)  )
+  ind = sample(nrow(mcmc_out), 1)
+  lines(dat_EIP$T, briere(dat_EIP$T, c( mcmc_out$PDR_T0[ind] ,
+                                        mcmc_out$PDR_Tm[ind] ,
+                                        mcmc_out$PDR_c[ind] )  ), 
+        col = rgb(0,0,0,alpha=0.01)  )
 }
 points(dat_EIP$T, dat_EIP$PDR, col = "red", pch =20)
 
@@ -234,12 +229,14 @@ points(dat_EIP$T, dat_EIP$PDR, col = "red", pch =20)
 
 Temp = seq(15, 42, by=0.01)
 
-plot(Temp, temp_suitability(Temp ,apply(mcmc_out[,20:28], 2, median)), ylim = c(0,30), type = "l", lwd =1, 
+plot(Temp, temp_suitability(Temp ,apply(mcmc_out[,20:28], 2, median)), 
+     ylim = c(0,100), type = "l", lwd =1, 
      xlab = "Temperature", ylab = "Suitability")
 
 temp_suit_mat = NULL
 for (i in 1:n_samples){
-  t_s = temp_suitability(Temp , as.numeric( mcmc_out[sample(nrow(mcmc_out), 1),20:28]) )
+  ind = sample(nrow(mcmc_out), 1)
+  t_s = temp_suitability(Temp ,  mcmc_out[ind,20:28] )
   
   lines(Temp, t_s, type = "l", ylim = c(0,1), lwd =1, 
         xlab = "Temperature", ylab = "Suitability", col = rgb(0,0,0,alpha=0.01)  )
@@ -287,7 +284,7 @@ plot(shp1,lwd=1, add=T)
 ### TEMP SUITABILITY ###
 dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,"ERAday.mean"] , apply(mcmc_out[,20:28], 2 ,"median")) )
 names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
-envdat = launch_env_dat(dat_full_temp,c34)  
+envdat = launch_env_dat(filepath = NA, dat_full = dat_full_temp, c34 = c34)  
 
 ### GET x ###
 modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability" 
@@ -313,7 +310,7 @@ plot(shp0, xlim=c(-15,45),ylim=c(-20,35), add=T)
 ```
 
 
-```{r glm_predict_uncertainty, fig.cap="Coefficient of variation % for predictions."}
+```{r glm_predict_uncertainty_prep, fig.cap="Coefficient of variation % for predictions."}
 
 glm_pred_uncert = NULL
 
@@ -322,9 +319,9 @@ for(i in 1:n_samples){
   sample_ind = sample(nrow(mcmc_out), 1)
   
   ### TEMP SUITABILITY ###
-  dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,"ERAday.mean"] , as.numeric(mcmc_out[sample_ind,20:28]) ) )
+  dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,"ERAday.mean"] , mcmc_out[sample_ind,20:28])  )
   names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
-  envdat = launch_env_dat(dat_full_temp,c34)  
+  envdat = launch_env_dat(filepath = NA, dat_full = dat_full_temp, c34 = c34)  
   
   ### GET x ###
   modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability" 
@@ -337,11 +334,13 @@ for(i in 1:n_samples){
   
   glm_pred_uncert = rbind(glm_pred_uncert, t(glmpreds_tmp) )
 }
+```
 
+```{r glm_predict_uncertainty, fig.cap="Coefficient of variation % for predictions."}
 coeff_of_var = log10(apply(glm_pred_uncert, 2, sd )/apply(glm_pred_uncert, 2, mean ) * 100)
 
 mybreaks = seq(min(coeff_of_var)-1,max(coeff_of_var)+1,length.out=100)
-mycols =  rev( colorRampPalette(brewer.pal(11, "PuOr") )(length(mybreaks)-1) )
+mycols =  rev( snapalette( "Kalypso", length(mybreaks)-1, type = "continuous" ))
 mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
 vcols = findInterval(coeff_of_var,mybreaks)
 
@@ -363,52 +362,13 @@ image.plot(legend.only=TRUE,breaks=mybreaks,col=mycols,zlim=c(0,1), horizontal =
 We now use the estimated model to calculate the transmission intensity assuming the temperature is as fitted - see figure, and then assuming the temperature is increasing. We save the outputs in .csv to become inputs for thse next markdown document.
 
 ```{r setup_fit}
-#########################################################################################################
-### SOURCE FUNCTIONS ###
-#########################################################################################################
-
-source("../MultiModelInference/FUNCTIONS/Functions_Foi_model_reestimation.R") 
-source("../MultiModelInference/FUNCTIONS/Functions_R0_model_reestimation.R") 
-source("../MultiModelInference/FUNCTIONS/MCMC_functions.R") 
-source("../MultiModelInference/FUNCTIONS/ProductSpaceFunctions.R") 
-source("../MultiModelInference/FUNCTIONS/ProductSpaceFunctions_Sero.R")
-
-source('Z:/YF_climateChange/FUNCTIONS/Population_functions.R') #this needs improving
 
 #########################################################################################################
 ### LOADING SEROLOGY DATA ###
 #########################################################################################################
 
-#read serology in
-Serology = read_csv(paste0("../Data/","Serology/serology.csv"))
-Serology = filter(Serology, country_zone != "TCD_zone2") #ignoring this because there are no samples
-
-### turn off some entries
-Serology = filter(Serology, country_zone != "CAF")
-
-#extracting values as the file is read as a tibble
-sero_studies =  unique(Serology$country_zone)                                      #serology locations                                                      
-
-#minimum of sero survey age groups
-study_years = pull( unique(Serology[,c("country_zone","year") ] )[ ,2] , year)     #years each survey occurred
-no_sero_surveys = length(sero_studies)                                             #Number of sero surveys in database
-
-no_age_groups = rep(0,no_sero_surveys)                                             #Number of age groups in each survey
-for (surveyIndex in 1:no_sero_surveys){
-  no_age_groups[surveyIndex] = nrow( filter(Serology, country_zone== sero_studies[surveyIndex]) ) 
-}
-
-vc_factor = pull(unique(Serology[,c("country_zone","vc_factor") ] )[ ,2], vc_factor)  #whether to account for vaccination in serology or not
-t0_vac = pull(unique(Serology[,c("country_zone","t0_vac") ] )[ ,2]  , t0_vac)         #first incidence of vaccination, pulled from tibble
-names(t0_vac)=pull(unique(Serology[,c("country_zone","t0_vac") ] )[ ,1]  , country_zone)
-
-adm1s_tibble = unique(Serology[ , c("country_zone", "gadm2")])[ ,2]                   #shape file admin locations in tibble form
-adm1s=list()
-for (surveyIndex in 1:no_sero_surveys) {
-  adm1s[surveyIndex] = strsplit(as.character(adm1s_tibble[surveyIndex,1]),",")
-}
-
-
+Serology = read.csv(paste0("../Data/","Serology/serology.csv"), stringsAsFactors = FALSE)
+seroout = process_serology(Serology)
 #########################################################################################################
 ### POPULATION AND VACCINATION DATA ###
 #########################################################################################################
@@ -426,53 +386,53 @@ p_prop_3d = all_res_pop_3d$p_prop_3d                                    #proport
 dim_adm  = dimnames(pop3d)[[1]]
 dim_year = as.numeric(dimnames(pop3d)[[2]])
 dim_age  = dimnames(pop3d)[[3]]
-dim_survey = sero_studies
 
 #########################################################################################################
 ### VACCINATION DATA ###
 #########################################################################################################
 
+
 vaccdir = paste0("../Data/", "Vaccination/")
 # latest_vaccine_csv = "vaccination_coverage_by_adm1_year_age_base_skew0_update_2016-10-16.csv"
-latest_vaccine_csv = "Outputs/adm1_old/vaccination_coverage_by_adm1_year_age_base_skew0.csv"   #updated at end of 2017
+latest_vaccine_csv = "Outputs/adm1_old/vaccination_coverage_by_adm1_year_age_base_skew0.csv"   
 
-vc2d = read.csv(paste0(vaccdir,latest_vaccine_csv),stringsAsFactors = F, h=T) #read in latest vaccine coverage estimates
+vc2d = read.csv(paste0(vaccdir,latest_vaccine_csv), 
+                stringsAsFactors = FALSE) 
 
 names(vc2d)[names(vc2d)=="country"]= "adm0"                          #rename countries as adm0
 names(vc2d)[names(vc2d)=="adm1"]= "adm0_adm1"                        #renames adm1 as adm0_adm1
 
 # formally "repair_vc_data" from FOI model in Kevin's folder
-for (colIndex in 3:ncol(vc2d)){                                      #before 1995, we have NA values for those aged >75
+for (colIndex in 3:ncol(vc2d)){                                      
   vc2d[,colIndex] = ifelse(is.na(vc2d[,colIndex]), vc2d[,colIndex-1], vc2d[,colIndex])
 }
 # restrict to lines in dat
 vc2d = vc2d[vc2d[,"adm0_adm1"] %in% envdat$dat[,"adm0_adm1"],]
 
-# create 3d array of adm, year, age
+#vc3d
 vc3d = transform_into_vc3d(vc2d,  adm="adm1")
 
-#########################################################################################################
-### CALCULATE VACCINE INCIDENCE ###
-#########################################################################################################
-inc_v3d = calc_incidence_vac_general(vc3d)
-
-#########################################################################################################
-### CALCULATE t0_vac_Africa ###
-#########################################################################################################
+# t0_vac_africa #
 t0_vac_africa = calc_t0_vac_africa(vc3d)
 
-#########################################################################################################
-### CALCULATE population moments ###
-#########################################################################################################
-pop_moments_whole = calc_pop_moments(p_prop_3d, t0_vac_africa,dim_adm,dim_year,dim_age)
-#remember the last year of the data is hard-coded into this function so as the data gets updated, this should be checked
-
+# inc_v3d #
+inc_v3d = calc_incidence_vac_general(vc3d)
+    
+# CALCULATE population moments #
+pop_moments_whole = calc_pop_moments(p_prop_3d, 
+                                     t0_vac_africa,
+                                     dim_adm,
+                                     dim_year,
+                                     dim_age)
 #########################################################################################################
 ### AGGREGATE POPULATION AND VACCINATION DATA ###
 #########################################################################################################
 
 #aggregate
-list_aggregate_pop_vc =Make_aggregate_pop_vc_3d(pop1=pop1, vc2d=vc2d, sero_studies=sero_studies, adm1s=adm1s)
+list_aggregate_pop_vc =Make_aggregate_pop_vc_3d(pop1=pop1, 
+                                                vc2d=vc2d, 
+                                                sero_studies=seroout$sero_studies, 
+                                                adm1s=seroout$adm1s)
 pop_agg3d = list_aggregate_pop_vc$pop_agg3d
 vc_agg3d = list_aggregate_pop_vc$vc_agg3d
 
@@ -480,22 +440,27 @@ vc_agg3d = list_aggregate_pop_vc$vc_agg3d
 inc_v3d_agg = calc_incidence_vac_general(vc_agg3d);dim(inc_v3d_agg)
 
 #calculate aggregated moments (different fucntion before)
-pop_moments_agg = calc_pop_moments_agg(pop_agg3d,t0_vac,dim_year,study_years); dim(pop_moments_agg)
+pop_moments_agg = calc_pop_moments_agg(pop_agg3d,
+                                       seroout$t0_vac,
+                                       dim_year,
+                                       seroout$study_years)
 
 
 #########################################################################################################
 ### CREATE R0 LOOKUP TABLE ###
 #########################################################################################################
 
-load(paste0("../MultiModelInference/","R0_lookup_table.Rdata") )
+load(paste0("../YellowFeverModelEstimation2017/","R0_lookup_table.Rdata") )
 
 #########################################################################################################
 ### pop at survey ###
 #########################################################################################################
 #foi_const_surv = c(0,1e-6,0,0,0,0,rep(0,no_sero_surveys-6))
-foi_const_surv = rep(0, no_sero_surveys)
+foi_const_surv = rep(0, seroout$no_sero_surveys)
 
-list_pop_at_survey = create_pop_at_survey(pop_agg3d,dim_survey,dim_year)
+list_pop_at_survey = create_pop_at_survey(pop_agg3d, 
+                                          seroout$sero_studies,
+                                          dim_year)
 p_at_survey = list_pop_at_survey$p_at_survey_3d
 P_tot_survey = list_pop_at_survey$P_tot_survey_2d
 
@@ -503,22 +468,9 @@ P_tot_survey = list_pop_at_survey$P_tot_survey_2d
 
 ```{r import_serology_fit}
 
+path = "Z:/MultiModelInference/multi_model_MCMC_chain_20180622"
 
-setwd("Z:/MultiModelInference/multi_model_MCMC_chain_20180622")
-
-#list all files and read
-temp = list.files(pattern="\\.csv$")
-
-fi = file.info(temp)
-temp = temp[fi$size>5000]
-
-l=lapply(temp,read.csv)
-mcmc_out_sero=data.table::rbindlist( l , fill=TRUE)
-
-#thin
-mcmc_out_sero=mcmc_out_sero[seq(1,nrow(mcmc_out_sero),100),]
-
-mcmc_out_sero = mcmc_out_sero[,-1]
+mcmc_out_sero = get_chains(path, burnin = 1, thin = 100)
 
 ```
 
@@ -526,16 +478,7 @@ mcmc_out_sero = mcmc_out_sero[,-1]
 
 ```{r transmission, echo=TRUE}
 
- 
-t=create_pop30.agg_vc30.agg(pop1, vc2d)
-
-vc30.agg = t$vc30.agg
-
-pop30.agg= t$pop30.agg
-
-pop.vc.moments =t$pop.vc.moments
-
-source('Z:/MultiModelInference/FUNCTIONS/burden_functions.R')
+#source('Z:/MultiModelInference/FUNCTIONS/burden_functions.R')
 
 ii= 2:20
 
@@ -556,22 +499,21 @@ names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_C
 temp_param = apply(mcmc_out[,20:28], 2, median,na.rm = T)
 
 FOI_median_samples = calc_Foi_tempchange(dat_full,
-                               adjusted_params,
-                               temp_param,
-                               scenarios,
-                               c34,
-                               adm1s,
-                               t0_vac_africa,
-                               sero_studies,
-                               dim_year,
-                               dim_age,
-                               p_prop_3d,
-                               P_tot_2d,
-                               inc_v3d,
-                               pop_moments_whole,
-                               varsin_nc,
-                               pop1,
-                               vc2d)
+                                         adjusted_params,
+                                         temp_param,
+                                         scenarios,
+                                         c34,
+                                         seroout,
+                                         t0_vac_africa,
+                                         dim_year,
+                                         dim_age,
+                                         p_prop_3d,
+                                         P_tot_2d,
+                                         inc_v3d,
+                                         pop_moments_whole,
+                                         varsin_nc,
+                                         pop1,
+                                         vc2d)
 
 
 write.csv(FOI_median_samples, paste0("Foi_median_climate_samples_", format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
@@ -625,16 +567,15 @@ for(i in 1:n_samples){
   
   names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
   
-  temp_param = as.numeric( mcmc_out[sample_ind, 20:28])
+  temp_param = mcmc_out[sample_ind, 20:28]
   
   Foi_tmp = calc_Foi_tempchange(dat_full,
                                 adjusted_params,
                                 temp_param,
                                 scenarios,
                                 c34,
-                                adm1s,
+                                seroout,
                                 t0_vac_africa,
-                                sero_studies,
                                 dim_year,
                                 dim_age,
                                 p_prop_3d,
@@ -644,7 +585,7 @@ for(i in 1:n_samples){
                                 varsin_nc,
                                 pop1,
                                 vc2d)
-  
+
   FOI_samples = rbind(FOI_samples, Foi_tmp)
   
 }

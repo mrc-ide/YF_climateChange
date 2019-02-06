@@ -4,9 +4,8 @@ calc_Foi_tempchange = function(dat_full,
                                temp_param,
                                scenarios,
                                c34,
-                               adm1s,
+                               seroout,
                                t0_vac_africa,
-                               sero_studies,
                                dim_year,
                                dim_age,
                                p_prop_3d,
@@ -26,7 +25,7 @@ calc_Foi_tempchange = function(dat_full,
   dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,"ERAday.mean"] , temp_param ))
   names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
   
-  envdat = launch_env_dat(dat_full_temp,c34)  
+  envdat = launch_env_dat(filepath = NA, dat_full = dat_full_temp, c34 = c34)  
   
 
   
@@ -35,15 +34,16 @@ calc_Foi_tempchange = function(dat_full,
   object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
   x = object_glm[[2]]
   
+  ###get vc_agg etc ###
+  t = create_pop30_agg_vc30_agg(pop1, vc2d)
 
   
   ### p detect ###
   p_detect =  fun_calc_pdetect_multi_both(x=x, 
-                                          adm1s= adm1s, 
+                                          seroout = seroout,
                                           params=adjusted_params, 
                                           dat = envdat$dat, 
                                           t0_vac_africa, 
-                                          sero_studies, 
                                           dim_year, 
                                           dim_age, 
                                           p_prop_3d,
@@ -51,7 +51,9 @@ calc_Foi_tempchange = function(dat_full,
                                           inc_v3d, 
                                           pop_moments_whole, 
                                           varsin_nc,
-                                          "Foi")
+                                          t$vc30_agg,
+                                          t$pop30_agg,
+                                          model_type = "Foi")
   p_detect_link = mean(p_detect)
   
   ########SCENARIOS########
@@ -63,7 +65,7 @@ calc_Foi_tempchange = function(dat_full,
     ### TEMP SUITABILITY ###
     dat_full_temp_ts = cbind(dat_full_ts, temp_suitability(dat_full_ts[,"ERAday.mean"] , temp_param ) )
     names(dat_full_temp_ts)[ncol(dat_full_temp_ts)] = "temp_suitability"
-    envdat_ts = launch_env_dat(dat_full_temp_ts,c34) 
+    envdat_ts = launch_env_dat(filepath = NA, dat_full = dat_full_temp_ts, c34 = c34) 
     
     ## sort variance
     envdat_ts$dat$temp_suitability = envdat_ts$dat$temp_suitability * (max(envdat$dat$temp_suitability)/max(envdat_ts$dat$temp_suitability))
@@ -83,7 +85,7 @@ calc_Foi_tempchange = function(dat_full,
     Ninf_whole = exp( mypreds_ts - p_detect_link)
     
     # calculate transmission
-    pop_vc_moments = create_pop30.agg_vc30.agg(pop1,vc2d)$pop.vc.moments
+    pop_vc_moments = create_pop30_agg_vc30_agg(pop1,vc2d)$pop_vc_moments
     
     z = -Ninf_whole
     polydeg = 5

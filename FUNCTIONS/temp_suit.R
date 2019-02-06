@@ -20,17 +20,17 @@ temp_suitability = function(Temp, param){
   
   #bite rate
   a = briere(Temp, 
-             param[ grep("^a_", names(param))]) # new estimate medians
+             as.numeric(param[ grep("^a_", names(param))] )) # new estimate medians
   
   # mu = m mortality
   lf = quad(Temp, 
-            param[ grep("^mu_", names(param))])
+            as.numeric(param[ grep("^mu_", names(param))]))
   mu = 1/ ifelse( lf<=0, 1, lf ) #guard against negatives and zeros
   
   
   # PDR = parasite development rate = 1/EIP  
   PDR = briere(Temp, 
-               param[ grep("^PDR_", names(param))]) #
+               as.numeric(param[ grep("^PDR_", names(param))])) #
   PDR[PDR<0]=0
   
   a[is.na(a)] = PDR[is.na(PDR)] = 0
