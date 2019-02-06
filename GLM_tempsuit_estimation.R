@@ -76,6 +76,9 @@ prev_param = read.csv("GLM_tempsuit_MCMC_chain_20180823_hamlet/GLM_tempsuit_para
 pars_ini = c(prev_param$median)
 names(pars_ini) = prev_param$Parameter
 
+#add rainfall
+pars_ini = c(pars_ini, "RFE.mean" = 1e-3)
+
 #########################################################################################################
 ### MCMC ###
 #########################################################################################################

@@ -16,8 +16,8 @@ GLM_tempsuit_MCMC_step = function(param,
   param_prop = YFestimation::GLMproposal(param, chain_cov, adapt)
   
   ### priors ###
-  prior_prop = sum( YFestimation::GLMprior(param_prop[1:19]) ) + 
-                    fun_tempsuitPrior( param_prop[20:28])
+  prior_prop = sum( YFestimation::GLMprior(param_prop[1:20]) ) + 
+                    fun_tempsuitPrior( param_prop[21:29])
   
   
   ### if prior finite, evaluate likelihood ###
@@ -26,7 +26,7 @@ GLM_tempsuit_MCMC_step = function(param,
     ### TEMP SUITABILITY ###
     dat_full_temp = cbind(dat_full, 
                           temp_suitability(dat_full[,"ERAday.mean"] , 
-                                           param_prop[20:28]))
+                                           param_prop[21:29]))
     names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
 
     envdat = YFestimation::launch_env_dat(filepath = NA, 
@@ -34,14 +34,14 @@ GLM_tempsuit_MCMC_step = function(param,
                                           c34 = c34)  
     
     ### GET x ###
-    modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability" 
+    modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+RFE.mean" 
     object_glm = YFestimation::fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
     x = object_glm[[2]]
     y = object_glm[[3]]
     
     ### LIKE ###
-    like_prop = YFestimation::GLMlike(param_prop[1:19], x, y) + 
-                fun_tempsuitLike(dat_bite, dat_mort, dat_EIP, param_prop[20:28]) 
+    like_prop = YFestimation::GLMlike(param_prop[1:20], x, y) + 
+                fun_tempsuitLike(dat_bite, dat_mort, dat_EIP, param_prop[21:29]) 
     
     ### accept/ reject ###
     accProp = like_prop + prior_prop
@@ -89,6 +89,7 @@ GLM_tempsuit_MCMC = function(Niter,
                         "adm05KEN","adm05MRT","adm05RWA" ,
                         "adm05SDN" ,"adm05SOM" ,"adm05SSD" ,"adm05TZA",
                         "adm05UGA","adm05ZMB" , "lon" ,"logpop","temp_suitability",
+                        "RFE.mean",
                         "a_T0" ,"a_Tm" ,"a_c", "mu_T0","mu_Tm",
                         "mu_c" ,"PDR_T0","PDR_Tm","PDR_c") ]
   
@@ -134,7 +135,7 @@ GLM_tempsuit_MCMC = function(Niter,
         fileIndex  = iter/10000
       }
       write.csv(cbind(chain,  posteriorProb, acceptRate)[min((fileIndex * 10000+1),iter):iter,], 
-                paste0(name_dir,"/","GLM_tempsuit_chain",fileIndex,"_output",".csv") ) 
+                paste0(name_dir,"/","GLM_tempsuit_rain_chain",fileIndex,"_output",".csv") ) 
     }
     
     
