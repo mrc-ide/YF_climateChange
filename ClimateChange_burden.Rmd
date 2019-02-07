@@ -12,7 +12,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
 knitr::opts_chunk$set(
-  fig.path = "ClimateChangeBurdenImages/",
+  fig.path = "ClimateChangeBurdenImagesNew/",
   dpi = 300
 )
 
@@ -34,13 +34,16 @@ library(abind)
 library(mvtnorm)
 library(RColorBrewer)
 library(truncdist)
-library(wesanderson)
 library(ggmcmc)
 library(mcmcplots)
 library(readr)
 library(data.table)
 library(ggplot2)
-library(RColorBrewer)
+
+
+library(YFburden)
+library(YFestimation)
+library(snapalette)
 
 #########################################################################################################
 ### SETTING THE WORKING DIRECTORY ###
@@ -69,18 +72,16 @@ country34 = Countries$country34
 ### SOURCE FUNCTIONS ###
 #########################################################################################################
 
-R.utils::sourceDirectory("FUNCTIONS/FUNCTIONS_combined", modifiedOnly = FALSE)
-source("FUNCTIONS/GLMonly_functions.R")
-source("FUNCTIONS/Population_functions.R")
+R.utils::sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 #########################################################################################################
 ### LOAD ENVIRONMENTAL DATA ###
 #########################################################################################################
 
 Env_Table_path = (paste0("../Data/","Environment/Africa_adm1_dat_2017.csv")) #this file is adapted by hand to have latest outbreaks
 
-dat_full = read.csv(Env_Table_path, stringsAsFactors=F)
+dat_full = read.csv(Env_Table_path, stringsAsFactors=FALSE)
 
-envdat = launch_env_dat(dat_full,c34) 
+envdat = launch_env_dat(filepath = NA, dat_full = dat_full, c34 = c34) 
 ```
 # Introduction
 
@@ -119,7 +120,7 @@ difference_add4 = (Foi_runs_add4[,-1] - Foi_runs[,-1])/Foi_runs[,-1] *100
 
 
 mybreaks= seq(-150,150, length.out=100)
-mycols =  rev( colorRampPalette(brewer.pal(11, "BrBG") )(length(mybreaks)-1) )
+mycols =  snapalette("Camden",length(mybreaks)-1, type = "continuous")
 mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
 vcols = findInterval(difference_add2,mybreaks)
 
@@ -167,7 +168,7 @@ difference_add4 = (Foi_runs_add4[-1] - Foi_runs[-1])/Foi_runs[-1] *100
 
 
 mybreaks= seq(-150,150, length.out=100)
-mycols =  rev( colorRampPalette(brewer.pal(11, "BrBG") )(length(mybreaks)-1) )
+mycols = snapalette("Bouquet",length(mybreaks)-1, type = "continuous")
 mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
 vcols = findInterval(difference_add2,mybreaks)
 
@@ -203,7 +204,6 @@ image.plot(legend.only=TRUE,breaks=mybreaks,col=mycols,zlim=c(0,1), horizontal =
 
 ```{r burden}
 
-source('Z:/MultiModelInference/FUNCTIONS/burden_functions.R')
 
 #import coverage data for each scenario
 coverage_df_prev = read.csv(paste0("../Data/Vaccination/Outputs/", 
@@ -226,6 +226,10 @@ pop_all = filter(pop_all, year>1939)
 
 scenarios = c(0,2,4)
 ##########################################
+
+vac_eff = 0.975
+
+n_samples = 10
 
 infections =  rep(NA, nrow(Foi_samples)*35)
 dim(infections) = c(nrow(Foi_samples), 35)
@@ -256,7 +260,7 @@ for (country_ind in 1: 34){
   #get model type
   model_type = "Foi"
   
-  for( index in 1:(nrow(Foi_samples)/3)){
+  for( index in 1:n_samples){#(nrow(Foi_samples)/3)){
     for (s in 1:3){
       
       Foi_samples_scenario = filter(Foi_samples, scenario == scenarios[s])
@@ -280,30 +284,22 @@ for (country_ind in 1: 34){
                                        transmission_param = param_country_ave_base,
                                        age_max = 100,
                                        pop = pop_new,
-                                       old_coverage = coverage_country_prev,
-                                       2017)
+                                       old_coverage = coverage_country_prev)
 
-    #calculate with new FOI
-    out_imm = run_infections_unit(model_type,
-                                   transmission_param = param_country_ave,
-                                   years = c(2017:(year_end-1)),
-                                   age.max = 100,
-                                   pop = pop_new,
-                                   coverage = coverage_country_prev,      #this is a subset of pop_moments_whole for adm1s of interest
-                                   immunityStart = immunity_start)
-    
+
     #calculate burden in year of interest
     
     out_prev = run_infections_unit(model_type,
                                    transmission_param = param_country_ave,
+                                   vac_eff,
                                    years = year_end,
-                                   age.max = 100,
+                                   age_max = 100,
                                    pop = pop_new,
                                    coverage = coverage_country_prev,      #this is a subset of pop_moments_whole for adm1s of interest
-                                   immunityStart = out_imm$immunity[nrow(out_imm$immunity),])
+                                   immunity_start)
     
     
-    infections[index + nrow(Foi_samples_baseline)* (s-1)  , c(country_ind, 35)] = c(sum(out_prev$new.infections) , scenarios[s])
+    infections[index + nrow(Foi_samples_baseline)* (s-1)  , c(country_ind, 35)] = c(sum(out_prev$new_infections) , scenarios[s])
     
     param_country_vec = rbind(param_country_vec , c(param_country_ave, model_type, c34[country_ind]))
     }
@@ -327,7 +323,7 @@ P_severe =  rbeta(1000,6.367309,44.60736)
 burden_df = melt(infections_df, id = "scenario")
 burden_df$value = burden_df$value * P_severe
 
-colours = wes_palette("GrandBudapest1")
+colours = snapalette("Barcelona", 5, type = "discrete")[c(2,4,5)]
 
 ggplot(burden_df, aes(x = variable, y = value, fill = as.factor(scenario))) + 
   geom_col(  position = position_dodge()) + 
