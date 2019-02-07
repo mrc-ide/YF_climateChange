@@ -12,7 +12,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
 knitr::opts_chunk$set(
-  fig.path = "ClimateChangeBurdenImagesNew/",
+  fig.path = paste0("ClimateChangeBurdenImages-", Sys.Date(), "/"),
   dpi = 300
 )
 
@@ -94,9 +94,9 @@ We begin by comparing the force of infection predictions.
 ```{r import predictions and plot}
 
 
-Foi_samples = read.csv("Foi_climate_samples_20180830.csv", stringsAsFactors = FALSE)
+Foi_samples = read.csv("Foi_climate_samples_20190207.csv", stringsAsFactors = FALSE)
 
-Foi_median_samples= read.csv("Foi_median_climate_samples_20180830.csv", stringsAsFactors = FALSE)
+Foi_median_samples= read.csv("Foi_median_climate_samples_20190207.csv", stringsAsFactors = FALSE)
 
 Foi_samples_all = melt(Foi_samples, id = "scenario")
 
@@ -126,7 +126,7 @@ vcols = findInterval(difference_add2,mybreaks)
 
 plot(shp0, xlim=c(-15,45),ylim=c(-20,30), main= "% difference +2")
 mm0 = match(shp0$ISO,c34) #
-plot(shp0[is.na(mm0),],col="grey70",add=T) 
+plot(shp0[is.na(mm0),],col="grey20",add=T) 
 plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
 plot(shp0, lwd=2, add=T)
 
@@ -141,7 +141,7 @@ vcols = findInterval(difference_add4,mybreaks)
 
 plot(shp0, xlim=c(-15,45),ylim=c(-20,30), main= "% difference +4")
 mm0 = match(shp0$ISO,c34) #
-plot(shp0[is.na(mm0),],col="grey70",add=T) 
+plot(shp0[is.na(mm0),],col="grey20",add=T) 
 plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
 plot(shp0, lwd=2, add=T)
 
@@ -174,7 +174,7 @@ vcols = findInterval(difference_add2,mybreaks)
 
 plot(shp0, xlim=c(-15,45),ylim=c(-20,30), main= "% difference +2")
 mm0 = match(shp0$ISO,c34) #
-plot(shp0[is.na(mm0),],col="grey70",add=T) 
+plot(shp0[is.na(mm0),],col="grey20",add=T) 
 plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
 plot(shp0, lwd=2, add=T)
 
@@ -189,7 +189,7 @@ vcols = findInterval(difference_add4,mybreaks)
 
 plot(shp0, xlim=c(-15,45),ylim=c(-20,30), main= "% difference +4")
 mm0 = match(shp0$ISO,c34) #
-plot(shp0[is.na(mm0),],col="grey70",add=T) 
+plot(shp0[is.na(mm0),],col="grey20",add=T) 
 plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
 plot(shp0, lwd=2, add=T)
 
@@ -229,7 +229,7 @@ scenarios = c(0,2,4)
 
 vac_eff = 0.975
 
-n_samples = 10
+n_samples = nrow(Foi_samples)/3 #10
 
 infections =  rep(NA, nrow(Foi_samples)*35)
 dim(infections) = c(nrow(Foi_samples), 35)
@@ -356,7 +356,7 @@ df_vale_we = data.frame("Location" = c("West", "East and central"),
 
 ggplot(df_vale_we) + geom_segment( aes( x = as.factor(1), y = log10(baseline), xend = as.factor(2), yend = log10(warming_2), colour = Location), size = 1) +
                      geom_segment( aes( x = as.factor(2), y = log10(warming_2), xend = as.factor(3), yend = log10(warming_4), colour = Location), size =1) +
-  scale_colour_manual( values = c("blue", "orange")) +
+  scale_colour_manual( values = snapalette("Barcelona", 5, type = "discrete")[c(2,4)]) +
   labs(x = "", y = "Burden (log scale)") + 
   scale_x_discrete(breaks = c("1","2","3"),labels=c( "Baseline", "Warming +2", "Warming +4"))
 

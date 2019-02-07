@@ -12,7 +12,7 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, error = FALSE)
 knitr::opts_chunk$set(
-  fig.path = "FullProjectionImagesRainfall/",
+  fig.path = paste0("FullProjectionImagesRainfall", Sys.Date(), "/"),
   dpi = 300
 )
 ```
@@ -108,7 +108,7 @@ dat_mort = filter(dat_mort, Alive+Dead+Censored>0)
 dat_EIP <- read_csv("Data/davis_EIP.csv")
 
 ### posterior samples
-n_samples = 1000
+n_samples = 100
 
 
 #########################################################################################################
@@ -484,7 +484,6 @@ mcmc_out_sero = get_chains(path, burnin = 1, thin = 100)
 
 ```{r transmission, fig.cap="Force of infection %.", echo=TRUE}
 
-#source('Z:/MultiModelInference/FUNCTIONS/burden_functions.R')
 
 ii= 2:20
 
@@ -502,9 +501,9 @@ adjusted_params = c(exp(median(mcmc_out_f[,1])),
 
 names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
   
-temp_param = apply(mcmc_out[,21:29], 2, median,na.rm = T)
+temp_param = apply(mcmc_out[,21:29], 2, median, na.rm = TRUE)
 
-FOI_median_samples = calc_Foi_tempchange(dat_full,
+FOI_median_samples = calc_Foi_tempprecipchange(dat_full,
                                          adjusted_params,
                                          temp_param,
                                          scenarios,
@@ -575,7 +574,7 @@ for(i in 1:n_samples){
   
   temp_param = mcmc_out[sample_ind, 21:29]
   
-  Foi_tmp = calc_Foi_tempchange(dat_full,
+  Foi_tmp = calc_Foi_tempprecipchange(dat_full,
                                 adjusted_params,
                                 temp_param,
                                 scenarios,

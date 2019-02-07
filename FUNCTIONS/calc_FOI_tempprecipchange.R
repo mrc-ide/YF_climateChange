@@ -1,5 +1,5 @@
 
-calc_Foi_tempchange = function(dat_full,
+calc_Foi_tempprecipchange = function(dat_full,
                                adjusted_params,
                                temp_param,
                                scenarios,
@@ -61,6 +61,12 @@ calc_Foi_tempchange = function(dat_full,
     
     dat_full_ts = dat_full
     dat_full_ts[,"ERAday.mean"] = dat_full_ts[,"ERAday.mean"] + s 
+    
+    if(s == 2){
+      dat_full_ts[,"RFE.mean"] = dat_full_ts[,"RFE.mean"] * 1.1
+    } else if(s == 4){
+      dat_full_ts[,"RFE.mean"] = dat_full_ts[,"RFE.mean"] * 1.2
+    }
 
     ### TEMP SUITABILITY ###
     dat_full_temp_ts = cbind(dat_full_ts, temp_suitability(dat_full_ts[,"ERAday.mean"] , temp_param ) )
