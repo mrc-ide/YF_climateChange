@@ -482,7 +482,7 @@ mcmc_out_sero = get_chains(path, burnin = 1, thin = 100)
 
 
 
-```{r transmission, echo=TRUE}
+```{r transmission, fig.cap="Force of infection %.", echo=TRUE}
 
 #source('Z:/MultiModelInference/FUNCTIONS/burden_functions.R')
 
@@ -547,7 +547,7 @@ image.plot(legend.only=TRUE,breaks=mybreaks,col=mycols,zlim=c(0,1), horizontal =
 
 ```
 
-```{r save_output, echo=TRUE}
+```{r save_output, echo=TRUE, eval = FALSE}
 
 # We would like to save samples of the force of infection across the endemic region, 
 # given the uncertainty in our posterior estimates, for three scenarios.
