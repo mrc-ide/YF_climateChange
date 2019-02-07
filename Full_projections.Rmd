@@ -10,9 +10,9 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, error = FALSE)
 knitr::opts_chunk$set(
-  fig.path = "FullProjectionImagesNew/",
+  fig.path = "FullProjectionImagesRainfall/",
   dpi = 300
 )
 ```
@@ -110,29 +110,35 @@ dat_EIP <- read_csv("Data/davis_EIP.csv")
 ### posterior samples
 n_samples = 1000
 
+
+#########################################################################################################
+### model form ###
+#########################################################################################################
+modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+RFE.mean"
+
 ```
 
 
 ```{r import_chains}
 
-path = "GLM_tempsuit_MCMC_chain_20180910_hamlet"
+path = "GLM_tempsuit_MCMC_chain_20190206_hamlet"
 
 #get_chains
-mcmc_out=get_chains(path, burnin = 1, thin = 100)[, 1:28]
+mcmc_out=get_chains(path, burnin = 1, thin = 100)[, 1:29]
 
 ```
 
 
 ```{r trace_basic, fig.height = 10, fig.width = 7}
 
-par(mfrow = c(7,4), mar = c(2,4,2,1)+0.1)
+par(mfrow = c(7,5), mar = c(2,4,2,1)+0.1)
 for(i in 1:ncol(mcmc_out)){
   plot(mcmc_out[,i], type = "l", xlab = "", ylab = names(mcmc_out)[i])
 }
 ```
 
 ```{r posterior, fig.height = 10, fig.width = 7}
-par(mfrow = c(7,4), mar = c(2,4,2,1)+0.1)
+par(mfrow = c(7,5), mar = c(2,4,2,1)+0.1)
 for(i in 1:ncol(mcmc_out)){
   plot(density(mcmc_out[,i]), type = "l", xlab = "", main = names(mcmc_out)[i], col = "lightslateblue")
   polygon(density(mcmc_out[,i]), type = "l", xlab = "", main = names(mcmc_out)[i], col = "lightslateblue", border = "slateblue")
@@ -229,14 +235,14 @@ points(dat_EIP$T, dat_EIP$PDR, col = "red", pch =20)
 
 Temp = seq(15, 42, by=0.01)
 
-plot(Temp, temp_suitability(Temp ,apply(mcmc_out[,20:28], 2, median)), 
+plot(Temp, temp_suitability(Temp ,apply(mcmc_out[,21:29], 2, median)), 
      ylim = c(0,100), type = "l", lwd =1, 
      xlab = "Temperature", ylab = "Suitability")
 
 temp_suit_mat = NULL
 for (i in 1:n_samples){
   ind = sample(nrow(mcmc_out), 1)
-  t_s = temp_suitability(Temp ,  mcmc_out[ind,20:28] )
+  t_s = temp_suitability(Temp ,  mcmc_out[ind,21:29] )
   
   lines(Temp, t_s, type = "l", ylim = c(0,1), lwd =1, 
         xlab = "Temperature", ylab = "Suitability", col = rgb(0,0,0,alpha=0.01)  )
@@ -282,12 +288,12 @@ plot(shp1,lwd=1, add=T)
 ### model ###
 
 ### TEMP SUITABILITY ###
-dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,"ERAday.mean"] , apply(mcmc_out[,20:28], 2 ,"median")) )
+dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,"ERAday.mean"] , apply(mcmc_out[,21:29], 2 ,"median")) )
 names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
 envdat = launch_env_dat(filepath = NA, dat_full = dat_full_temp, c34 = c34)  
 
 ### GET x ###
-modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability" 
+
 object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
 x = object_glm[[2]]
 
@@ -319,17 +325,17 @@ for(i in 1:n_samples){
   sample_ind = sample(nrow(mcmc_out), 1)
   
   ### TEMP SUITABILITY ###
-  dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,"ERAday.mean"] , mcmc_out[sample_ind,20:28])  )
+  dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,"ERAday.mean"] , mcmc_out[sample_ind,21:29])  )
   names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
   envdat = launch_env_dat(filepath = NA, dat_full = dat_full_temp, c34 = c34)  
   
   ### GET x ###
-  modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability" 
+ 
   object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
   x = object_glm[[2]]
   
   ### preds
-  Est_beta =  as.numeric( mcmc_out[sample_ind,1:19] )
+  Est_beta =  as.numeric( mcmc_out[sample_ind,1:20] )
   glmpreds_tmp = fun_calcPred( Est_beta ,x,type="response")
   
   glm_pred_uncert = rbind(glm_pred_uncert, t(glmpreds_tmp) )
@@ -340,7 +346,7 @@ for(i in 1:n_samples){
 coeff_of_var = log10(apply(glm_pred_uncert, 2, sd )/apply(glm_pred_uncert, 2, mean ) * 100)
 
 mybreaks = seq(min(coeff_of_var)-1,max(coeff_of_var)+1,length.out=100)
-mycols =  rev( snapalette( "Kalypso", length(mybreaks)-1, type = "continuous" ))
+mycols =   snapalette( "EspiritoSanta", length(mybreaks)-1, type = "continuous" )
 mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
 vcols = findInterval(coeff_of_var,mybreaks)
 
@@ -490,13 +496,13 @@ scenarios = c(0, 2, 4)
 
 
 adjusted_params = c(exp(median(mcmc_out_f[,1])), 
-                        apply(mcmc_out[,1:19], 2, median, na.rm = T), 
+                        apply(mcmc_out[,1:20], 2, median, na.rm = T), 
                         exp(apply(mcmc_out_f[,c(2:41)], 2, median, na.rm = T)),
-                        exp(median(mcmc_out_f[,82])) )
+                        exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
 
 names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
   
-temp_param = apply(mcmc_out[,20:28], 2, median,na.rm = T)
+temp_param = apply(mcmc_out[,21:29], 2, median,na.rm = T)
 
 FOI_median_samples = calc_Foi_tempchange(dat_full,
                                          adjusted_params,
@@ -523,7 +529,7 @@ write.csv(FOI_median_samples, paste0("Foi_median_climate_samples_", format(Sys.t
 Foi_runs = filter(FOI_median_samples, scenario == 0)[,-1]
 
 mybreaks= seq(-3, 1.2, length.out=100)
-mycols =  rev( colorRampPalette(brewer.pal(11, "PuOr") )(length(mybreaks)-1) )
+mycols =  rev( snapalette( "Kalypso", length(mybreaks)-1, type = "continuous" ))
 mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
 vcols = findInterval(log10(Foi_runs*100),mybreaks)
 
@@ -561,13 +567,13 @@ for(i in 1:n_samples){
   
   
   adjusted_params = unlist(c(exp(mcmc_out_f[sample_ind_f,1]), #vac eff
-                             mcmc_out[sample_ind,1:19] ,            #glm
+                             mcmc_out[sample_ind,1:20] ,            #glm
                              exp(mcmc_out_f[sample_ind_f,c(2:41)]),  #foi
-                             exp(mcmc_out_f[sample_ind_f,82]) ) )    #vc factor
+                             exp(mcmc_out_f[sample_ind_f,ncol(mcmc_out_f)]) ) )    #vc factor
   
   names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
   
-  temp_param = mcmc_out[sample_ind, 20:28]
+  temp_param = mcmc_out[sample_ind, 21:29]
   
   Foi_tmp = calc_Foi_tempchange(dat_full,
                                 adjusted_params,
