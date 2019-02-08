@@ -623,35 +623,35 @@ scenarios = seq(0,2, length.out = 2050-2017)
 
 # then we take n_samples random samples of our posteriors to create our output.
 adjusted_params = c(exp(median(mcmc_out_f[,1])), 
-                        apply(mcmc_out[,1:20], 2, median, na.rm = TRUE), 
-                        exp(apply(mcmc_out_f[,c(2:41)], 2, median, na.rm = TRUE)),
-                        exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
+                    apply(mcmc_out[,1:20], 2, median, na.rm = TRUE), 
+                    exp(apply(mcmc_out_f[,c(2:41)], 2, median, na.rm = TRUE)),
+                    exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
 
 names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
-  
+
 temp_param = apply(mcmc_out[,21:29], 2, median, na.rm = TRUE)
 
 
 for(s in c(0,1,2)){
   
   scen = scenarios*s
-
-Foi_tmp = calc_Foi_tempprecipchange(dat_full,
-                                adjusted_params,
-                                temp_param,
-                                scen,
-                                c34,
-                                seroout,
-                                t0_vac_africa,
-                                dim_year,
-                                dim_age,
-                                p_prop_3d,
-                                P_tot_2d,
-                                inc_v3d,
-                                pop_moments_whole,
-                                varsin_nc,
-                                pop1,
-                                vc2d)
+  
+  Foi_tmp = calc_Foi_tempprecipchange(dat_full,
+                                      adjusted_params,
+                                      temp_param,
+                                      scen,
+                                      c34,
+                                      seroout,
+                                      t0_vac_africa,
+                                      dim_year,
+                                      dim_age,
+                                      p_prop_3d,
+                                      P_tot_2d,
+                                      inc_v3d,
+                                      pop_moments_whole,
+                                      varsin_nc,
+                                      pop1,
+                                      vc2d)
   Foi_tmp = cbind( data.frame("final_scenario" = 2*s), Foi_tmp)
   FOI_samples = rbind(FOI_samples, Foi_tmp)
   
@@ -663,3 +663,62 @@ write.csv(FOI_samples, paste0("Foi_climate_median_increment_", format(Sys.time()
 
 ```
 
+then for a number of samples.
+
+```{r save_incremental_sample, echo=TRUE}
+
+# We would like to save samples of the force of infection across the endemic region, 
+# given the uncertainty in our posterior estimates, for three scenarios.
+
+#declare our output
+FOI_samples = NULL
+
+#three scenarios of mean temperature increase across the region
+scenarios = seq(0,2, length.out = 2050-2017)
+
+for(i in 1:n_samples){
+  sample_ind = sample(nrow(mcmc_out), 1)
+  sample_ind_f = sample(nrow(mcmc_out_f), 1)
+  
+  
+  adjusted_params = unlist(c(exp(mcmc_out_f[sample_ind_f,1]), #vac eff
+                             mcmc_out[sample_ind,1:20] ,            #glm
+                             exp(mcmc_out_f[sample_ind_f,c(2:41)]),  #foi
+                             exp(mcmc_out_f[sample_ind_f,ncol(mcmc_out_f)]) ) )    #vc factor
+  
+  names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
+  
+  temp_param = mcmc_out[sample_ind, 21:29]
+  
+  
+  
+  for(s in c(0,1,2)){
+    
+    scen = scenarios*s
+    
+    Foi_tmp = calc_Foi_tempprecipchange(dat_full,
+                                        adjusted_params,
+                                        temp_param,
+                                        scen,
+                                        c34,
+                                        seroout,
+                                        t0_vac_africa,
+                                        dim_year,
+                                        dim_age,
+                                        p_prop_3d,
+                                        P_tot_2d,
+                                        inc_v3d,
+                                        pop_moments_whole,
+                                        varsin_nc,
+                                        pop1,
+                                        vc2d)
+    Foi_tmp = cbind( data.frame("final_scenario" = 2*s), Foi_tmp)
+    FOI_samples = rbind(FOI_samples, Foi_tmp)
+    
+  }
+}
+FOI_samples = FOI_samples[order(FOI_samples[,1]),]
+
+write.csv(FOI_samples, paste0("Foi_climate_increment_", format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
+
+```
