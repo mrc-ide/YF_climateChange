@@ -1,0 +1,135 @@
+---
+title: "Plot data"
+author: "Katy Gaythorpe"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes: 
+- \usepackage{placeins}
+output: 
+  pdf_document:
+    df_print: "kable"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, error = FALSE)
+knitr::opts_chunk$set(
+  fig.path = paste0("DataImages", "/"),
+  dpi = 300
+)
+```
+
+# Occurrence data
+
+```{r set_up}
+
+library(maptools)
+library(sp) 
+library(shapefiles)
+library(Hmisc)
+library(fields)
+library(dplyr)
+library(EnvStats)
+library(readr)
+library(reshape)
+library(truncdist)
+library(RColorBrewer)
+
+library(ggmcmc)
+library(mcmcplots)
+library(R.utils)
+
+library(YFestimation)
+library(snapalette)
+library(KsetupR)
+
+#########################################################################################################
+### SETTING THE WORKING DIRECTORY ###
+#########################################################################################################
+
+shpdir = paste0("../","shapefiles/gadm2/")
+
+#########################################################################################################
+### LOADING SHAPEFILES AND COUNTRIES ###
+#########################################################################################################
+
+#read shapefiles in
+shp0 = readShapePoly(paste0(shpdir, "Africa_adm0.shp")) #if gadm2
+shp1 = readShapePoly(paste0(shpdir, "Africa_adm1.shp"))
+
+#adjust titles
+shp1$adm0_adm1 = paste(shp1$ISO, shp1$ID_1, sep="_")
+shp1 = shp1[order(shp1$adm0_adm1),]
+
+#read countries in
+Countries = read_csv(paste0("../Data/","Countries.csv"))
+c34 = Countries$c34
+country34 = Countries$country34
+
+
+```
+
+```{r occurrence, fig.cap="Location of YF occurrence from 1984 to 2018. Red indicates occurrence, white no reports and black indicates that area is not in the YF endemic region."}
+Env_Table_path = (paste0("../Data/","Environment/Africa_adm1_dat_2017.csv")) #this file is adapted by hand to have latest outbreaks
+
+dat_full = read.csv(Env_Table_path, stringsAsFactors=FALSE)
+
+### data ###
+plot(shp0, col = "grey90", xlim=c(-15,45), ylim=c(-20,35))
+mm0 = match(shp0$ISO,c34) #
+plot(shp0[is.na(mm0),],col="black",add=T)
+
+pres= dat_full$adm0_adm1[dat_full$cas.or.out>0]
+mm1<-match(pres, shp1$adm0_adm1)
+
+plot(shp1[mm1,], col="red", border = "red",  add=TRUE)
+plot(shp0,lwd=2, add=TRUE)
+
+
+```
+
+# ERA.mean 
+
+```{r ERA, fig.cap="ERA mean. Black indicates that area is not in the YF endemic region."}
+
+mybreaks= seq(min(dat_full$ERAday.mean)-0.1, max(dat_full$ERAday.mean)+0.1, length.out=100)
+mycols =   colorRampPalette(brewer.pal(9, "Oranges") )(length(mybreaks)-1)
+mm = match(shp1$adm0_adm1, dat_full$adm0_adm1)
+vcols = findInterval(dat_full$ERAday.mean,mybreaks)
+
+plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
+mm0 = match(shp0$ISO,c34) #
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+plot(shp0, lwd=2, add=TRUE)
+plot(shp0[is.na(mm0),],col="black",add=T) 
+
+image.plot(legend.only=TRUE,
+           breaks=mybreaks,
+           col=mycols,
+           zlim=c(0,1), 
+           horizontal = TRUE,
+           legend.mar = 3.5)
+
+```
+
+# Rainfall mean
+
+```{r RFE, fig.cap="RFE mean. Black indicates that area is not in the YF endemic region."}
+
+mybreaks= seq(min(dat_full$RFE.mean)-0.1, max(dat_full$RFE.mean)+0.1, length.out=100)
+mycols =   colorRampPalette(brewer.pal(9, "Blues") )(length(mybreaks)-1)
+mm = match(shp1$adm0_adm1, dat_full$adm0_adm1)
+vcols = findInterval(dat_full$RFE.mean,mybreaks)
+
+plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
+mm0 = match(shp0$ISO,c34) #
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+plot(shp0, lwd=2, add=TRUE)
+plot(shp0[is.na(mm0),],col="black",add=T) 
+
+image.plot(legend.only=TRUE,
+           breaks=mybreaks,
+           col=mycols,
+           zlim=c(0,1), 
+           horizontal = TRUE,
+           legend.mar = 3.5)
+
+```
