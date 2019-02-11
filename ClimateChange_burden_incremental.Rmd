@@ -44,6 +44,7 @@ library(ggplot2)
 library(YFburden)
 library(YFestimation)
 library(snapalette)
+library(KsetupR)
 
 #########################################################################################################
 ### SETTING THE WORKING DIRECTORY ###
@@ -92,9 +93,9 @@ We begin by comparing the force of infection predictions.
 # Comparing the force of infection
 
 ```{r import predictions}
+path = get_latest_file("Foi_climate_median_increment_")
 
-
-Foi_median_increment_samples= read.csv("Foi_climate_median_increment_20190208.csv", stringsAsFactors = FALSE)
+Foi_median_increment_samples= read.csv(path, stringsAsFactors = FALSE)
 
 ```
 
@@ -174,8 +175,10 @@ scenarios = c(0,2,4)
 ##########################################
 vac_eff = 0.975
 
+path = get_latest_file("Foi_climate_increment_")
+Foi_median_increment_samples= read.csv(path, stringsAsFactors = FALSE)
 
-Foi_median_increment_samples= read.csv("Foi_climate_median_increment_20190208.csv", stringsAsFactors = FALSE)
+#Foi_median_increment_samples= read.csv("Foi_climate_median_increment_20190208.csv", stringsAsFactors = FALSE)
 
 
 infections_inc = NULL
@@ -275,7 +278,7 @@ ggplot(infections_inc_df) + geom_col(aes(x = Year, y = Infections, fill = Final_
 
 
 
-```{r increment_infections_2030}
+```{r increment_burden_2030}
 P_severe =  0.12
 colours = snapalette("Barcelona", 5, type = "discrete")[c(2,4,5)]
 
@@ -288,7 +291,7 @@ ggplot(sub_inf) + geom_col(aes(x = Country, y = Infections* P_severe, fill = Fin
 
 ```
 
-```{r increment_infections_2050}
+```{r increment_burden_2050}
 P_severe =  0.12
 colours = snapalette("Barcelona", 5, type = "discrete")[c(2,4,5)]
 

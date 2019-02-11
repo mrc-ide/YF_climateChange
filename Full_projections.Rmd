@@ -49,6 +49,7 @@ library(R.utils)
 
 library(YFestimation)
 library(snapalette)
+library(KsetupR)
 
 #########################################################################################################
 ### SETTING THE WORKING DIRECTORY ###
@@ -108,7 +109,7 @@ dat_mort = filter(dat_mort, Alive+Dead+Censored>0)
 dat_EIP <- read_csv("Data/davis_EIP.csv")
 
 ### posterior samples
-n_samples = 100
+n_samples = 1000
 
 
 #########################################################################################################
@@ -121,7 +122,8 @@ modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+RFE.
 
 ```{r import_chains}
 
-path = "GLM_tempsuit_MCMC_chain_20190206_hamlet"
+
+path = get_latest_file(pattern = "GLM_tempsuit_MCMC_chain_")
 
 #get_chains
 mcmc_out=get_chains(path, burnin = 1, thin = 100)[, 1:29]
@@ -157,7 +159,6 @@ ggs_crosscorrelation(chain_sub)
 ```{r caterpillar, fig.height = 10, fig.width = 7}
 
 ggs_caterpillar(chain_sub)
-
 
 ### save values 
 write.csv(ci(chain_sub), paste0("GLM_tempsuit_parameter_estimates_", format(Sys.time(),"%Y%m%d"), " .csv"), row.names = FALSE)
@@ -312,6 +313,30 @@ mm0 = match(shp0$ISO,c34) #
 plot(shp0[is.na(mm0),],col="black",add=T) 
 plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
 plot(shp0, xlim=c(-15,45),ylim=c(-20,35), add=T)
+
+```
+
+```{r plot_temp_suit, fig.cap = "Normalized temperature suitability from median of posterior predicted distribution."}
+
+temp_suit = (dat_full_temp$temp_suitability)/max(dat_full_temp$temp_suitability)
+
+mybreaks= seq(0, 1, length.out=100)
+mycols =   snapalette( "ST_art", length(mybreaks)-1, type = "continuous" )
+mm = match(shp1$adm0_adm1, dat_full_temp$adm0_adm1)
+vcols = findInterval(temp_suit,mybreaks)
+
+plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
+mm0 = match(shp0$ISO,c34) #
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+plot(shp0, lwd=2, add=TRUE)
+plot(shp0[is.na(mm0),],col="black",add=T) 
+
+image.plot(legend.only=TRUE,
+           breaks=mybreaks,
+           col=mycols,
+           zlim=c(0,1), 
+           horizontal = TRUE,
+           legend.mar = 3.5)
 
 ```
 
@@ -474,9 +499,10 @@ P_tot_survey = list_pop_at_survey$P_tot_survey_2d
 
 ```{r import_serology_fit}
 
-path = "Z:/MultiModelInference/multi_model_MCMC_chain_20180622"
+filepath = get_latest_file(path = "Z:/MultiModelInference", pattern = "multi_model_MCMC_chain_")
 
-mcmc_out_sero = get_chains(path, burnin = 1, thin = 100)
+
+mcmc_out_sero = get_chains(filepath, burnin = 1, thin = 100)
 
 ```
 
@@ -632,8 +658,7 @@ names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_C
 temp_param = apply(mcmc_out[,21:29], 2, median, na.rm = TRUE)
 
 
-for(s in c(0,1,2)){
-  
+run_for_scenarios = function(s){
   scen = scenarios*s
   
   Foi_tmp = calc_Foi_tempprecipchange(dat_full,
@@ -653,9 +678,11 @@ for(s in c(0,1,2)){
                                       pop1,
                                       vc2d)
   Foi_tmp = cbind( data.frame("final_scenario" = 2*s), Foi_tmp)
-  FOI_samples = rbind(FOI_samples, Foi_tmp)
   
+  return(Foi_tmp)
 }
+FOI_samples = mapply(c(0,1,2), 
+                     FUN = run_for_scenarios) %>% bind_rows()
 
 FOI_samples = FOI_samples[order(FOI_samples[,1]),]
 
@@ -665,7 +692,7 @@ write.csv(FOI_samples, paste0("Foi_climate_median_increment_", format(Sys.time()
 
 then for a number of samples.
 
-```{r save_incremental_sample, echo=TRUE}
+```{r save_incremental_sample, eval = FALSE}
 
 # We would like to save samples of the force of infection across the endemic region, 
 # given the uncertainty in our posterior estimates, for three scenarios.
@@ -713,9 +740,10 @@ for(i in 1:n_samples){
                                         pop1,
                                         vc2d)
     Foi_tmp = cbind( data.frame("final_scenario" = 2*s), Foi_tmp)
-    FOI_samples = rbind(FOI_samples, Foi_tmp)
     
+    FOI_samples = rbind(FOI_samples, Foi_tmp)
   }
+  
 }
 FOI_samples = FOI_samples[order(FOI_samples[,1]),]
 

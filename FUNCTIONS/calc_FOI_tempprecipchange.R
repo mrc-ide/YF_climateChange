@@ -1,33 +1,31 @@
 
 calc_Foi_tempprecipchange = function(dat_full,
-                               adjusted_params,
-                               temp_param,
-                               scenarios,
-                               c34,
-                               seroout,
-                               t0_vac_africa,
-                               dim_year,
-                               dim_age,
-                               p_prop_3d,
-                               P_tot_2d,
-                               inc_v3d,
-                               pop_moments_whole,
-                               varsin_nc,
-                               pop1,
-                               vc2d) {
+                                     adjusted_params,
+                                     temp_param,
+                                     scenarios,
+                                     c34,
+                                     seroout,
+                                     t0_vac_africa,
+                                     dim_year,
+                                     dim_age,
+                                     p_prop_3d,
+                                     P_tot_2d,
+                                     inc_v3d,
+                                     pop_moments_whole,
+                                     varsin_nc,
+                                     pop1,
+                                     vc2d) {
   
-  FOI_median_samples = NULL
-  
-  
-  ######BASELINE#######
 
+  ######BASELINE#######
+  
   ### TEMP SUITABILITY ###
   dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,"ERAday.mean"] , temp_param ))
   names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
   
   envdat = launch_env_dat(filepath = NA, dat_full = dat_full_temp, c34 = c34)  
   
-
+  
   
   ### GET x ###
   modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+RFE.mean" 
@@ -36,7 +34,7 @@ calc_Foi_tempprecipchange = function(dat_full,
   
   ###get vc_agg etc ###
   t = create_pop30_agg_vc30_agg(pop1, vc2d)
-
+  
   
   ### p detect ###
   p_detect =  fun_calc_pdetect_multi_both(x=x, 
@@ -57,15 +55,16 @@ calc_Foi_tempprecipchange = function(dat_full,
   p_detect_link = mean(p_detect)
   
   ########SCENARIOS########
-  for(s in scenarios){
+  
+  run_for_scenarios = function(s){
     
     dat_full_ts = dat_full
-    dat_full_ts[,"ERAday.mean"] = dat_full_ts[,"ERAday.mean"] + s 
+    dat_full_ts[,"ERAday.mean"] = dat_full_ts[,"ERAday.mean"] + scenarios[s] 
     
-    if(s >0){
-      dat_full_ts[,"RFE.mean"] = dat_full_ts[,"RFE.mean"] * (1 + s/20)
+    if(scenarios[s] >0){
+      dat_full_ts[,"RFE.mean"] = dat_full_ts[,"RFE.mean"] * (1 + scenarios[s]/20)
     } 
-
+    
     ### TEMP SUITABILITY ###
     dat_full_temp_ts = cbind(dat_full_ts, temp_suitability(dat_full_ts[,"ERAday.mean"] , temp_param ) )
     names(dat_full_temp_ts)[ncol(dat_full_temp_ts)] = "temp_suitability"
@@ -106,13 +105,15 @@ calc_Foi_tempprecipchange = function(dat_full,
     transmission_whole = as.numeric(transmission_whole)
     dim(transmission_whole) = dt
     transmission_whole = apply(transmission_whole,2,min,na.rm=T)
-
     
-    Foi_tmp = cbind(data.frame("scenario" = s), t(transmission_whole) )
+    
+    Foi_tmp = cbind(data.frame("scenario" = scenarios[s]), t(transmission_whole) )
     names(Foi_tmp)[2:480] = dim_adm
     
-    FOI_median_samples = rbind(FOI_median_samples, Foi_tmp)
+    return(Foi_tmp)
   }
+  
+  FOI_median_samples = lapply(1:length(scenarios), FUN = run_for_scenarios) %>% bind_rows()
   
   
   return(FOI_median_samples)
