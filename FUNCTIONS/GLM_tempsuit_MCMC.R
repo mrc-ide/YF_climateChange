@@ -87,6 +87,9 @@ GLM_tempsuit_MCMC = function(Niter,
     run_id = 1
   }
   
+  #set random seed
+  set.seed(run_id)
+  
   #get in the right order
   pars_ini = pars_ini[c("Intercept","log.surv.qual.adm0","adm05AGO",
                         "adm05BDI","adm05ERI","adm05ETH","adm05GNB",
