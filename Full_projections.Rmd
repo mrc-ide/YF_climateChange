@@ -692,7 +692,7 @@ write.csv(FOI_samples, paste0("Foi_climate_median_increment_", format(Sys.time()
 
 then for a number of samples.
 
-```{r save_incremental_sample, eval = FALSE}
+```{r save_incremental_sample, eval = TRUE}
 
 # We would like to save samples of the force of infection across the endemic region, 
 # given the uncertainty in our posterior estimates, for three scenarios.

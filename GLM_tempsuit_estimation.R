@@ -31,7 +31,7 @@ sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 ### LOAD ENVIRONMENTAL DATA ###
 #########################################################################################################
 
-Env_Table_path = (paste0("../Data/","Environment/Africa_adm1_dat_2017.csv")) 
+Env_Table_path = (paste0("../Data/","Environment/Africa_adm1_dat_2018.csv")) 
 
 dat_full = read.csv(Env_Table_path, 
                     stringsAsFactors = FALSE)
@@ -71,13 +71,11 @@ set.seed(seed)
 #### INITIAL PARAM ####
 
 ### OR LOAD FROM PREVIOUS RUN ###
-prev_param = read.csv("GLM_tempsuit_MCMC_chain_20180823_hamlet/GLM_tempsuit_parameter_estimates.csv")
+prev_param = read.csv("GLM_tempsuit_MCMC_chain_20190206_hamlet/GLM_tempsuit_parameter_estimates.csv")
 
 pars_ini = c(prev_param$median)
 names(pars_ini) = prev_param$Parameter
 
-#add rainfall
-pars_ini = c(pars_ini, "RFE.mean" = 1e-3)
 
 #########################################################################################################
 ### MCMC ###
@@ -87,6 +85,6 @@ date=format(Sys.time(),"%Y%m%d")
 name_dir = paste0("GLM_tempsuit_MCMC_chain", "_", date, "_hamlet")
 dir.create(name_dir)
 
-Niter = 1e6
+Niter = 1e5
 
 GLM_tempsuit_MCMC(Niter, name_dir, pars_ini, dat_full, dat_bite, dat_mort, dat_EIP, c34, plot_chain = TRUE)
