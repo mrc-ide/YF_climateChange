@@ -81,7 +81,11 @@ GLM_tempsuit_MCMC = function(Niter,
                              dat_mort,
                              dat_EIP,
                              c34,
+                             run_id = NA,
                              plot_chain = TRUE){
+  if(is.na(run_id)){
+    run_id = 1
+  }
   
   #get in the right order
   pars_ini = pars_ini[c("Intercept","log.surv.qual.adm0","adm05AGO",
@@ -135,7 +139,7 @@ GLM_tempsuit_MCMC = function(Niter,
         fileIndex  = iter/10000
       }
       write.csv(cbind(chain,  posteriorProb, acceptRate)[min((fileIndex * 10000+1),iter):iter,], 
-                paste0(name_dir,"/","GLM_tempsuit_rain_chain",fileIndex,"_output",".csv") ) 
+                paste0(name_dir,"/","GLM_tempsuit_rain_chain",fileIndex,"_output_", run_id,".csv") ) 
     }
     
     

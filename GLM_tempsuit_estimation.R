@@ -87,4 +87,4 @@ dir.create(name_dir)
 
 Niter = 1e5
 
-GLM_tempsuit_MCMC(Niter, name_dir, pars_ini, dat_full, dat_bite, dat_mort, dat_EIP, c34, plot_chain = TRUE)
+GLM_tempsuit_MCMC(Niter, name_dir, pars_ini, dat_full, dat_bite, dat_mort, dat_EIP, c34, run_id = 1, plot_chain = TRUE)
