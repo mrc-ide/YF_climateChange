@@ -13,7 +13,8 @@ output:
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, error = FALSE)
 knitr::opts_chunk$set(
   fig.path = paste0("DataImages", "/"),
-  dpi = 300
+  dpi = 300,
+  dev = c('png')
 )
 ```
 
@@ -68,7 +69,7 @@ country34 = Countries$country34
 ```
 
 ```{r occurrence, fig.cap="Location of YF occurrence from 1984 to 2018. Red indicates occurrence, white no reports and black indicates that area is not in the YF endemic region."}
-Env_Table_path = (paste0("../Data/","Environment/Africa_adm1_dat_2017.csv")) 
+Env_Table_path = (paste0("../Data/","Environment/Africa_adm1_dat_2018.csv")) 
 dat_full = read.csv(Env_Table_path, stringsAsFactors=FALSE)
 
 ### data ###
@@ -122,6 +123,82 @@ mybreaks= seq(min(dat_full$RFE.mean)-0.1, max(dat_full$RFE.mean)+0.1, length.out
 mycols =   colorRampPalette(brewer.pal(9, "Blues") )(length(mybreaks)-1)
 mm = match(shp1$adm0_adm1, dat_full$adm0_adm1)
 vcols = findInterval(dat_full$RFE.mean,mybreaks)
+
+plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
+mm0 = match(shp0$ISO,c34) #
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+plot(shp0, lwd=2, add=TRUE)
+plot(shp0[is.na(mm0),],col="black",add=T) 
+
+image.plot(legend.only=TRUE,
+           breaks=mybreaks,
+           col=mycols,
+           zlim=c(0,1), 
+           horizontal = FALSE)
+
+```
+
+
+# log.surv.qual.adm0
+
+```{r surv.qual.adm0, fig.cap="log.surv.qual.adm0. Black indicates that area is not in the YF endemic region."}
+
+par(mar = 0*c(5.1,4.1,4.1,2.1))
+
+mybreaks= seq(min(dat_full$surv.qual.adm0, na.rm = TRUE)-0.1, max(dat_full$surv.qual.adm0, na.rm = TRUE)+0.1, length.out=100)
+mycols =   colorRampPalette(brewer.pal(9, "Purples") )(length(mybreaks)-1)
+mm = match(shp1$adm0_adm1, dat_full$adm0_adm1)
+vcols = findInterval(dat_full$surv.qual.adm0,mybreaks)
+
+plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
+mm0 = match(shp0$ISO,c34) #
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+plot(shp0, lwd=2, add=TRUE)
+plot(shp0[is.na(mm0),],col="black",add=T) 
+
+image.plot(legend.only=TRUE,
+           breaks=mybreaks,
+           col=mycols,
+           zlim=c(0,1), 
+           horizontal = FALSE)
+
+```
+
+# lon
+
+```{r lon, fig.cap="lon. Black indicates that area is not in the YF endemic region."}
+
+par(mar = 0*c(5.1,4.1,4.1,2.1))
+
+mybreaks= seq(min(dat_full$lon)-0.1, max(dat_full$lon)+0.1, length.out=100)
+mycols =   colorRampPalette(brewer.pal(9, "Spectral") )(length(mybreaks)-1)
+mm = match(shp1$adm0_adm1, dat_full$adm0_adm1)
+vcols = findInterval(dat_full$lon,mybreaks)
+
+plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
+mm0 = match(shp0$ISO,c34) #
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+plot(shp0, lwd=2, add=TRUE)
+plot(shp0[is.na(mm0),],col="black",add=T) 
+
+image.plot(legend.only=TRUE,
+           breaks=mybreaks,
+           col=mycols,
+           zlim=c(0,1), 
+           horizontal = FALSE)
+
+```
+
+# logpop
+
+```{r logpop, fig.cap="logpop. Black indicates that area is not in the YF endemic region."}
+
+par(mar = 0*c(5.1,4.1,4.1,2.1))
+
+mybreaks= seq(min(dat_full$logpop)-0.1, max(dat_full$logpop)+0.1, length.out=100)
+mycols =   colorRampPalette(brewer.pal(9, "Greens") )(length(mybreaks)-1)
+mm = match(shp1$adm0_adm1, dat_full$adm0_adm1)
+vcols = findInterval(dat_full$logpop,mybreaks)
 
 plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
 mm0 = match(shp0$ISO,c34) #
