@@ -13,7 +13,8 @@ output:
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
 knitr::opts_chunk$set(
   fig.path = paste0("ClimateChangeBurdenIncrementalImages-", Sys.Date(), "/"),
-  dpi = 300
+  dpi = 300,
+  dev = c('png')
 )
 
 year_of_interest = 2050
