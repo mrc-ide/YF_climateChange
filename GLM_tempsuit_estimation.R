@@ -13,6 +13,7 @@ library(truncdist)
 library(R.utils)
 
 library(YFestimation)
+library(KsetupR)
 
 #########################################################################################################
 ### LOADING COUNTRIES ###
@@ -71,7 +72,8 @@ set.seed(seed)
 #### INITIAL PARAM ####
 
 ### OR LOAD FROM PREVIOUS RUN ###
-prev_param = read.csv("GLM_tempsuit_MCMC_chain_20190206_hamlet/GLM_tempsuit_parameter_estimates.csv")
+file_name = get_latest_file(pattern = "GLM_tempsuit_parameter_estimates")
+prev_param = read.csv(file_name)
 
 pars_ini = c(prev_param$median)
 names(pars_ini) = prev_param$Parameter
@@ -85,7 +87,7 @@ date=format(Sys.time(),"%Y%m%d")
 name_dir = paste0("GLM_tempsuit_MCMC_chain", "_", date, "_hamlet")
 dir.create(name_dir)
 
-Niter = 1e5
+Niter = 500000
 
 if(!parall){
   GLM_tempsuit_MCMC(Niter, name_dir, pars_ini, dat_full, dat_bite, dat_mort, dat_EIP, c34, run_id = 1, plot_chain = TRUE)

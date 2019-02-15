@@ -7,13 +7,16 @@ header-includes:
 output: 
   pdf_document:
     df_print: "kable"
+params:
+  save_samples: FALSE
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, error = FALSE)
 knitr::opts_chunk$set(
   fig.path = paste0("FullProjectionImagesRainfall", Sys.Date(), "/"),
-  dpi = 300
+  dpi = 300,
+  dev = c('png')
 )
 ```
 
@@ -269,21 +272,7 @@ We will map the median predictions and then examine uncertainty.
 
 ```{r plot_glm, fig.height=10, fig.width=7, fig.cap="Actual versus predicted probability of a yellow fever report for median posterior parameter estimates."}
 
-par(mfrow=c(2,1), mar = c(3,3,1,0)+0.1)
-
-### data ###
-plot(shp0, xlim=c(-15,45),ylim=c(-20,35), main = "Location of YF reports")
-mm0 = match(shp0$ISO,c34) #
-plot(shp0[is.na(mm0),],col="black",add=T)
-
-pres= dat_full$adm0_adm1[dat_full$cas.or.out>0]
-mm1<-match(shp1$adm0_adm1,pres)
-mm1<-match(pres, shp1$adm0_adm1)
-
-
-plot(shp1[mm1,],col="red", add=T)
-plot(shp0,lwd=2, add=T)
-plot(shp1,lwd=1, add=T)
+par(mar = 0*c(5.1,4.1,4.1,2.1))
 
 ##################################################################################
 ### model ###
@@ -302,41 +291,52 @@ x = object_glm[[2]]
 Est_beta =  apply(mcmc_out[,1:19], 2, median)
 glmpreds_tmp = fun_calcPred( Est_beta ,x,type="response")
 
+
+#plotting
 mybreaks = seq(0,1.0001,by=0.01)
 mycols =  heat.colors(length(mybreaks)-1)
 mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
 vcols = findInterval(glmpreds_tmp,mybreaks)
 vcols=101-vcols
 
-plot(shp0, xlim=c(-15,45),ylim=c(-20,35), main="as fitted")
+plot(shp0, xlim=c(-15,45),ylim=c(-20,35))
 mm0 = match(shp0$ISO,c34) #
-plot(shp0[is.na(mm0),],col="black",add=T) 
-plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
-plot(shp0, xlim=c(-15,45),ylim=c(-20,35), add=T)
-
-```
-
-```{r plot_temp_suit, fig.cap = "Normalized temperature suitability from median of posterior predicted distribution."}
-
-temp_suit = (dat_full_temp$temp_suitability)/max(dat_full_temp$temp_suitability)
-
-mybreaks= seq(0, 1, length.out=100)
-mycols =   snapalette( "ST_art", length(mybreaks)-1, type = "continuous" )
-mm = match(shp1$adm0_adm1, dat_full_temp$adm0_adm1)
-vcols = findInterval(temp_suit,mybreaks)
-
-plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
-mm0 = match(shp0$ISO,c34) #
-plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
-plot(shp0, lwd=2, add=TRUE)
-plot(shp0[is.na(mm0),],col="black",add=T) 
+plot(shp0[is.na(mm0),],col="black",add=TRUE) 
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45), ylim=c(-20,35) , lty=0, add=TRUE)
+plot(shp0,  add=TRUE)
 
 image.plot(legend.only=TRUE,
            breaks=mybreaks,
            col=mycols,
            zlim=c(0,1), 
            horizontal = TRUE,
-           legend.mar = 3.5)
+           legend.shrink = 0.75)
+
+```
+
+```{r plot_temp_suit, fig.cap = "Normalized temperature suitability from median of posterior predicted distribution."}
+par(mar = 0*c(5.1,4.1,4.1,2.1))
+
+temp_suit = (dat_full_temp$temp_suitability)
+
+mybreaks= seq(0, max(temp_suit)+0.01, length.out=100)
+mycols =   snapalette( "ST_art", length(mybreaks)-1, type = "continuous" )
+vcols = findInterval(temp_suit,mybreaks)
+
+mm = match(shp1$adm0_adm1, dat_full_temp$adm0_adm1)
+
+plot(shp0, xlim=c(-15,45), ylim=c(-20,35))
+plot(shp0[is.na(mm0),],col="black",add=TRUE) 
+plot(shp1[!is.na(mm),], col=mycols[vcols], xlim=c(-15,45), ylim=c(-20,35) , lty=0, add=TRUE)
+plot(shp0,  add=TRUE)
+plot(shp0[is.na(mm0),],col="black",add=TRUE) 
+
+image.plot(legend.only=TRUE,
+           breaks=mybreaks,
+           col=mycols,
+           zlim=c(0,1), 
+           horizontal = TRUE,
+           legend.shrink = 0.75)
 
 ```
 
@@ -368,6 +368,9 @@ for(i in 1:n_samples){
 ```
 
 ```{r glm_predict_uncertainty, fig.cap="Coefficient of variation % for predictions."}
+
+par(mar = 0*c(5.1,4.1,4.1,2.1))
+
 coeff_of_var = log10(apply(glm_pred_uncert, 2, sd )/apply(glm_pred_uncert, 2, mean ) * 100)
 
 mybreaks = seq(min(coeff_of_var)-1,max(coeff_of_var)+1,length.out=100)
@@ -379,7 +382,7 @@ vcols = findInterval(coeff_of_var,mybreaks)
 plot(shp0, xlim=c(-15,45),ylim=c(-20,35), main="")
 mm0 = match(shp0$ISO,c34) #
 plot(shp0[is.na(mm0),],col="black",add=T) 
-plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45), ylim=c(-20,35) , lty=0, add=T)
 plot(shp0, xlim=c(-15,45),ylim=c(-20,35), add=T)
 
 image.plot(legend.only=TRUE,breaks=mybreaks,col=mycols,zlim=c(0,1), horizontal = TRUE, 
@@ -550,6 +553,7 @@ FOI_median_samples = calc_Foi_tempprecipchange(dat_full,
 write.csv(FOI_median_samples, paste0("Foi_median_climate_samples_", format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
 
 # plot baseline
+par(mar = 0*c(5.1,4.1,4.1,2.1))
 
 Foi_runs = filter(FOI_median_samples, scenario == 0)[,-1]
 
@@ -560,10 +564,10 @@ vcols = findInterval(log10(Foi_runs*100),mybreaks)
 
 
 
-plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
+plot(shp0, xlim=c(-15,45),ylim=c(-20,35))
 mm0 = match(shp0$ISO,c34) #
 plot(shp0[is.na(mm0),],col="grey70",add=T) 
-plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,35) , lty=0, add=T)
 plot(shp0, lwd=2, add=T)
 
 image.plot(legend.only=TRUE,breaks=mybreaks,col=mycols,zlim=c(0,1), horizontal = TRUE, 
@@ -574,58 +578,60 @@ image.plot(legend.only=TRUE,breaks=mybreaks,col=mycols,zlim=c(0,1), horizontal =
 
 ```{r save_output, echo=TRUE, eval = TRUE}
 
-# We would like to save samples of the force of infection across the endemic region, 
-# given the uncertainty in our posterior estimates, for three scenarios.
-
-#declare our output
-FOI_samples = NULL
-
-#three scenarios of mean temperature increase across the region
-scenarios = c(0, 2, 4)
-
-# then we take n_samples random samples of our posteriors to create our output.
-
-
-for(i in 1:n_samples){
-  sample_ind = sample(nrow(mcmc_out), 1)
-  sample_ind_f = sample(nrow(mcmc_out_f), 1)
+if(params$save_samples){
+  # We would like to save samples of the force of infection across the endemic region, 
+  # given the uncertainty in our posterior estimates, for three scenarios.
+  
+  #declare our output
+  FOI_samples = NULL
+  
+  #three scenarios of mean temperature increase across the region
+  scenarios = c(0, 2, 4)
+  
+  # then we take n_samples random samples of our posteriors to create our output.
   
   
-  adjusted_params = unlist(c(exp(mcmc_out_f[sample_ind_f,1]), #vac eff
-                             mcmc_out[sample_ind,1:20] ,            #glm
-                             exp(mcmc_out_f[sample_ind_f,c(2:41)]),  #foi
-                             exp(mcmc_out_f[sample_ind_f,ncol(mcmc_out_f)]) ) )    #vc factor
+  for(i in 1:n_samples){
+    sample_ind = sample(nrow(mcmc_out), 1)
+    sample_ind_f = sample(nrow(mcmc_out_f), 1)
+    
+    
+    adjusted_params = unlist(c(exp(mcmc_out_f[sample_ind_f,1]), #vac eff
+                               mcmc_out[sample_ind,1:20] ,            #glm
+                               exp(mcmc_out_f[sample_ind_f,c(2:41)]),  #foi
+                               exp(mcmc_out_f[sample_ind_f,ncol(mcmc_out_f)]) ) )    #vc factor
+    
+    names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
+    
+    temp_param = mcmc_out[sample_ind, 21:29]
+    
+    Foi_tmp = calc_Foi_tempprecipchange(dat_full,
+                                        adjusted_params,
+                                        temp_param,
+                                        scenarios,
+                                        c34,
+                                        seroout,
+                                        t0_vac_africa,
+                                        dim_year,
+                                        dim_age,
+                                        p_prop_3d,
+                                        P_tot_2d,
+                                        inc_v3d,
+                                        pop_moments_whole,
+                                        varsin_nc,
+                                        pop1,
+                                        vc2d)
+    
+    
+    
+    FOI_samples = rbind(FOI_samples, Foi_tmp)
+    
+  }
   
-  names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
+  FOI_samples = FOI_samples[order(FOI_samples[,1]),]
   
-  temp_param = mcmc_out[sample_ind, 21:29]
-  
-  Foi_tmp = calc_Foi_tempprecipchange(dat_full,
-                                adjusted_params,
-                                temp_param,
-                                scenarios,
-                                c34,
-                                seroout,
-                                t0_vac_africa,
-                                dim_year,
-                                dim_age,
-                                p_prop_3d,
-                                P_tot_2d,
-                                inc_v3d,
-                                pop_moments_whole,
-                                varsin_nc,
-                                pop1,
-                                vc2d)
-  
-
-
-  FOI_samples = rbind(FOI_samples, Foi_tmp)
-  
+  write.csv(FOI_samples, paste0("Foi_climate_samples_", format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
 }
-
-FOI_samples = FOI_samples[order(FOI_samples[,1]),]
-
-write.csv(FOI_samples, paste0("Foi_climate_samples_", format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
 
 ```
 
@@ -681,7 +687,7 @@ run_for_scenarios = function(s){
   
   return(Foi_tmp)
 }
-FOI_samples = mapply(c(0,1,2), 
+FOI_samples = lapply(c(0,1,2), 
                      FUN = run_for_scenarios) %>% bind_rows()
 
 FOI_samples = FOI_samples[order(FOI_samples[,1]),]
@@ -694,59 +700,60 @@ then for a number of samples.
 
 ```{r save_incremental_sample, eval = TRUE}
 
-# We would like to save samples of the force of infection across the endemic region, 
-# given the uncertainty in our posterior estimates, for three scenarios.
-
-#declare our output
-FOI_samples = NULL
-
-#three scenarios of mean temperature increase across the region
-scenarios = seq(0,2, length.out = 2050-2017)
-
-for(i in 1:n_samples){
-  sample_ind = sample(nrow(mcmc_out), 1)
-  sample_ind_f = sample(nrow(mcmc_out_f), 1)
+if(params$save_samples){
+  # We would like to save samples of the force of infection across the endemic region, 
+  # given the uncertainty in our posterior estimates, for three scenarios.
   
+  #declare our output
+  FOI_samples = NULL
   
-  adjusted_params = unlist(c(exp(mcmc_out_f[sample_ind_f,1]), #vac eff
-                             mcmc_out[sample_ind,1:20] ,            #glm
-                             exp(mcmc_out_f[sample_ind_f,c(2:41)]),  #foi
-                             exp(mcmc_out_f[sample_ind_f,ncol(mcmc_out_f)]) ) )    #vc factor
+  #three scenarios of mean temperature increase across the region
+  scenarios = seq(0,2, length.out = 2050-2017)
   
-  names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
-  
-  temp_param = mcmc_out[sample_ind, 21:29]
-  
-  
-  
-  for(s in c(0,1,2)){
+  for(i in 1:n_samples){
+    sample_ind = sample(nrow(mcmc_out), 1)
+    sample_ind_f = sample(nrow(mcmc_out_f), 1)
     
-    scen = scenarios*s
     
-    Foi_tmp = calc_Foi_tempprecipchange(dat_full,
-                                        adjusted_params,
-                                        temp_param,
-                                        scen,
-                                        c34,
-                                        seroout,
-                                        t0_vac_africa,
-                                        dim_year,
-                                        dim_age,
-                                        p_prop_3d,
-                                        P_tot_2d,
-                                        inc_v3d,
-                                        pop_moments_whole,
-                                        varsin_nc,
-                                        pop1,
-                                        vc2d)
-    Foi_tmp = cbind( data.frame("final_scenario" = 2*s), Foi_tmp)
+    adjusted_params = unlist(c(exp(mcmc_out_f[sample_ind_f,1]), #vac eff
+                               mcmc_out[sample_ind,1:20] ,            #glm
+                               exp(mcmc_out_f[sample_ind_f,c(2:41)]),  #foi
+                               exp(mcmc_out_f[sample_ind_f,ncol(mcmc_out_f)]) ) )    #vc factor
     
-    FOI_samples = rbind(FOI_samples, Foi_tmp)
+    names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
+    
+    temp_param = mcmc_out[sample_ind, 21:29]
+    
+    
+    
+    for(s in c(0,1,2)){
+      
+      scen = scenarios*s
+      
+      Foi_tmp = calc_Foi_tempprecipchange(dat_full,
+                                          adjusted_params,
+                                          temp_param,
+                                          scen,
+                                          c34,
+                                          seroout,
+                                          t0_vac_africa,
+                                          dim_year,
+                                          dim_age,
+                                          p_prop_3d,
+                                          P_tot_2d,
+                                          inc_v3d,
+                                          pop_moments_whole,
+                                          varsin_nc,
+                                          pop1,
+                                          vc2d)
+      Foi_tmp = cbind( data.frame("final_scenario" = 2*s), Foi_tmp)
+      
+      FOI_samples = rbind(FOI_samples, Foi_tmp)
+    }
+    
   }
+  FOI_samples = FOI_samples[order(FOI_samples[,1]),]
   
+  write.csv(FOI_samples, paste0("Foi_climate_increment_", format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
 }
-FOI_samples = FOI_samples[order(FOI_samples[,1]),]
-
-write.csv(FOI_samples, paste0("Foi_climate_increment_", format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
-
 ```
