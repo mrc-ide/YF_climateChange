@@ -17,7 +17,7 @@ GLM_tempsuit_MCMC_step = function(param,
   
   ### priors ###
   prior_prop = sum( YFestimation::GLMprior(param_prop[1:20]) ) + 
-                    fun_tempsuitPrior( param_prop[21:29])
+    fun_tempsuitPrior( param_prop[21:29])
   
   
   ### if prior finite, evaluate likelihood ###
@@ -25,13 +25,13 @@ GLM_tempsuit_MCMC_step = function(param,
     
     ### TEMP SUITABILITY ###
     dat_full_temp = cbind(dat_full, 
-                          temp_suitability(dat_full[,"ERAday.mean"] , 
+                          temp_suitability(dat_full[,"ERA_temp"] , 
                                            param_prop[21:29]))
     names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
-
-    envdat = YFestimation::launch_env_dat(filepath = NA, 
-                                          dat_full = dat_full_temp, 
-                                          c34 = c34)  
+    
+    envdat = launch_env_dat(filepath = NA, 
+                            dat_full = dat_full_temp, 
+                            c34 = c34)  
     
     ### GET x ###
     modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+RFE.mean" 
@@ -41,7 +41,7 @@ GLM_tempsuit_MCMC_step = function(param,
     
     ### LIKE ###
     like_prop = YFestimation::GLMlike(param_prop[1:20], x, y) + 
-                fun_tempsuitLike(dat_bite, dat_mort, dat_EIP, param_prop[21:29]) 
+      fun_tempsuitLike(dat_bite, dat_mort, dat_EIP, param_prop[21:29]) 
     
     ### accept/ reject ###
     accProp = like_prop + prior_prop
