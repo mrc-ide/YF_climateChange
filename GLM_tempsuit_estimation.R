@@ -32,7 +32,7 @@ sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 ### LOAD ENVIRONMENTAL DATA ###
 #########################################################################################################
 
-Env_Table_path = (paste0("../Data/","Environment/Dat_by_ERA_year/dat_2000.csv")) 
+Env_Table_path = (paste0("../Data/","Environment/Dat_by_ERA_year/dat_average.csv")) 
 
 dat_full = read.csv(Env_Table_path, 
                     stringsAsFactors = FALSE)
