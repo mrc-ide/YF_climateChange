@@ -79,7 +79,7 @@ R.utils::sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 ### LOAD ENVIRONMENTAL DATA ###
 #########################################################################################################
 
-Env_Table_path = (paste0("../Data/","Environment/Africa_adm1_dat_2017.csv")) #this file is adapted by hand to have latest outbreaks
+Env_Table_path = paste0("../Data/","Environment/dat_with_worldclim/dat_worldclim_baseline_2019-03-15.csv") 
 
 dat_full = read.csv(Env_Table_path, stringsAsFactors=FALSE)
 
@@ -94,7 +94,7 @@ We begin by comparing the force of infection predictions.
 # Comparing the force of infection
 
 ```{r import predictions}
-path = get_latest_file("Foi_climate_median_increment_")
+path = get_latest_file(pattern = "Foi_climate_median_increment_")
 
 Foi_median_increment_samples= read.csv(path, stringsAsFactors = FALSE)
 

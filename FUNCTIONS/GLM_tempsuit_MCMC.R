@@ -25,7 +25,7 @@ GLM_tempsuit_MCMC_step = function(param,
     
     ### TEMP SUITABILITY ###
     dat_full_temp = cbind(dat_full, 
-                          temp_suitability(dat_full[,"ERAday.mean"] , 
+                          temp_suitability(dat_full[,"worldclim_temp_min"] , 
                                            param_prop[21:29]))
     names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
     
