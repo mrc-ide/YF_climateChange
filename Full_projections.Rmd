@@ -272,7 +272,7 @@ We will map the median predictions and then examine uncertainty.
 
 ```{r temp_type, echo = TRUE}
 
-temp_type = "worldclim_temp_min"
+temp_type = "worldclim_temp_max"
 
 ```
 

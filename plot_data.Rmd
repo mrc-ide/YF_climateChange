@@ -69,7 +69,7 @@ country34 = Countries$country34
 ```
 
 ```{r occurrence, fig.cap="Location of YF occurrence from 1984 to 2018. Red indicates occurrence, white no reports and black indicates that area is not in the YF endemic region."}
-Env_Table_path = (paste0("../Data/","Environment/Africa_adm1_dat_2018.csv")) 
+Env_Table_path = paste0("../Data/","Environment/dat_with_worldclim/dat_worldclim_baseline_2019-03-15.csv")
 dat_full = read.csv(Env_Table_path, stringsAsFactors=FALSE)
 
 ### data ###
@@ -90,14 +90,14 @@ plot(shp0,lwd=2, add=TRUE)
 
 # ERA.mean 
 
-```{r ERA, fig.cap="ERA mean. Black indicates that area is not in the YF endemic region."}
+```{r ERA, fig.cap="worldclim_temp_min. Black indicates that area is not in the YF endemic region."}
 
 par(mar = 0*c(5.1,4.1,4.1,2.1))
 
-mybreaks= seq(min(dat_full$ERAday.mean)-0.1, max(dat_full$ERAday.mean)+0.1, length.out=100)
+mybreaks= seq(min(dat_full$worldclim_temp_min)-0.1, max(dat_full$worldclim_temp_min)+0.1, length.out=100)
 mycols =   colorRampPalette(brewer.pal(9, "Oranges") )(length(mybreaks)-1)
 mm = match(shp1$adm0_adm1, dat_full$adm0_adm1)
-vcols = findInterval(dat_full$ERAday.mean,mybreaks)
+vcols = findInterval(dat_full$worldclim_temp_min,mybreaks)
 
 plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
 mm0 = match(shp0$ISO,c34) #

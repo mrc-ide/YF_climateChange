@@ -16,7 +16,7 @@ GLM_tempsuit_MCMC_step = function(param,
   param_prop = YFestimation::GLMproposal(param, chain_cov, adapt)
   
   ### priors ###
-  prior_prop = sum( YFestimation::GLMprior(param_prop[1:20]) ) + 
+  prior_prop = sum( GLMprior_ts(param_prop[1:20]) ) + 
     fun_tempsuitPrior( param_prop[21:29])
   
   
@@ -25,7 +25,7 @@ GLM_tempsuit_MCMC_step = function(param,
     
     ### TEMP SUITABILITY ###
     dat_full_temp = cbind(dat_full, 
-                          temp_suitability(dat_full[,"worldclim_temp_min"] , 
+                          temp_suitability(dat_full[,"worldclim_temp_max"] , 
                                            param_prop[21:29]))
     names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
     
@@ -169,4 +169,30 @@ GLM_tempsuit_MCMC = function(Niter,
   }
   
   
+}
+
+
+##################################################################################
+### GLM prior ###
+##################################################################################
+
+
+GLMprior_ts = function(param) {
+  
+  Prior = rep(0,2)
+  
+  #GLM
+  jj = grep("^log.adm05", names(param)) 
+  sd.prior = 1 ##changed this
+  
+  Prior[1] =  - 0.5 * sum((param[jj] / sd.prior) ^ 2) # adjustment for reduced variation between countries?
+  
+  Prior[2] =  sum(dnorm(param[grepl("^log.adm05", names(param)) == FALSE],
+                        mean = 0,
+                        sd = 30,
+                        log = TRUE
+  ))
+  
+  out = as.numeric( Prior )
+  return( out )
 }
