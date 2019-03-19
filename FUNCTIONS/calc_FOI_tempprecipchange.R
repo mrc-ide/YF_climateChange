@@ -20,7 +20,7 @@ calc_Foi_tempprecipchange = function(dat_full,
   ######BASELINE#######
   
   ### TEMP SUITABILITY ###
-  dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,"ERAday.mean"] , temp_param ))
+  dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,temp_type] , temp_param ))
   names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
   
   envdat = launch_env_dat(filepath = NA, dat_full = dat_full_temp, c34 = c34)  
@@ -59,14 +59,14 @@ calc_Foi_tempprecipchange = function(dat_full,
   run_for_scenarios = function(s){
     
     dat_full_ts = dat_full
-    dat_full_ts[,"ERAday.mean"] = dat_full_ts[,"ERAday.mean"] + scenarios[s] 
+    dat_full_ts[,temp_type] = dat_full_ts[,temp_type] + scenarios[s] 
     
     if(scenarios[s] >0){
       dat_full_ts[,"RFE.mean"] = dat_full_ts[,"RFE.mean"] * (1 + scenarios[s]/20)
     } 
     
     ### TEMP SUITABILITY ###
-    dat_full_temp_ts = cbind(dat_full_ts, temp_suitability(dat_full_ts[,"ERAday.mean"] , temp_param ) )
+    dat_full_temp_ts = cbind(dat_full_ts, temp_suitability(dat_full_ts[,temp_type] , temp_param ) )
     names(dat_full_temp_ts)[ncol(dat_full_temp_ts)] = "temp_suitability"
     envdat_ts = launch_env_dat(filepath = NA, dat_full = dat_full_temp_ts, c34 = c34) 
     

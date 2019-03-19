@@ -128,6 +128,8 @@ modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+RFE.
 
 path = get_latest_file(pattern = "GLM_tempsuit_MCMC_chain_")
 
+path = "GLM_tempsuit_MCMC_chain_20190315_hamlet"
+
 #get_chains
 mcmc_out=get_chains(path, burnin = 1, thin = 100)[, 1:29]
 
@@ -272,7 +274,7 @@ We will map the median predictions and then examine uncertainty.
 
 ```{r temp_type, echo = TRUE}
 
-temp_type = "worldclim_temp_max"
+temp_type = "worldclim_temp_min"
 
 ```
 
