@@ -37,6 +37,8 @@ Env_Table_path = (paste0("../Data/","Environment/dat_with_worldclim/dat_worldcli
 dat_full = read.csv(Env_Table_path, 
                     stringsAsFactors = FALSE)
 
+temp_type = "worldclim_temp_min"
+
 #########################################################################################################
 ### LOAD TEMPSUIT DATA ###
 #########################################################################################################
@@ -90,7 +92,7 @@ dir.create(name_dir)
 Niter = 500000
 
 if(!parall){
-  GLM_tempsuit_MCMC(Niter, name_dir, pars_ini, dat_full, dat_bite, dat_mort, dat_EIP, c34, run_id = 1, plot_chain = TRUE)
+  GLM_tempsuit_MCMC(Niter, name_dir, pars_ini, dat_full, temp_type, dat_bite, dat_mort, dat_EIP, c34, run_id = 1, plot_chain = TRUE)
 }
 
 #########################################################################################################
@@ -103,7 +105,8 @@ if(parall){
            FUN = function(run_id){GLM_tempsuit_MCMC(Niter, 
                                                     name_dir, 
                                                     pars_ini, 
-                                                    dat_full, 
+                                                    dat_full,
+                                                    temp_type,
                                                     dat_bite, 
                                                     dat_mort, 
                                                     dat_EIP, 

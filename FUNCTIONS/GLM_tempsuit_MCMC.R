@@ -4,6 +4,7 @@
 ##################################################################################
 GLM_tempsuit_MCMC_step = function(param,
                                   dat_full,
+                                  temp_type,
                                   dat_bite,
                                   dat_mort,
                                   dat_EIP,
@@ -25,7 +26,7 @@ GLM_tempsuit_MCMC_step = function(param,
     
     ### TEMP SUITABILITY ###
     dat_full_temp = cbind(dat_full, 
-                          temp_suitability(dat_full[,"worldclim_temp_max"] , 
+                          temp_suitability(dat_full[,temp_type] , 
                                            param_prop[21:29]))
     names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
     
@@ -77,6 +78,7 @@ GLM_tempsuit_MCMC = function(Niter,
                              name_dir,
                              pars_ini,
                              dat_full,
+                             temp_type,
                              dat_bite,
                              dat_mort,
                              dat_EIP,
@@ -103,6 +105,7 @@ GLM_tempsuit_MCMC = function(Niter,
   ### find posterior probability at start ###
   out = GLM_tempsuit_MCMC_step(pars_ini,
                                dat_full,
+                               temp_type,
                                dat_bite,
                                dat_mort,
                                dat_EIP,
@@ -158,6 +161,7 @@ GLM_tempsuit_MCMC = function(Niter,
     #new step
     out = GLM_tempsuit_MCMC_step(param,
                                  dat_full,
+                                 temp_type,
                                  dat_bite,
                                  dat_mort,
                                  dat_EIP,
