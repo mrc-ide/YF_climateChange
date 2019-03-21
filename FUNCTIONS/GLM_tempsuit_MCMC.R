@@ -16,7 +16,7 @@ GLM_tempsuit_MCMC_step = function(param,
   param_prop = YFestimation::GLMproposal(param, chain_cov, adapt)
   
   ### priors ###
-  prior_prop = sum( GLMprior_ts(param_prop[1:20]) ) + 
+  prior_prop = sum( YFestimation::GLMprior(param_prop[1:20]) ) + 
     fun_tempsuitPrior( param_prop[21:29])
   
   

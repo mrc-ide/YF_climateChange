@@ -128,10 +128,10 @@ modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+RFE.
 
 path = get_latest_file(pattern = "GLM_tempsuit_MCMC_chain_")
 
-path = "GLM_tempsuit_MCMC_chain_20190315_hamlet"
+#path = "GLM_tempsuit_MCMC_chain_20190315_hamlet"
 
 #get_chains
-mcmc_out=get_chains(path, burnin = 1, thin = 100)[, 1:29]
+mcmc_out=get_chains(path, burnin = 5e5, thin = 1)[, 1:29]
 
 ```
 
