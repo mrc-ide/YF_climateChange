@@ -37,6 +37,8 @@ run_estimation = function(run_id){
   dat_full = read.csv(Env_Table_path, 
                       stringsAsFactors = FALSE)
   
+  temp_type = "worldclim_temp_min"
+  
   #########################################################################################################
   ### LOAD TEMPSUIT DATA ###
   #########################################################################################################
@@ -90,6 +92,6 @@ run_estimation = function(run_id){
   Niter = 500000
   
   
-  GLM_tempsuit_MCMC(Niter, name_dir, pars_ini, dat_full, dat_bite, dat_mort, dat_EIP, c34, run_id, plot_chain = FALSE)
+  GLM_tempsuit_MCMC(Niter, name_dir, pars_ini, dat_full, temp_type, dat_bite, dat_mort, dat_EIP, c34, run_id, plot_chain = FALSE)
   
 }
