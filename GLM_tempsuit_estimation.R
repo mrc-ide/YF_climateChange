@@ -11,6 +11,7 @@ library(reshape)
 library(mvtnorm)
 library(truncdist)
 library(R.utils)
+library(tibble)
 
 library(YFestimation)
 library(KsetupR)
@@ -37,7 +38,13 @@ Env_Table_path = (paste0("../Data/","Environment/dat_with_worldclim/dat_worldcli
 dat_full = read.csv(Env_Table_path, 
                     stringsAsFactors = FALSE)
 
-temp_type = "worldclim_temp_min"
+dat_full = dat_full %>% add_column(worldclim_temp_mid = (dat_full$worldclim_temp_min + dat_full$worldclim_temp_max)/2)
+
+dat_full = dat_full %>% add_column(worldclim_temp_range = (dat_full$worldclim_temp_max - dat_full$worldclim_temp_min))
+
+temp_type = "worldclim_temp_mid"
+
+modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+worldclim_temp_range+RFE.mean" 
 
 #########################################################################################################
 ### LOAD TEMPSUIT DATA ###
@@ -80,6 +87,17 @@ prev_param = read.csv(file_name)
 pars_ini = c(prev_param$median)
 names(pars_ini) = prev_param$Parameter
 
+pars_ini = c(pars_ini, worldclim_temp_range = 1e-1)
+
+#get in the right order
+pars_ini = pars_ini[c("Intercept","log.surv.qual.adm0","adm05AGO",
+                      "adm05BDI","adm05ERI","adm05ETH","adm05GNB",
+                      "adm05KEN","adm05MRT","adm05RWA" ,
+                      "adm05SDN" ,"adm05SOM" ,"adm05SSD" ,"adm05TZA",
+                      "adm05UGA","adm05ZMB" , "lon" ,"logpop","temp_suitability",
+                      "worldclim_temp_range", "RFE.mean",
+                      "a_T0" ,"a_Tm" ,"a_c", "mu_T0","mu_Tm",
+                      "mu_c" ,"PDR_T0","PDR_Tm","PDR_c") ]
 
 #########################################################################################################
 ### MCMC ###
@@ -92,7 +110,18 @@ dir.create(name_dir)
 Niter = 500000
 
 if(!parall){
-  GLM_tempsuit_MCMC(Niter, name_dir, pars_ini, dat_full, temp_type, dat_bite, dat_mort, dat_EIP, c34, run_id = 1, plot_chain = TRUE)
+  GLM_tempsuit_MCMC(Niter, 
+                    name_dir, 
+                    modelVec,
+                    pars_ini, 
+                    dat_full, 
+                    temp_type, 
+                    dat_bite, 
+                    dat_mort, 
+                    dat_EIP, 
+                    c34, 
+                    run_id = 1, 
+                    plot_chain = TRUE)
 }
 
 #########################################################################################################
@@ -104,6 +133,7 @@ if(parall){
   mclapply(X = c(1:6),
            FUN = function(run_id){GLM_tempsuit_MCMC(Niter, 
                                                     name_dir, 
+                                                    modelVec,
                                                     pars_ini, 
                                                     dat_full,
                                                     temp_type,

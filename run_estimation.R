@@ -4,6 +4,9 @@ run_estimation = function(run_id){
   #########################################################################################################
   ### LIBRARIES FOR PACKAGES USED ###
   #########################################################################################################
+  #########################################################################################################
+  ### LIBRARIES FOR PACKAGES USED ###
+  #########################################################################################################
   
   library(dplyr)
   library(readr)
@@ -11,6 +14,7 @@ run_estimation = function(run_id){
   library(mvtnorm)
   library(truncdist)
   library(R.utils)
+  library(tibble)
   
   library(YFestimation)
   library(KsetupR)
@@ -37,7 +41,13 @@ run_estimation = function(run_id){
   dat_full = read.csv(Env_Table_path, 
                       stringsAsFactors = FALSE)
   
-  temp_type = "worldclim_temp_min"
+  dat_full = dat_full %>% add_column(worldclim_temp_mid = (dat_full$worldclim_temp_min + dat_full$worldclim_temp_max)/2)
+  
+  dat_full = dat_full %>% add_column(worldclim_temp_range = (dat_full$worldclim_temp_max - dat_full$worldclim_temp_min))
+  
+  temp_type = "worldclim_temp_mid"
+  
+  modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+worldclim_temp_range+RFE.mean" 
   
   #########################################################################################################
   ### LOAD TEMPSUIT DATA ###
@@ -74,12 +84,23 @@ run_estimation = function(run_id){
   #### INITIAL PARAM ####
   
   ### OR LOAD FROM PREVIOUS RUN ###
-  file_name = "Z:/YF_climateChange/GLM_tempsuit_parameter_estimates_20190318 .csv"#get_latest_file(pattern = "GLM_tempsuit_parameter_estimates")
+  file_name = get_latest_file(pattern = "GLM_tempsuit_parameter_estimates")
   prev_param = read.csv(file_name)
   
   pars_ini = c(prev_param$median)
   names(pars_ini) = prev_param$Parameter
   
+  pars_ini = c(pars_ini, worldclim_temp_range = 1e-1)
+  
+  #get in the right order
+  pars_ini = pars_ini[c("Intercept","log.surv.qual.adm0","adm05AGO",
+                        "adm05BDI","adm05ERI","adm05ETH","adm05GNB",
+                        "adm05KEN","adm05MRT","adm05RWA" ,
+                        "adm05SDN" ,"adm05SOM" ,"adm05SSD" ,"adm05TZA",
+                        "adm05UGA","adm05ZMB" , "lon" ,"logpop","temp_suitability",
+                        "worldclim_temp_range", "RFE.mean",
+                        "a_T0" ,"a_Tm" ,"a_c", "mu_T0","mu_Tm",
+                        "mu_c" ,"PDR_T0","PDR_Tm","PDR_c") ]
   
   #########################################################################################################
   ### MCMC ###
@@ -92,6 +113,6 @@ run_estimation = function(run_id){
   Niter = 500000
   
   
-  GLM_tempsuit_MCMC(Niter, name_dir, pars_ini, dat_full, temp_type, dat_bite, dat_mort, dat_EIP, c34, run_id, plot_chain = FALSE)
+  GLM_tempsuit_MCMC( Niter, name_dir, modelVec,pars_ini, dat_full, temp_type, dat_bite, dat_mort, dat_EIP, c34, run_id, plot_chain = FALSE)
   
 }

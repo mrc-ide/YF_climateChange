@@ -28,7 +28,6 @@ calc_Foi_tempprecipchange = function(dat_full,
   
   
   ### GET x ###
-  modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+RFE.mean" 
   object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
   x = object_glm[[2]]
   

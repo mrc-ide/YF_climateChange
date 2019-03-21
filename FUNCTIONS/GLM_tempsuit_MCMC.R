@@ -2,7 +2,8 @@
 ##################################################################################
 ### GLM tempsuit mcmc step ###
 ##################################################################################
-GLM_tempsuit_MCMC_step = function(param,
+GLM_tempsuit_MCMC_step = function(modelVec,
+                                  param,
                                   dat_full,
                                   temp_type,
                                   dat_bite,
@@ -17,8 +18,8 @@ GLM_tempsuit_MCMC_step = function(param,
   param_prop = YFestimation::GLMproposal(param, chain_cov, adapt)
   
   ### priors ###
-  prior_prop = sum( YFestimation::GLMprior(param_prop[1:20]) ) + 
-    fun_tempsuitPrior( param_prop[21:29])
+  prior_prop = sum( GLMprior_ts(param_prop[1:21]) ) + 
+    fun_tempsuitPrior( param_prop[22:30])
   
   
   ### if prior finite, evaluate likelihood ###
@@ -27,7 +28,7 @@ GLM_tempsuit_MCMC_step = function(param,
     ### TEMP SUITABILITY ###
     dat_full_temp = cbind(dat_full, 
                           temp_suitability(dat_full[,temp_type] , 
-                                           param_prop[21:29]))
+                                           param_prop[22:30]))
     names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
     
     envdat = launch_env_dat(filepath = NA, 
@@ -35,14 +36,14 @@ GLM_tempsuit_MCMC_step = function(param,
                             c34 = c34)  
     
     ### GET x ###
-    modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+RFE.mean" 
+    
     object_glm = YFestimation::fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
     x = object_glm[[2]]
     y = object_glm[[3]]
     
     ### LIKE ###
-    like_prop = YFestimation::GLMlike(param_prop[1:20], x, y) + 
-      fun_tempsuitLike(dat_bite, dat_mort, dat_EIP, param_prop[21:29]) 
+    like_prop = YFestimation::GLMlike(param_prop[1:21], x, y) + 
+      fun_tempsuitLike(dat_bite, dat_mort, dat_EIP, param_prop[22:30]) 
     
     ### accept/ reject ###
     accProp = like_prop + prior_prop
@@ -76,6 +77,7 @@ GLM_tempsuit_MCMC_step = function(param,
 ##################################################################################
 GLM_tempsuit_MCMC = function(Niter,
                              name_dir,
+                             modelVec,
                              pars_ini,
                              dat_full,
                              temp_type,
@@ -92,18 +94,10 @@ GLM_tempsuit_MCMC = function(Niter,
   #set random seed
   set.seed(run_id)
   
-  #get in the right order
-  pars_ini = pars_ini[c("Intercept","log.surv.qual.adm0","adm05AGO",
-                        "adm05BDI","adm05ERI","adm05ETH","adm05GNB",
-                        "adm05KEN","adm05MRT","adm05RWA" ,
-                        "adm05SDN" ,"adm05SOM" ,"adm05SSD" ,"adm05TZA",
-                        "adm05UGA","adm05ZMB" , "lon" ,"logpop","temp_suitability",
-                        "RFE.mean",
-                        "a_T0" ,"a_Tm" ,"a_c", "mu_T0","mu_Tm",
-                        "mu_c" ,"PDR_T0","PDR_Tm","PDR_c") ]
   
   ### find posterior probability at start ###
-  out = GLM_tempsuit_MCMC_step(pars_ini,
+  out = GLM_tempsuit_MCMC_step(modelVec,
+                               pars_ini,
                                dat_full,
                                temp_type,
                                dat_bite,
@@ -159,7 +153,8 @@ GLM_tempsuit_MCMC = function(Niter,
     }
     
     #new step
-    out = GLM_tempsuit_MCMC_step(param,
+    out = GLM_tempsuit_MCMC_step(modelVec,
+                                 param,
                                  dat_full,
                                  temp_type,
                                  dat_bite,
@@ -187,7 +182,7 @@ GLMprior_ts = function(param) {
   
   #GLM
   jj = grep("^log.adm05", names(param)) 
-  sd.prior = 1 ##changed this
+  sd.prior = 0.1 ##changed this
   
   Prior[1] =  - 0.5 * sum((param[jj] / sd.prior) ^ 2) # adjustment for reduced variation between countries?
   

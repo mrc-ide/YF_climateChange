@@ -45,6 +45,7 @@ library(abind)
 library(mvtnorm)
 library(RColorBrewer)
 library(truncdist)
+library(tibble)
 
 library(ggmcmc)
 library(mcmcplots)
@@ -91,6 +92,14 @@ Env_Table_path = paste0("../Data/","Environment/dat_with_worldclim/dat_worldclim
 
 dat_full = read.csv(Env_Table_path, stringsAsFactors=FALSE)
 
+dat_full = dat_full %>% add_column(worldclim_temp_mid = (dat_full$worldclim_temp_min + dat_full$worldclim_temp_max)/2)
+
+dat_full = dat_full %>% add_column(worldclim_temp_range = (dat_full$worldclim_temp_max - dat_full$worldclim_temp_min))
+
+temp_type = "worldclim_temp_mid"
+
+modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+worldclim_temp_range+RFE.mean" 
+
 #########################################################################################################
 ### LOAD TEMPSUIT DATA ###
 #########################################################################################################
@@ -115,11 +124,6 @@ dat_EIP <- read_csv("Data/davis_EIP.csv")
 n_samples = 1000
 
 
-#########################################################################################################
-### model form ###
-#########################################################################################################
-modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+RFE.mean"
-
 ```
 
 
@@ -131,7 +135,7 @@ path = get_latest_file(pattern = "GLM_tempsuit_MCMC_chain_")
 #path = "GLM_tempsuit_MCMC_chain_20190315_hamlet"
 
 #get_chains
-mcmc_out=get_chains(path, burnin = 5e5, thin = 1)[, 1:29]
+mcmc_out=get_chains(path, burnin = 1e5, thin = 1)[, 1:30]
 
 ```
 
@@ -166,7 +170,7 @@ ggs_crosscorrelation(chain_sub)
 ggs_caterpillar(chain_sub)
 
 ### save values 
-write.csv(ci(chain_sub), paste0("GLM_tempsuit_parameter_estimates_", format(Sys.time(),"%Y%m%d"), " .csv"), row.names = FALSE)
+write.csv(ci(chain_sub), paste0("GLM_tempsuit_parameter_estimates_", format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
 
 ```
 
@@ -241,14 +245,14 @@ points(dat_EIP$T, dat_EIP$PDR, col = "red", pch =20)
 
 Temp = seq(15, 42, by=0.01)
 
-plot(Temp, temp_suitability(Temp ,apply(mcmc_out[,21:29], 2, median)), 
+plot(Temp, temp_suitability(Temp ,apply(mcmc_out[,22:30], 2, median)), 
      ylim = c(0,100), type = "l", lwd =1, 
      xlab = "Temperature", ylab = "Suitability")
 
 temp_suit_mat = NULL
 for (i in 1:n_samples){
   ind = sample(nrow(mcmc_out), 1)
-  t_s = temp_suitability(Temp ,  mcmc_out[ind,21:29] )
+  t_s = temp_suitability(Temp ,  mcmc_out[ind,22:30] )
   
   lines(Temp, t_s, type = "l", ylim = c(0,1), lwd =1, 
         xlab = "Temperature", ylab = "Suitability", col = rgb(0,0,0,alpha=0.01)  )
@@ -272,12 +276,6 @@ quantile(peak, c(0.025, 0.5, 0.975))
 
 We will map the median predictions and then examine uncertainty.
 
-```{r temp_type, echo = TRUE}
-
-temp_type = "worldclim_temp_min"
-
-```
-
 ```{r plot_glm, fig.height=10, fig.width=7, fig.cap="Actual versus predicted probability of a yellow fever report for median posterior parameter estimates."}
 
 par(mar = 0*c(5.1,4.1,4.1,2.1))
@@ -286,7 +284,7 @@ par(mar = 0*c(5.1,4.1,4.1,2.1))
 ### model ###
 
 ### TEMP SUITABILITY ###
-dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,temp_type] , apply(mcmc_out[,21:29], 2 ,"median")) )
+dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,temp_type] , apply(mcmc_out[,22:30], 2 ,"median")) )
 names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
 envdat = launch_env_dat(filepath = NA, dat_full = dat_full_temp, c34 = c34)  
 
@@ -296,7 +294,7 @@ object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec )
 x = object_glm[[2]]
 
 ### preds
-Est_beta =  apply(mcmc_out[,1:19], 2, median)
+Est_beta =  apply(mcmc_out[,1:20], 2, median)
 glmpreds_tmp = fun_calcPred( Est_beta ,x,type="response")
 
 
@@ -358,7 +356,7 @@ for(i in 1:n_samples){
   sample_ind = sample(nrow(mcmc_out), 1)
   
   ### TEMP SUITABILITY ###
-  dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,temp_type] , mcmc_out[sample_ind,21:29])  )
+  dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,temp_type] , mcmc_out[sample_ind,22:30])  )
   names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
   envdat = launch_env_dat(filepath = NA, dat_full = dat_full_temp, c34 = c34)  
   
@@ -368,7 +366,7 @@ for(i in 1:n_samples){
   x = object_glm[[2]]
   
   ### preds
-  Est_beta =  as.numeric( mcmc_out[sample_ind,1:20] )
+  Est_beta =  as.numeric( mcmc_out[sample_ind,1:21] )
   glmpreds_tmp = fun_calcPred( Est_beta ,x,type="response")
   
   glm_pred_uncert = rbind(glm_pred_uncert, t(glmpreds_tmp) )
@@ -532,13 +530,13 @@ scenarios = c(0, 2, 4)
 
 
 adjusted_params = c(exp(median(mcmc_out_f[,1])), 
-                        apply(mcmc_out[,1:20], 2, median, na.rm = T), 
+                        apply(mcmc_out[,1:21], 2, median, na.rm = T), 
                         exp(apply(mcmc_out_f[,c(2:41)], 2, median, na.rm = T)),
                         exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
 
 names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
   
-temp_param = apply(mcmc_out[,21:29], 2, median, na.rm = TRUE)
+temp_param = apply(mcmc_out[,22:30], 2, median, na.rm = TRUE)
 
 FOI_median_samples = calc_Foi_tempprecipchange(dat_full,
                                          adjusted_params,
@@ -663,13 +661,13 @@ scenarios = seq(0,2, length.out = 2050-2017)
 
 # then we take n_samples random samples of our posteriors to create our output.
 adjusted_params = c(exp(median(mcmc_out_f[,1])), 
-                    apply(mcmc_out[,1:20], 2, median, na.rm = TRUE), 
+                    apply(mcmc_out[,1:21], 2, median, na.rm = TRUE), 
                     exp(apply(mcmc_out_f[,c(2:41)], 2, median, na.rm = TRUE)),
                     exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
 
 names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
 
-temp_param = apply(mcmc_out[,21:29], 2, median, na.rm = TRUE)
+temp_param = apply(mcmc_out[,22:30], 2, median, na.rm = TRUE)
 
 
 run_for_scenarios = function(s){

@@ -10,7 +10,7 @@ context::context_log_start()
 
 root = "contexts"
 
-packages <- list( attached = c("dplyr", "readr", "reshape", "mvtnorm", "truncdist","R.utils", "YFestimation", "KsetupR"))
+packages <- list( attached = c("dplyr", "readr", "reshape", "mvtnorm", "truncdist","R.utils", "tibble", "YFestimation", "KsetupR"))
 
 sources <- c("FUNCTIONS/GLM_tempsuit_MCMC.R", 
              "FUNCTIONS/temp_suit.R", 
