@@ -42,9 +42,12 @@ GLM_tempsuit_MCMC_step = function(modelVec,
     y = object_glm[[3]]
     
     ### LIKE ###
-    like_prop = YFestimation::GLMlike(param_prop[1:21], x, y) + 
-      fun_tempsuitLike(dat_bite, dat_mort, dat_EIP, param_prop[22:30]) 
-    
+    if(!anyNA(x)){
+      like_prop = YFestimation::GLMlike(param_prop[1:21], x, y) + 
+        fun_tempsuitLike(dat_bite, dat_mort, dat_EIP, param_prop[22:30]) 
+    } else {
+      like_prop = -Inf
+    }
     ### accept/ reject ###
     accProp = like_prop + prior_prop
     
