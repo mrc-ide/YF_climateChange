@@ -88,7 +88,7 @@ sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 ### LOAD ENVIRONMENTAL DATA ###
 #########################################################################################################
 
-Env_Table_path = paste0("../Data/","Environment/dat_with_worldclim/dat_worldclim_baseline_2019-03-15.csv") 
+Env_Table_path = paste0("../Data/","Environment/dat_with_worldclim/dat_worldclim_baseline_2019-03-22.csv") 
 
 dat_full = read.csv(Env_Table_path, stringsAsFactors=FALSE)
 
@@ -151,8 +151,10 @@ for(i in 1:ncol(mcmc_out)){
 ```{r posterior, fig.height = 10, fig.width = 7}
 par(mfrow = c(7,5), mar = c(2,4,2,1)+0.1)
 for(i in 1:ncol(mcmc_out)){
-  plot(density(mcmc_out[,i]), type = "l", xlab = "", main = names(mcmc_out)[i], col = "lightslateblue")
-  polygon(density(mcmc_out[,i]), type = "l", xlab = "", main = names(mcmc_out)[i], col = "lightslateblue", border = "slateblue")
+  plot(density(mcmc_out[,i]), 
+       type = "l", xlab = "", main = names(mcmc_out)[i], col = "lightslateblue")
+  polygon(density(mcmc_out[,i]), 
+          type = "l", xlab = "", main = names(mcmc_out)[i], col = "lightslateblue", border = "slateblue")
 }
 ```
 
@@ -170,7 +172,8 @@ ggs_crosscorrelation(chain_sub)
 ggs_caterpillar(chain_sub)
 
 ### save values 
-write.csv(ci(chain_sub), paste0("GLM_tempsuit_parameter_estimates_", format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
+write.csv(ci(chain_sub), paste0("GLM_tempsuit_parameter_estimates_", 
+                                format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
 
 ```
 
@@ -218,7 +221,8 @@ mu = ifelse( lf<=0, 1, 1/ lf ) + 1e-8
 lines(Temp, mu, col = rgb(0,0,0,alpha=0.1))
 }
 
-points(dat_mort$Temp, dat_mort$Dead/(dat_mort$Dead+dat_mort$Alive), pch = 20, col="red", cex = (dat_mort$Dead+dat_mort$Alive)/100)
+points(dat_mort$Temp, dat_mort$Dead/(dat_mort$Dead+dat_mort$Alive), 
+       pch = 20, col="red", cex = (dat_mort$Dead+dat_mort$Alive)/100)
 
 ```
 
@@ -284,7 +288,9 @@ par(mar = 0*c(5.1,4.1,4.1,2.1))
 ### model ###
 
 ### TEMP SUITABILITY ###
-dat_full_temp = cbind(dat_full, temp_suitability(dat_full[,temp_type] , apply(mcmc_out[,22:30], 2 ,"median")) )
+dat_full_temp = cbind(dat_full, 
+                      temp_suitability(dat_full[,temp_type] , 
+                                       apply(mcmc_out[,22:30], 2 ,"median")) )
 names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
 envdat = launch_env_dat(filepath = NA, dat_full = dat_full_temp, c34 = c34)  
 
@@ -294,16 +300,16 @@ object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec )
 x = object_glm[[2]]
 
 ### preds
-Est_beta =  apply(mcmc_out[,1:20], 2, median)
+Est_beta =  apply(mcmc_out[,1:21], 2, median)
 glmpreds_tmp = fun_calcPred( Est_beta ,x,type="response")
 
 
 #plotting
-mybreaks = seq(0,1.0001,by=0.01)
-mycols =  heat.colors(length(mybreaks)-1)
+mybreaks = seq(0,1,by=0.01)
+mycols =  (snapalette("BudapestCitadel",length(mybreaks)-1, type = "continuous"))
 mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
 vcols = findInterval(glmpreds_tmp,mybreaks)
-vcols=101-vcols
+
 
 plot(shp0, xlim=c(-15,45),ylim=c(-20,35))
 mm0 = match(shp0$ISO,c34) #
@@ -320,7 +326,7 @@ image.plot(legend.only=TRUE,
 
 ```
 
-```{r plot_temp_suit, fig.cap = "Normalized temperature suitability from median of posterior predicted distribution."}
+```{r plot_temp_suit, fig.height=10, fig.width=7, fig.cap = "Normalized temperature suitability from median of posterior predicted distribution."}
 par(mar = 0*c(5.1,4.1,4.1,2.1))
 
 temp_suit = (dat_full_temp$temp_suitability)
@@ -331,9 +337,10 @@ vcols = findInterval(temp_suit,mybreaks)
 
 mm = match(shp1$adm0_adm1, dat_full_temp$adm0_adm1)
 
-plot(shp0, xlim=c(-15,45), ylim=c(-20,35))
+plot(shp0, xlim=c(-15,45),ylim=c(-20,35))
+mm0 = match(shp0$ISO,c34) #
 plot(shp0[is.na(mm0),],col="black",add=TRUE) 
-plot(shp1[!is.na(mm),], col=mycols[vcols], xlim=c(-15,45), ylim=c(-20,35) , lty=0, add=TRUE)
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45), ylim=c(-20,35) , lty=0, add=TRUE)
 plot(shp0,  add=TRUE)
 plot(shp0[is.na(mm0),],col="black",add=TRUE) 
 
@@ -347,7 +354,7 @@ image.plot(legend.only=TRUE,
 ```
 
 
-```{r glm_predict_uncertainty_prep, fig.cap="Coefficient of variation % for predictions."}
+```{r glm_predict_uncertainty_prep, fig.height=10, fig.width=7, fig.cap="Coefficient of variation % for predictions."}
 
 glm_pred_uncert = NULL
 
@@ -373,7 +380,7 @@ for(i in 1:n_samples){
 }
 ```
 
-```{r glm_predict_uncertainty, fig.cap="Coefficient of variation % for predictions."}
+```{r glm_predict_uncertainty, fig.height=10, fig.width=7, fig.cap="Coefficient of variation % for predictions."}
 
 par(mar = 0*c(5.1,4.1,4.1,2.1))
 
@@ -385,7 +392,7 @@ mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
 vcols = findInterval(coeff_of_var,mybreaks)
 
 
-plot(shp0, xlim=c(-15,45),ylim=c(-20,35), main="")
+plot(shp0, xlim=c(-15,45),ylim=c(-20,35))
 mm0 = match(shp0$ISO,c34) #
 plot(shp0[is.na(mm0),],col="black",add=T) 
 plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45), ylim=c(-20,35) , lty=0, add=T)
@@ -508,7 +515,8 @@ P_tot_survey = list_pop_at_survey$P_tot_survey_2d
 
 ```{r import_serology_fit}
 
-filepath = get_latest_file(path = "Z:/MultiModelInference", pattern = "multi_model_MCMC_chain_")
+filepath = "Z:/MultiModelInference/multi_model_MCMC_chain_20180622" #get_latest_file(path = "Z:/MultiModelInference", pattern = "multi_model_MCMC_chain_")
+#
 
 
 mcmc_out_sero = get_chains(filepath, burnin = 1, thin = 100)
@@ -517,17 +525,25 @@ mcmc_out_sero = get_chains(filepath, burnin = 1, thin = 100)
 
 
 
-```{r transmission, fig.cap="Force of infection %.", echo=TRUE}
+```{r transmission, fig.height=10, fig.width=7, fig.cap="Force of infection.", echo=TRUE}
+
+dat_full_temp = cbind(dat_full, 
+                      temp_suitability(dat_full[,temp_type] , 
+                                       apply(mcmc_out[,22:30], 2 ,"median")) )
+names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
+envdat = launch_env_dat(filepath = NA, dat_full = dat_full_temp, c34 = c34)  
+
+### GET x ###
+
+object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
+x = object_glm[[2]]
 
 
-ii= 2:20
+ii= 2:22
 
 varsin_nc=ii[-grep("adm0",colnames(x))] - 1 
 
-mcmc_out_f = filter(mcmc_out_sero, model_chain ==0)
-#three scenarios of mean temperature increase across the region
-scenarios = c(0, 2, 4)
-
+mcmc_out_f = filter(mcmc_out_sero, model_chain == 0)
 
 adjusted_params = c(exp(median(mcmc_out_f[,1])), 
                         apply(mcmc_out[,1:21], 2, median, na.rm = T), 
@@ -535,39 +551,35 @@ adjusted_params = c(exp(median(mcmc_out_f[,1])),
                         exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
 
 names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
-  
-temp_param = apply(mcmc_out[,22:30], 2, median, na.rm = TRUE)
-
-FOI_median_samples = calc_Foi_tempprecipchange(dat_full,
-                                         adjusted_params,
-                                         temp_param,
-                                         scenarios,
-                                         c34,
-                                         seroout,
-                                         t0_vac_africa,
-                                         dim_year,
-                                         dim_age,
-                                         p_prop_3d,
-                                         P_tot_2d,
-                                         inc_v3d,
-                                         pop_moments_whole,
-                                         varsin_nc,
-                                         pop1,
-                                         vc2d)
 
 
-write.csv(FOI_median_samples, paste0("Foi_median_climate_samples_", format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
+outfoi = YFestimation::fun_calc_transmission_Africa(x, 
+                                                    ii, 
+                                                    seroout,
+                                                    params = adjusted_params,
+                                                    dat = envdat$dat,
+                                                    t0_vac_africa,
+                                                    dim_year,
+                                                    dim_age,
+                                                    p_prop_3d,
+                                                    P_tot_2d,
+                                                    inc_v3d,
+                                                    pop1,
+                                                    vc2d,
+                                                    varsin_nc,
+                                                    polydeg = 5,
+                                                    R0_lookup,
+                                                    model_type = "Foi")
 
 # plot baseline
 par(mar = 0*c(5.1,4.1,4.1,2.1))
 
-Foi_runs = filter(FOI_median_samples, scenario == 0)[,-1]
+Foi_runs = outfoi
 
-mybreaks= seq(-3, 1.2, length.out=100)
-mycols =  rev( snapalette( "Kalypso", length(mybreaks)-1, type = "continuous" ))
+mybreaks = seq(-5, -1, length.out=101)
+mycols =  ( snapalette( "Ipanema", length(mybreaks)-1, type = "continuous" ))
 mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
-vcols = findInterval(log10(Foi_runs*100),mybreaks)
-
+vcols = findInterval(log10(Foi_runs),mybreaks)
 
 
 plot(shp0, xlim=c(-15,45),ylim=c(-20,35))
@@ -576,9 +588,9 @@ plot(shp0[is.na(mm0),],col="grey70",add=T)
 plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,35) , lty=0, add=T)
 plot(shp0, lwd=2, add=T)
 
-image.plot(legend.only=TRUE,breaks=mybreaks,col=mycols,zlim=c(0,1), horizontal = TRUE, 
-                    axis.args = list(at = c(-3:1), labels =c( "0.001", "0.01", "0.1","1","10"), las =2),
-                    legend.mar = 3.5)
+image.plot(legend.only=TRUE, breaks=mybreaks, col=mycols, zlim=c(0,1), horizontal = TRUE,
+               axis.args = list(at = c(-5:-1), labels =c("1e-05","1e-04", "0.001", "0.01", "0.1"), las =2),
+               legend.mar = 3.5)
 
 ```
 

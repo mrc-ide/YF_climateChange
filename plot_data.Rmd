@@ -69,7 +69,7 @@ country34 = Countries$country34
 ```
 
 ```{r occurrence, fig.cap="Location of YF occurrence from 1984 to 2018. Red indicates occurrence, white no reports and black indicates that area is not in the YF endemic region."}
-Env_Table_path = paste0("../Data/","Environment/dat_with_worldclim/dat_worldclim_baseline_2019-03-15.csv")
+Env_Table_path = paste0("../Data/","Environment/dat_with_worldclim/dat_worldclim_baseline_2019-03-22.csv")
 dat_full = read.csv(Env_Table_path, stringsAsFactors=FALSE)
 
 ### data ###

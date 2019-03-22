@@ -36,7 +36,7 @@ run_estimation = function(run_id){
   ### LOAD ENVIRONMENTAL DATA ###
   #########################################################################################################
   
-  Env_Table_path = (paste0("../Data/","Environment/dat_with_worldclim/dat_worldclim_baseline_2019-03-15.csv")) 
+  Env_Table_path = (paste0("../Data/","Environment/dat_with_worldclim/dat_worldclim_baseline_2019-03-22.csv")) 
   
   dat_full = read.csv(Env_Table_path, 
                       stringsAsFactors = FALSE)
@@ -90,7 +90,7 @@ run_estimation = function(run_id){
   pars_ini = c(prev_param$median)
   names(pars_ini) = prev_param$Parameter
   
-  pars_ini = c(pars_ini, worldclim_temp_range = 1e-1)
+  pars_ini = c(pars_ini, worldclim_temp_range = 1e-2)
   
   #get in the right order
   pars_ini = pars_ini[c("Intercept","log.surv.qual.adm0","adm05AGO",
@@ -107,12 +107,23 @@ run_estimation = function(run_id){
   #########################################################################################################
   #create a directory to save the output in
   date=format(Sys.time(),"%Y%m%d")
-  name_dir = paste0("GLM_tempsuit_MCMC_chain", "_", date, "_hamlet", "_cluster")
+  name_dir = paste0("GLM_tempsuit_MCMC_chain", "_", date)
   dir.create(name_dir)
   
   Niter = 500000
   
   
-  GLM_tempsuit_MCMC( Niter, name_dir, modelVec,pars_ini, dat_full, temp_type, dat_bite, dat_mort, dat_EIP, c34, run_id, plot_chain = FALSE)
+  GLM_tempsuit_MCMC( Niter,
+                     name_dir,
+                     modelVec,
+                     pars_ini,
+                     dat_full,
+                     temp_type,
+                     dat_bite,
+                     dat_mort,
+                     dat_EIP,
+                     c34,
+                     run_id,
+                     plot_chain = FALSE)
   
 }
