@@ -89,8 +89,7 @@ run_estimation = function(run_id){
   
   pars_ini = c(prev_param$median)
   names(pars_ini) = prev_param$Parameter
-  
-  pars_ini = c(pars_ini, worldclim_temp_range = 1e-2)
+
   
   #get in the right order
   pars_ini = pars_ini[c("Intercept","log.surv.qual.adm0","adm05AGO",
@@ -102,6 +101,8 @@ run_estimation = function(run_id){
                         "a_T0" ,"a_Tm" ,"a_c", "mu_T0","mu_Tm",
                         "mu_c" ,"PDR_T0","PDR_Tm","PDR_c") ]
   
+  pars_ini[grep("^adm05", names(pars_ini))] = -1
+  pars_ini[grep("^adm05AGO", names(pars_ini))] = 1
   #########################################################################################################
   ### MCMC ###
   #########################################################################################################

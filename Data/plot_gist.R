@@ -14,7 +14,7 @@ plot(shp0, xlim=c(-15,45),ylim=c(-20,35))
 mm0 = match(shp0$ISO,c34) #
 plot(shp0[is.na(mm0),],col="grey70",add=T) 
 plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,35) , lty=0, add=T)
-
+plot(shp0, add = T)
 
 image.plot(legend.only=TRUE,breaks=mybreaks,col=mycols,zlim=c(0,1), horizontal = TRUE, 
            legend.mar = 3.5)
@@ -34,7 +34,7 @@ plot(shp0, xlim=c(-15,45),ylim=c(-20,35))
 mm0 = match(shp0$ISO,c34) #
 plot(shp0[is.na(mm0),],col="grey70",add=T) 
 plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,35) , lty=0, add=T)
-
+plot(shp0, add = T)
 
 image.plot(legend.only=TRUE,breaks=mybreaks,col=mycols,zlim=c(0,1), horizontal = TRUE, 
            legend.mar = 3.5)

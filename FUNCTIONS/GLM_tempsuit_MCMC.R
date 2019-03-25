@@ -184,16 +184,15 @@ GLMprior_ts = function(param) {
   Prior = rep(0,2)
   
   #GLM
-  jj = grep("^log.adm05", names(param)) 
-  sd.prior = 0.1 ##changed this
+  jj = grep("^adm05", names(param)) 
+  sd.prior = 2 ##changed this
   
   Prior[1] =  - 0.5 * sum((param[jj] / sd.prior) ^ 2) # adjustment for reduced variation between countries?
   
-  Prior[2] =  sum(dnorm(param[grepl("^log.adm05", names(param)) == FALSE],
+  Prior[2] =  sum(dnorm(param[grepl("^adm05", names(param)) == FALSE],
                         mean = 0,
                         sd = 30,
-                        log = TRUE
-  ))
+                        log = TRUE))
   
   out = as.numeric( Prior )
   return( out )
