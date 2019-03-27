@@ -196,6 +196,13 @@ ggs_compare_partial(chain_sub, family = "adm05GNB")
 
 ```
 
+```{r raftery}
+rd = coda::raftery.diag(chain_sub2)
+rd[[1]]$resmatrix
+
+max(rd[[1]]$resmatrix[,2])
+```
+
 # Plotting the fit
 
 We do this first for the temperature suitability parameters and then for the GLM and temp suitability.
@@ -298,7 +305,7 @@ quantile(peak, c(0.025, 0.5, 0.975))
 
 We will map the median predictions and then examine uncertainty.
 
-```{r plot_glm, fig.height=10, fig.width=7, fig.cap="Actual versus predicted probability of a yellow fever report for median posterior parameter estimates."}
+```{r plot_glm, fig.height=7, fig.width=7, fig.cap="Actual versus predicted probability of a yellow fever report for median posterior parameter estimates."}
 snapal = "BudapestCitadel"
 
 
