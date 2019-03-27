@@ -1,1 +1,0 @@
-This are estimated with the temperature suitability of hamlet with param estimated from YF data. These are fixed at their median value.

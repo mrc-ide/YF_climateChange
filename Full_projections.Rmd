@@ -136,22 +136,30 @@ path = get_latest_file(pattern = "GLM_tempsuit_MCMC_chain_")
 #path = "Z:/MultiModelInference/chains/GLM_MCMC_chain_20180515"
 
 #get_chains
-mcmc_out=get_chains(path, burnin = 1e6, thin = 1)
+mcmc_out = get_chains(path, burnin = 1.5e6, thin = 1)
+
+plot(mcmc_out$posteriorProb, type = "l", ylab = "Posterior probability", xlab = "Iteration")
+
+ind = which.max(mcmc_out$posteriorProb)
 
 mcmc_out = mcmc_out[, 1:(ncol(mcmc_out)-2)]
 
 ```
 
 
-```{r trace_basic, fig.height = 10, fig.width = 7}
-
+```{r trace_basic_adm05, fig.height = 10, fig.width = 7}
 par(mfrow = c(7,5), mar = c(2,4,2,1)+0.1)
+
 for(i in 1:ncol(mcmc_out)){
   plot(mcmc_out[,i], type = "l", xlab = "", ylab = names(mcmc_out)[i])
 }
 ```
 
 ```{r posterior, fig.height = 10, fig.width = 7}
+chain_sub2 = convert.mcmc.list(mcmc_out)
+
+chain_sub = ggs(chain_sub2 )
+
 par(mfrow = c(7,5), mar = c(2,4,2,1)+0.1)
 for(i in 1:ncol(mcmc_out)){
   plot(density(mcmc_out[,i]), 
@@ -162,9 +170,7 @@ for(i in 1:ncol(mcmc_out)){
 ```
 
 ```{r correlations, fig.height = 10, fig.width = 7}
-chain_sub2 = convert.mcmc.list(mcmc_out)
 
-chain_sub = ggs(chain_sub2 )
 
 ggs_crosscorrelation(chain_sub)
 
@@ -180,6 +186,15 @@ write.csv(ci(chain_sub), paste0("GLM_tempsuit_parameter_estimates_",
 
 ```
 
+```{r running_mean}
+ggs_running(chain_sub, family = "adm05GNB")
+
+```
+
+```{r partial}
+ggs_compare_partial(chain_sub, family = "adm05GNB")
+
+```
 
 # Plotting the fit
 
@@ -286,12 +301,14 @@ We will map the median predictions and then examine uncertainty.
 ```{r plot_glm, fig.height=10, fig.width=7, fig.cap="Actual versus predicted probability of a yellow fever report for median posterior parameter estimates."}
 snapal = "BudapestCitadel"
 
+
+
 ##################################################################################
 ### model ###
 
 ### TEMP SUITABILITY ###
 dat_full_temp = cbind(dat_full,
-                      temp_suitability(dat_full[,temp_type] ,
+                      temp_suitability(dat_full[,temp_type] , #mcmc_out[ind,22:30]))
                                        apply(mcmc_out[,22:30], 2 ,"median")) )
 names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
 
@@ -303,7 +320,7 @@ object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec )
 x = object_glm[[2]]
 
 ### preds
-Est_beta =  apply(mcmc_out[,1:21], 2, median)
+Est_beta =  apply(mcmc_out[,1:21], 2, median) #as.numeric(mcmc_out[ind, 1:21])#
 
 
 plot_glm_map(shp0, shp1, c34, envdat$dat, Est_beta, x, snapalette(snapal, 1000, type="continuous"))
@@ -508,13 +525,15 @@ mcmc_out_sero = get_chains(filepath, burnin = 1, thin = 100)
 
 
 
-```{r transmission, fig.height=10, fig.width=7, fig.cap="Force of infection.", echo=TRUE}
+```{r transmission, fig.height=10, fig.width=7, fig.cap="Force of infection, %.", echo=TRUE}
 
-dat_full_temp = cbind(dat_full, 
-                      temp_suitability(dat_full[,temp_type] , 
+### TEMP SUITABILITY ###
+dat_full_temp = cbind(dat_full,
+                      temp_suitability(dat_full[,temp_type] , #mcmc_out[ind,22:30]))
                                        apply(mcmc_out[,22:30], 2 ,"median")) )
 names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
-envdat = YFestimation::launch_env_dat(filepath = NA, dat_full = dat_full_temp, c34 = c34)  
+
+envdat = YFestimation::launch_env_dat(filepath = NA, dat_full= dat_full_temp , c34 = c34)  
 
 ### GET x ###
 
@@ -529,218 +548,74 @@ varsin_nc=ii[-grep("adm0",colnames(x))] - 1
 mcmc_out_f = filter(mcmc_out_sero, model_chain == 0)
 
 adjusted_params = c(exp(median(mcmc_out_f[,1])), 
-                        apply(mcmc_out[,1:21], 2, median, na.rm = T), 
+                        apply(mcmc_out[,1:21], 2, median, na.rm = T), # as.numeric(mcmc_out[ind,1:21]), #
                         exp(apply(mcmc_out_f[,c(2:41)], 2, median, na.rm = T)),
                         exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
 
 names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
 
 
-colours = (snapalette("Ipanema", 100, type = "continuous"))
+colours = (snapalette("Camden", 100, type = "continuous"))
 
 # plot baseline
-YFestimation::plot_transmission_intensity(x, 
-                                          ii, 
-                                          seroout,
-                                          params = adjusted_params,
-                                          dat = envdat$dat,
-                                          t0_vac_africa,
-                                          dim_year,
-                                          dim_age,
-                                          p_prop_3d,
-                                          P_tot_2d,
-                                          inc_v3d,
-                                          pop1,
-                                          vc2d,
-                                          varsin_nc ,
-                                          polydeg = 5,
-                                          R0_lookup,
-                                          model_type = "Foi",
-                                          shp1,
-                                          shp0,
-                                          Countries,
-                                          colours)
+# YFestimation::plot_transmission_intensity(x, 
+#                                           ii, 
+#                                           seroout,
+#                                           params = adjusted_params,
+#                                           dat = envdat$dat,
+#                                           t0_vac_africa,
+#                                           dim_year,
+#                                           dim_age,
+#                                           p_prop_3d,
+#                                           P_tot_2d,
+#                                           inc_v3d,
+#                                           pop1,
+#                                           vc2d,
+#                                           varsin_nc ,
+#                                           polydeg = 5,
+#                                           R0_lookup,
+#                                           model_type = "Foi",
+#                                           shp1,
+#                                           shp0,
+#                                           Countries,
+#                                           colours)
 
-```
-
-```{r save_output, echo=TRUE, eval = TRUE}
-
-if(params$save_samples){
-  # We would like to save samples of the force of infection across the endemic region, 
-  # given the uncertainty in our posterior estimates, for three scenarios.
-  
-  #declare our output
-  FOI_samples = NULL
-  
-  #three scenarios of mean temperature increase across the region
-  scenarios = c(0, 2, 4)
-  
-  # then we take n_samples random samples of our posteriors to create our output.
-  
-  
-  for(i in 1:n_samples){
-    sample_ind = sample(nrow(mcmc_out), 1)
-    sample_ind_f = sample(nrow(mcmc_out_f), 1)
-    
-    
-    adjusted_params = unlist(c(exp(mcmc_out_f[sample_ind_f,1]), #vac eff
-                               mcmc_out[sample_ind,1:20] ,            #glm
-                               exp(mcmc_out_f[sample_ind_f,c(2:41)]),  #foi
-                               exp(mcmc_out_f[sample_ind_f,ncol(mcmc_out_f)]) ) )    #vc factor
-    
-    names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
-    
-    temp_param = mcmc_out[sample_ind, 21:29]
-    
-    Foi_tmp = calc_Foi_tempprecipchange(dat_full,
-                                        adjusted_params,
-                                        temp_param,
-                                        scenarios,
-                                        c34,
-                                        seroout,
-                                        t0_vac_africa,
-                                        dim_year,
-                                        dim_age,
-                                        p_prop_3d,
-                                        P_tot_2d,
-                                        inc_v3d,
-                                        pop_moments_whole,
-                                        varsin_nc,
-                                        pop1,
-                                        vc2d)
-    
-    
-    
-    FOI_samples = rbind(FOI_samples, Foi_tmp)
-    
-  }
-  
-  FOI_samples = FOI_samples[order(FOI_samples[,1]),]
-  
-  write.csv(FOI_samples, paste0("Foi_climate_samples_", format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
-}
-
-```
-
-
-## Incremental changes
-
-In order to project burden to 2050, we may want to consider incremental changes temperature and rainfall. We project changes gong from the latest year of data, 2018. in the two final scenarios, +2$^\circ$C and +4$^\circ$C.
-
-We do this for median samples from the posterior.
-
-```{r save_incremental, echo=TRUE}
-
-# We would like to save samples of the force of infection across the endemic region, 
-# given the uncertainty in our posterior estimates, for three scenarios.
-
-#declare our output
-FOI_samples = NULL
-
-#three scenarios of mean temperature increase across the region
-scenarios = seq(0,2, length.out = 2050-2017)
-
-# then we take n_samples random samples of our posteriors to create our output.
-adjusted_params = c(exp(median(mcmc_out_f[,1])), 
-                    apply(mcmc_out[,1:21], 2, median, na.rm = TRUE), 
-                    exp(apply(mcmc_out_f[,c(2:41)], 2, median, na.rm = TRUE)),
-                    exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
-
-names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
-
-temp_param = apply(mcmc_out[,22:30], 2, median, na.rm = TRUE)
-
-
-run_for_scenarios = function(s){
-  scen = scenarios*s
-  
-  Foi_tmp = calc_Foi_tempprecipchange(dat_full,
-                                      adjusted_params,
-                                      temp_param,
-                                      scen,
-                                      c34,
-                                      seroout,
-                                      t0_vac_africa,
-                                      dim_year,
-                                      dim_age,
-                                      p_prop_3d,
-                                      P_tot_2d,
-                                      inc_v3d,
-                                      pop_moments_whole,
-                                      varsin_nc,
+runs = YFestimation::fun_calc_transmission_Africa(x,
+                                      ii ,
+                                      seroout ,
+                                      params = adjusted_params ,
+                                      dat = envdat$dat ,
+                                      t0_vac_africa ,
+                                      dim_year ,
+                                      dim_age ,
+                                      p_prop_3d ,
+                                      P_tot_2d ,
+                                      inc_v3d ,
                                       pop1,
-                                      vc2d)
-  Foi_tmp = cbind( data.frame("final_scenario" = 2*s), Foi_tmp)
-  
-  return(Foi_tmp)
-}
-FOI_samples = lapply(c(0,1,2), 
-                     FUN = run_for_scenarios) %>% bind_rows()
+                                      vc2d,
+                                      varsin_nc,
+                                      polydeg = 5,
+                                      R0_lookup,
+                                      model_type = "Foi")
+names(runs) = envdat$dat$adm0_adm1
 
-FOI_samples = FOI_samples[order(FOI_samples[,1]),]
+mybreaks= seq(-3, 1, length.out=101)
+mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
+vcols = findInterval(log10(runs*100),mybreaks)
 
-write.csv(FOI_samples, paste0("Foi_climate_median_increment_", format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
+plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
+mm0 = match(shp0$ISO,Countries$c34) #
+plot(shp0[is.na(mm0),],col="black",add=T)
+plot(shp1[!is.na(mm),],col=colours[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+
+plot(shp0, lwd=2, add=T)
+
+
+image.plot(legend.only=TRUE, breaks=mybreaks, col=colours, zlim=c(0,1), horizontal = TRUE,
+           axis.args = list(at = c(-3:1), labels =c("0.001", "0.01", "0.1", "1", "10"), las =2),
+           legend.mar = 3.5)
+
 
 ```
 
-then for a number of samples.
 
-```{r save_incremental_sample, eval = TRUE}
-
-if(params$save_samples){
-  # We would like to save samples of the force of infection across the endemic region, 
-  # given the uncertainty in our posterior estimates, for three scenarios.
-  
-  #declare our output
-  FOI_samples = NULL
-  
-  #three scenarios of mean temperature increase across the region
-  scenarios = seq(0,2, length.out = 2050-2017)
-  
-  for(i in 1:n_samples){
-    sample_ind = sample(nrow(mcmc_out), 1)
-    sample_ind_f = sample(nrow(mcmc_out_f), 1)
-    
-    
-    adjusted_params = unlist(c(exp(mcmc_out_f[sample_ind_f,1]), #vac eff
-                               mcmc_out[sample_ind,1:20] ,            #glm
-                               exp(mcmc_out_f[sample_ind_f,c(2:41)]),  #foi
-                               exp(mcmc_out_f[sample_ind_f,ncol(mcmc_out_f)]) ) )    #vc factor
-    
-    names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
-    
-    temp_param = mcmc_out[sample_ind, 21:29]
-    
-    
-    
-    for(s in c(0,1,2)){
-      
-      scen = scenarios*s
-      
-      Foi_tmp = calc_Foi_tempprecipchange(dat_full,
-                                          adjusted_params,
-                                          temp_param,
-                                          scen,
-                                          c34,
-                                          seroout,
-                                          t0_vac_africa,
-                                          dim_year,
-                                          dim_age,
-                                          p_prop_3d,
-                                          P_tot_2d,
-                                          inc_v3d,
-                                          pop_moments_whole,
-                                          varsin_nc,
-                                          pop1,
-                                          vc2d)
-      Foi_tmp = cbind( data.frame("final_scenario" = 2*s), Foi_tmp)
-      
-      FOI_samples = rbind(FOI_samples, Foi_tmp)
-    }
-    
-  }
-  FOI_samples = FOI_samples[order(FOI_samples[,1]),]
-  
-  write.csv(FOI_samples, paste0("Foi_climate_increment_", format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
-}
-```
