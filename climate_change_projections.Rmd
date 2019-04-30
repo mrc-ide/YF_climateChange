@@ -1,0 +1,490 @@
+---
+title: "Climate change projections"
+author: "Katy Gaythorpe"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes: 
+- \usepackage{placeins}
+output: 
+  pdf_document:
+    df_print: "kable"
+params:
+  save_samples: FALSE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, error = FALSE)
+knitr::opts_chunk$set(
+  fig.path = paste0("climate_images_", Sys.Date(), "/"),
+  dpi = 300,
+  dev = c('png')
+)
+```
+
+```{r set_up}
+
+library(maptools)
+library(sp) 
+library(shapefiles)
+library(Hmisc)
+library(fields)
+library(dplyr)
+library(EnvStats)
+library(readr)
+library(reshape)
+library(abind)
+library(mvtnorm)
+library(RColorBrewer)
+library(truncdist)
+library(tibble)
+
+library(ggmcmc)
+library(mcmcplots)
+library(R.utils)
+
+library(YFestimation)
+library(snapalette)
+library(KsetupR)
+
+#########################################################################################################
+### SETTING THE WORKING DIRECTORY ###
+#########################################################################################################
+
+shpdir = paste0("../","shapefiles/gadm2/")
+
+#########################################################################################################
+### LOADING SHAPEFILES AND COUNTRIES ###
+#########################################################################################################
+
+#read shapefiles in
+shp0 = readShapePoly(paste0(shpdir, "Africa_adm0.shp")) #if gadm2
+shp1 = readShapePoly(paste0(shpdir, "Africa_adm1.shp"))
+
+#adjust titles
+shp1$adm0_adm1 = paste(shp1$ISO, shp1$ID_1, sep="_")
+shp1 = shp1[order(shp1$adm0_adm1),]
+
+#read countries in
+Countries = read_csv(paste0("../Data/","Countries.csv"))
+c34 = Countries$c34
+country34 = Countries$country34
+
+#########################################################################################################
+### SOURCE FUNCTIONS ###
+#########################################################################################################
+
+sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
+
+#########################################################################################################
+### LOAD ENVIRONMENTAL DATA ###
+#########################################################################################################
+
+Env_Table_path = paste0("../Data/","Environment/dat_worldclim_all_2019-04-15.csv") 
+
+dat_full = read.csv(Env_Table_path, stringsAsFactors=FALSE)
+
+temp_type = "worldclim_temp_mid"
+
+modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+worldclim_temp_range+RFE.mean" 
+#########################################################################################################
+### LOAD TEMPSUIT DATA ###
+#########################################################################################################
+### a
+mordecai_biterate <- read_csv("Data/mordecai_biterate.csv")
+hamlet_biterate = read_csv("Data/hamlet_biterate.csv")
+mordecai_biterate$author = "mordecai"
+hamlet_biterate$author = "hamlet"
+names(hamlet_biterate) = names(mordecai_biterate)
+
+dat_bite = rbind(mordecai_biterate, hamlet_biterate)
+
+### mu
+dat_mort <- read_csv("Data/Survival_mortality/SurvivalData_mordecai2018.csv")
+dat_mort = filter(dat_mort, `Time (dpi)`>0)
+dat_mort = filter(dat_mort, Alive+Dead+Censored>0)
+
+### PDR
+dat_EIP <- read_csv("Data/davis_EIP.csv")
+
+### posterior samples
+n_samples = 1000
+
+```
+
+```{r import_chains}
+
+path = "GLM_tempsuit_MCMC_chain_20190325"
+
+#get_chains
+mcmc_out = get_chains(path, burnin = 1.5e6, thin = 100)
+
+plot(mcmc_out$posteriorProb, type = "l", ylab = "Posterior probability", xlab = "Iteration")
+
+ind = which.max(mcmc_out$posteriorProb)
+
+mcmc_out = mcmc_out[, 1:(ncol(mcmc_out)-2)]
+
+```
+
+
+```{r plot_glm, fig.height=7, fig.width=7, fig.cap="Predicted probability of a yellow fever report for median posterior parameter estimates at baseline scenario."}
+snapal = "BudapestCitadel"
+
+
+
+##################################################################################
+### model ###
+
+### TEMP SUITABILITY ###
+dat_tmp = prepare_climate_dat(dat_full, year = "now")
+dat_full_temp = cbind(dat_tmp,
+                      temp_suitability(dat_tmp[,temp_type] , 
+                                       apply(mcmc_out[,22:30], 2 ,"median")) )
+
+names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
+
+envdat = YFestimation::launch_env_dat(filepath = NA, dat_full= dat_full_temp , c34 = c34)  
+
+### GET x ###
+
+object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
+x = object_glm[[2]]
+
+### preds
+Est_beta =  apply(mcmc_out[,1:21], 2, median) #as.numeric(mcmc_out[ind, 1:21])#
+
+
+plot_glm_map(shp0, shp1, c34, envdat$dat, Est_beta, x, snapalette(snapal, 1000, type="continuous"))
+```
+
+```{r plot_glm_climate, fig.height=7, fig.width=7, fig.cap="Predicted probability of a yellow fever report for median posterior parameter estimates at various scenarios."}
+snapal = "BudapestCitadel"
+
+par(mfrow = c(2, 4), mar = c(2,2,2,2))
+
+for(year in c(2050, 2070)){
+  
+  for(scenario in c(26, 45, 60, 85)){
+    
+    dat_tmp = prepare_climate_dat(dat_full, year , scenario)
+    ### TEMP SUITABILITY ###
+    dat_full_temp = cbind(dat_tmp,
+                          temp_suitability(dat_tmp[,temp_type] , 
+                                           apply(mcmc_out[,22:30], 2 ,"median")) )
+    
+    names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
+    
+    envdat = YFestimation::launch_env_dat(filepath = NA, dat_full= dat_full_temp , c34 = c34)  
+    
+    ### GET x ###
+    
+    object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
+    x = object_glm[[2]]
+    
+    ### preds
+    Est_beta =  apply(mcmc_out[,1:21], 2, median) 
+    
+    
+    plot_glm_map(shp0, shp1, c34, envdat$dat, Est_beta, x, snapalette(snapal, 1000, type="continuous"), plot_data = FALSE)
+  }
+}
+```
+
+
+```{r setup_fit}
+
+#########################################################################################################
+### LOADING SEROLOGY DATA ###
+#########################################################################################################
+
+Serology = read.csv(paste0("../Data/","Serology/serology.csv"), stringsAsFactors = FALSE)
+seroout = process_serology(Serology)
+#########################################################################################################
+### POPULATION AND VACCINATION DATA ###
+#########################################################################################################
+path = "../Data/"
+
+#function to collect , get totals for each year and proportions in each year
+all_res_pop_3d = get_pop_data_3d(path = path, c_country=c34, dat=envdat$dat)
+
+pop1 = all_res_pop_3d$pop1                                            #population import
+pop3d = all_res_pop_3d$pop3d                                      #populations in 3d array
+P_tot_2d = all_res_pop_3d$P_tot_2d                                    #total populations for each adm and year
+p_prop_3d = all_res_pop_3d$p_prop_3d                                    #proportions of population
+
+#get names
+dim_adm  = dimnames(pop3d)[[1]]
+dim_year = as.numeric(dimnames(pop3d)[[2]])
+dim_age  = dimnames(pop3d)[[3]]
+
+#########################################################################################################
+### VACCINATION DATA ###
+#########################################################################################################
+
+
+vaccdir = paste0("../Data/", "Vaccination/")
+# latest_vaccine_csv = "vaccination_coverage_by_adm1_year_age_base_skew0_update_2016-10-16.csv"
+latest_vaccine_csv = "Outputs/adm1_old/vaccination_coverage_by_adm1_year_age_base_skew0.csv"   
+
+vc2d = read.csv(paste0(vaccdir,latest_vaccine_csv), 
+                stringsAsFactors = FALSE) 
+
+names(vc2d)[names(vc2d)=="country"]= "adm0"                          #rename countries as adm0
+names(vc2d)[names(vc2d)=="adm1"]= "adm0_adm1"                        #renames adm1 as adm0_adm1
+
+# formally "repair_vc_data" from FOI model in Kevin's folder
+for (colIndex in 3:ncol(vc2d)){                                      
+  vc2d[,colIndex] = ifelse(is.na(vc2d[,colIndex]), vc2d[,colIndex-1], vc2d[,colIndex])
+}
+# restrict to lines in dat
+vc2d = vc2d[vc2d[,"adm0_adm1"] %in% envdat$dat[,"adm0_adm1"],]
+
+#vc3d
+vc3d = transform_into_vc3d(vc2d,  adm="adm1")
+
+# t0_vac_africa #
+t0_vac_africa = calc_t0_vac_africa(vc3d)
+
+# inc_v3d #
+inc_v3d = calc_incidence_vac_general(vc3d)
+    
+# CALCULATE population moments #
+pop_moments_whole = calc_pop_moments(p_prop_3d, 
+                                     t0_vac_africa,
+                                     dim_adm,
+                                     dim_year,
+                                     dim_age)
+#########################################################################################################
+### AGGREGATE POPULATION AND VACCINATION DATA ###
+#########################################################################################################
+
+#aggregate
+list_aggregate_pop_vc =Make_aggregate_pop_vc_3d(pop1=pop1, 
+                                                vc2d=vc2d, 
+                                                sero_studies=seroout$sero_studies, 
+                                                adm1s=seroout$adm1s)
+pop_agg3d = list_aggregate_pop_vc$pop_agg3d
+vc_agg3d = list_aggregate_pop_vc$vc_agg3d
+
+#calculate aggregated incidence (same function as before)
+inc_v3d_agg = calc_incidence_vac_general(vc_agg3d);dim(inc_v3d_agg)
+
+#calculate aggregated moments (different fucntion before)
+pop_moments_agg = calc_pop_moments_agg(pop_agg3d,
+                                       seroout$t0_vac,
+                                       dim_year,
+                                       seroout$study_years)
+
+
+#########################################################################################################
+### CREATE R0 LOOKUP TABLE ###
+#########################################################################################################
+
+load(paste0("../YellowFeverModelEstimation2017/","R0_lookup_table.Rdata") )
+
+#########################################################################################################
+### pop at survey ###
+#########################################################################################################
+#foi_const_surv = c(0,1e-6,0,0,0,0,rep(0,no_sero_surveys-6))
+foi_const_surv = rep(0, seroout$no_sero_surveys)
+
+list_pop_at_survey = create_pop_at_survey(pop_agg3d, 
+                                          seroout$sero_studies,
+                                          dim_year)
+p_at_survey = list_pop_at_survey$p_at_survey_3d
+P_tot_survey = list_pop_at_survey$P_tot_survey_2d
+
+```
+
+```{r import_serology_fit}
+
+filepath = "Z:/MultiModelInference/chains/multi_model_MCMC_chain_20180510" 
+
+
+mcmc_out_sero = get_chains(filepath, burnin = 1, thin = 100)
+
+```
+
+```{r transmission_climate}
+
+runs_clim_change = NULL
+for(year in c(2050, 2070, "now")){
+  
+  for(scenario in c(26, 45, 60, 85)){
+    
+    dat_tmp = prepare_climate_dat(dat_full, year , scenario)
+    ### TEMP SUITABILITY ###
+    dat_full_temp = cbind(dat_tmp,
+                          temp_suitability(dat_tmp[,temp_type] , 
+                                           apply(mcmc_out[,22:30], 2 ,"median")) )
+    names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
+    
+    envdat = YFestimation::launch_env_dat(filepath = NA, dat_full= dat_full_temp , c34 = c34)  
+    
+    ### GET x ###
+    
+    object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
+    x = object_glm[[2]]
+    
+    
+    ii= 2:22
+    
+    varsin_nc=ii[-grep("adm0",colnames(x))] - 1 
+    
+    mcmc_out_f = filter(mcmc_out_sero, model_chain == 0)
+    
+    adjusted_params = c(exp(median(mcmc_out_f[,1])), 
+                        apply(mcmc_out[,1:21], 2, median, na.rm = T), # as.numeric(mcmc_out[ind,1:21]), #
+                        exp(apply(mcmc_out_f[,c(2:41)], 2, median, na.rm = T)),
+                        exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
+    
+    names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
+    
+    
+    colours = (snapalette("Camden", 100, type = "continuous"))
+    
+    
+    runs = YFestimation::fun_calc_transmission_Africa(x,
+                                                      ii ,
+                                                      seroout ,
+                                                      params = adjusted_params ,
+                                                      dat = envdat$dat ,
+                                                      t0_vac_africa ,
+                                                      dim_year ,
+                                                      dim_age ,
+                                                      p_prop_3d ,
+                                                      P_tot_2d ,
+                                                      inc_v3d ,
+                                                      pop1,
+                                                      vc2d,
+                                                      varsin_nc,
+                                                      polydeg = 5,
+                                                      R0_lookup,
+                                                      model_type = "Foi")
+    names(runs) = envdat$dat$adm0_adm1
+    
+    runs_clim_change = rbind(runs_clim_change, cbind(runs, data.frame("year" = year, "scenario" = scenario)))
+  }
+}
+
+
+
+```
+
+
+
+
+
+```{r plot_transmission_base, fig.height=10, fig.width=7, fig.cap="Force of infection, %, baseline.", echo=TRUE}
+
+runs = runs_clim_change %>% filter(year == "now" & scenario == 26)
+
+mybreaks= seq(-3, 1, length.out=101)
+mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
+vcols = findInterval(log10(runs$runs*100),mybreaks)
+
+plot(shp0, xlim=c(-15,50),ylim=c(-20,30))
+mm0 = match(shp0$ISO,Countries$c34) #
+plot(shp0[is.na(mm0),],col="black",add=T)
+plot(shp1[!is.na(mm),],col=colours[vcols], xlim=c(-15,50),ylim=c(-20,30) , lty=0, add=T)
+
+plot(shp0, lwd=2, add=T)
+
+
+image.plot(legend.only=TRUE, breaks=mybreaks, col=colours, zlim=c(0,1), horizontal = TRUE,
+           axis.args = list(at = c(-3:1), labels =c("0.001", "0.01", "0.1", "1", "10"), las =2),
+           legend.mar = 3.5)
+
+
+```
+
+```{r plot_transmission_all, fig.height=10, fig.width=7, fig.cap="Force of infection, %, scenarios.", echo=TRUE}
+
+par(mfrow = c(2, 4), mar = c(2,2,2,2))
+for(year in c(2050, 2070)){
+  
+  for(scenario in c(26, 45, 60, 85)){
+    
+    runs = runs_clim_change %>% filter(year == year & scenario == scenario)
+    
+    mybreaks= seq(-3, 1, length.out=101)
+    mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
+    vcols = findInterval(log10(runs$runs*100),mybreaks)
+    
+    plot(shp0, xlim=c(-15,50),ylim=c(-20,30), main = paste0(year, "_", scenario))
+    mm0 = match(shp0$ISO,Countries$c34) #
+    plot(shp0[is.na(mm0),],col="black",add=T)
+    plot(shp1[!is.na(mm),],col=colours[vcols], xlim=c(-15,50),ylim=c(-20,30) , lty=0, add=T)
+    
+    plot(shp0, lwd=2, add=T)
+    
+    
+    image.plot(legend.only=TRUE, breaks=mybreaks, col=colours, zlim=c(0,1), horizontal = TRUE,
+               axis.args = list(at = c(-3:1), labels =c("0.001", "0.01", "0.1", "1", "10"), las =2),
+               legend.mar = 3.5)
+    
+  }
+}
+
+```
+
+```{r plot_transmission_diff_2050, fig.height=10, fig.width=7, fig.cap="Force of infection, relative difference 2050.", echo=TRUE}
+
+colours = (snapalette("Fjord", 100, type = "continuous"))
+
+trans_diff = data.frame(scenario = filter(runs_clim_change, year == 2050)$scenario)
+
+trans_diff$year_2050 = (filter(runs_clim_change, year == 2050)$runs - filter(runs_clim_change, year == "now")$runs)/filter(runs_clim_change, year == "now")$runs
+trans_diff$year_2070 = (filter(runs_clim_change, year == 2070)$runs - filter(runs_clim_change, year == "now")$runs)/filter(runs_clim_change, year == "now")$runs 
+
+par(mfrow = c(2, 2), mar = c(2,2,2,2))
+
+for(scenario in c(26, 45, 60, 85)){
+
+  runs = filter(trans_diff, scenario == scenario)$year_2050
+    
+    mybreaks= seq(-1.1, 1.1, length.out=101)
+    mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
+    vcols = findInterval(runs, mybreaks)
+    
+    plot(shp0, xlim=c(-15,50),ylim=c(-20,30), main = paste0( scenario))
+    mm0 = match(shp0$ISO, Countries$c34) #
+    plot(shp0[is.na(mm0),],col="black",add=T)
+    plot(shp1[!is.na(mm),],col=colours[vcols], xlim=c(-15,50),ylim=c(-20,30) , lty=0, add=T)
+    
+    plot(shp0, lwd=2, add=T)
+    
+    
+    image.plot(legend.only=TRUE, breaks=mybreaks, col=colours, zlim=c(0,1), horizontal = TRUE,
+               legend.mar = 3.5)
+    
+  }
+
+```
+
+```{r plot_transmission_diff_2070, fig.height=10, fig.width=7, fig.cap="Force of infection, relative difference 2070.", echo=TRUE}
+
+
+par(mfrow = c(2, 2), mar = c(2,2,2,2))
+
+for(scenario in c(26, 45, 60, 85)){
+
+  runs = filter(trans_diff, scenario == scenario)$year_2070
+    
+    mybreaks= seq(-1.1, 1.1, length.out=101)
+    mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
+    vcols = findInterval(runs, mybreaks)
+    
+    plot(shp0, xlim=c(-15,50),ylim=c(-20,30), main = paste0( scenario))
+    mm0 = match(shp0$ISO, Countries$c34) #
+    plot(shp0[is.na(mm0),],col="black",add=T)
+    plot(shp1[!is.na(mm),],col=colours[vcols], xlim=c(-15,50),ylim=c(-20,30) , lty=0, add=T)
+    
+    plot(shp0, lwd=2, add=T)
+    
+    
+    image.plot(legend.only=TRUE, breaks=mybreaks, col=colours, zlim=c(0,1), horizontal = TRUE,
+               legend.mar = 3.5)
+    
+  }
+
+```

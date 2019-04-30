@@ -136,7 +136,7 @@ path = get_latest_file(pattern = "GLM_tempsuit_MCMC_chain_")
 #path = "Z:/MultiModelInference/chains/GLM_MCMC_chain_20180515"
 
 #get_chains
-mcmc_out = get_chains(path, burnin = 1.5e6, thin = 1)
+mcmc_out = get_chains(path, burnin = 1.5e6, thin = 100)
 
 plot(mcmc_out$posteriorProb, type = "l", ylab = "Posterior probability", xlab = "Iteration")
 
@@ -564,28 +564,6 @@ names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_C
 
 colours = (snapalette("Camden", 100, type = "continuous"))
 
-# plot baseline
-# YFestimation::plot_transmission_intensity(x, 
-#                                           ii, 
-#                                           seroout,
-#                                           params = adjusted_params,
-#                                           dat = envdat$dat,
-#                                           t0_vac_africa,
-#                                           dim_year,
-#                                           dim_age,
-#                                           p_prop_3d,
-#                                           P_tot_2d,
-#                                           inc_v3d,
-#                                           pop1,
-#                                           vc2d,
-#                                           varsin_nc ,
-#                                           polydeg = 5,
-#                                           R0_lookup,
-#                                           model_type = "Foi",
-#                                           shp1,
-#                                           shp0,
-#                                           Countries,
-#                                           colours)
 
 runs = YFestimation::fun_calc_transmission_Africa(x,
                                       ii ,
