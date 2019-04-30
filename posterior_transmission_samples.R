@@ -232,3 +232,5 @@ n_samples = 1000
 all_runs = lapply(base::sample(1:nrow(mcmc_out), n_samples), FUN =fun_sample_transmission)
 
 all_runs_out = bind_rows(all_runs)
+
+write.csv(all_runs_out, "transmission_intensity_samples.csv")
