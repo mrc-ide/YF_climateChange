@@ -159,70 +159,70 @@ filepath = "Z:/MultiModelInference/chains/multi_model_MCMC_chain_20180510"
 mcmc_out_sero = get_chains(filepath, burnin = 1, thin = 100)
 
 #-----------------------------------------------------------------------------
-
+ii= 2:22
 fun_sample_transmission = function(sample_ind){
   runs_clim_change = NULL
   for(year in c(2050, 2070, "now")){
     
-    if(year == "now"){scenario = "now"} else {
+    
+    
+    for(scenario in c(26, 45, 60, 85)){
       
-      for(scenario in c(26, 45, 60, 85)){
-        
-        dat_tmp = prepare_climate_dat(dat_full, year , scenario)
-        ### TEMP SUITABILITY ###
-        dat_full_temp = cbind(dat_tmp,
-                              temp_suitability(dat_tmp[,temp_type] , 
-                                               mcmc_out[sample_ind,22:30]) )
-        names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
-        
-        envdat = YFestimation::launch_env_dat(filepath = NA, dat_full= dat_full_temp , c34 = c34)  
-        
-        ### GET x ###
-        
-        object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
-        x = object_glm[[2]]
-        
-        
-        ii= 2:22
-        
-        varsin_nc=ii[-grep("adm0",colnames(x))] - 1 
-        
-        mcmc_out_f = filter(mcmc_out_sero, model_chain == 0)
-        
-        adjusted_params = c(exp(median(mcmc_out_f[,1])), 
-                            as.numeric(mcmc_out[sample_ind,1:21]), #apply(mcmc_out[,1:21], 2, median, na.rm = T), # 
-                            exp(apply(mcmc_out_f[,c(2:41)], 2, median, na.rm = T)),
-                            exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
-        
-        names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
-        
-        
-        runs = YFestimation::fun_calc_transmission_Africa(x ,
-                                                          ii ,
-                                                          seroout ,
-                                                          params = adjusted_params ,
-                                                          dat = envdat$dat ,
-                                                          t0_vac_africa ,
-                                                          dim_year ,
-                                                          dim_age ,
-                                                          p_prop_3d ,
-                                                          P_tot_2d ,
-                                                          inc_v3d ,
-                                                          pop1,
-                                                          vc2d,
-                                                          varsin_nc,
-                                                          polydeg = 5,
-                                                          R0_lookup,
-                                                          model_type = "Foi")
-        names(runs) = envdat$dat$adm0_adm1
-        
-        runs = as.data.frame(cbind(runs, adm0 = envdat$dat$adm0))
-        
-        runs_adm0 = runs %>% group_by(adm0) %>% summarise(FOI = mean(as.numeric(as.character(runs))))
-        
-        runs_clim_change = rbind(runs_clim_change, cbind(runs_adm0, data.frame("year" = year, "scenario" = scenario, sample = sample_ind)))
-      }
+      dat_tmp = prepare_climate_dat(dat_full, year , scenario)
+      ### TEMP SUITABILITY ###
+      dat_full_temp = cbind(dat_tmp,
+                            temp_suitability(dat_tmp[,temp_type] , 
+                                             mcmc_out[sample_ind,22:30]) )
+      names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
+      
+      envdat = YFestimation::launch_env_dat(filepath = NA, dat_full= dat_full_temp , c34 = c34)  
+      
+      ### GET x ###
+      
+      object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
+      x = object_glm[[2]]
+      
+      
+      ii= 2:22
+      
+      varsin_nc=ii[-grep("adm0",colnames(x))] - 1 
+      
+      mcmc_out_f = filter(mcmc_out_sero, model_chain == 0)
+      
+      adjusted_params = c(exp(median(mcmc_out_f[,1])), 
+                          as.numeric(mcmc_out[sample_ind,1:21]), #apply(mcmc_out[,1:21], 2, median, na.rm = T), # 
+                          exp(apply(mcmc_out_f[,c(2:41)], 2, median, na.rm = T)),
+                          exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
+      
+      names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
+      
+      
+      runs = YFestimation::fun_calc_transmission_Africa(x ,
+                                                        ii ,
+                                                        seroout ,
+                                                        params = adjusted_params ,
+                                                        dat = envdat$dat ,
+                                                        t0_vac_africa ,
+                                                        dim_year ,
+                                                        dim_age ,
+                                                        p_prop_3d ,
+                                                        P_tot_2d ,
+                                                        inc_v3d ,
+                                                        pop1,
+                                                        vc2d,
+                                                        varsin_nc,
+                                                        polydeg = 5,
+                                                        R0_lookup,
+                                                        model_type = "Foi")
+      names(runs) = envdat$dat$adm0_adm1
+      
+      runs = as.data.frame(cbind(runs, adm0 = envdat$dat$adm0))
+      
+      runs_adm0 = runs %>% group_by(adm0) %>% summarise(FOI = mean(as.numeric(as.character(runs))))
+      
+      runs_clim_change = rbind(runs_clim_change, cbind(runs_adm0, data.frame("year" = year, "scenario" = scenario, sample = sample_ind)))
     }
+    
   }
   return(runs_clim_change)
 }

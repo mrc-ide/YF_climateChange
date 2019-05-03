@@ -1,0 +1,104 @@
+---
+title: "Uncertain transmission projections"
+author: "Katy Gaythorpe"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes: 
+- \usepackage{placeins}
+output: 
+  pdf_document:
+    df_print: "kable"
+params:
+  save_samples: FALSE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
+knitr::opts_chunk$set(
+  fig.path = paste0("Transmission_uncertainty_", Sys.Date(), "/"),
+  dpi = 300,
+  dev = c('png')
+)
+```
+
+```{r set_up}
+
+library(maptools)
+library(sp) 
+library(shapefiles)
+library(Hmisc)
+library(fields)
+library(dplyr)
+library(EnvStats)
+library(readr)
+library(reshape)
+library(abind)
+library(mvtnorm)
+library(RColorBrewer)
+library(truncdist)
+library(tibble)
+
+library(ggmcmc)
+library(mcmcplots)
+library(R.utils)
+
+library(YFestimation)
+library(snapalette)
+library(KsetupR)
+
+#########################################################################################################
+### SETTING THE WORKING DIRECTORY ###
+#########################################################################################################
+
+shpdir = paste0("../","shapefiles/gadm2/")
+
+#########################################################################################################
+### LOADING SHAPEFILES AND COUNTRIES ###
+#########################################################################################################
+
+#read shapefiles in
+shp0 = readShapePoly(paste0(shpdir, "Africa_adm0.shp")) #if gadm2
+shp1 = readShapePoly(paste0(shpdir, "Africa_adm1.shp"))
+
+#adjust titles
+shp1$adm0_adm1 = paste(shp1$ISO, shp1$ID_1, sep="_")
+shp1 = shp1[order(shp1$adm0_adm1),]
+
+#read countries in
+Countries = read_csv(paste0("../Data/","Countries.csv"))
+c34 = Countries$c34
+country34 = Countries$country34
+
+#########################################################################################################
+### SOURCE FUNCTIONS ###
+#########################################################################################################
+
+sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
+
+```
+
+# Visualising transmission intensity
+
+```{r load_transmission}
+
+transmission_proj = read.csv( "transmission_intensity_samples.csv", stringsAsFactors = FALSE)
+
+transmission_proj = transmission_proj %>% mutate(year = as.character(year), scenario = as.character(scenario))
+
+tp = filter(transmission_proj, scenario %in% c(26, 85))
+
+```
+
+```{r transmission_by_country, fig.height = 12, fig.width = 10}
+ggplot(tp) + geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + facet_wrap(adm0~., scales = "free_y")
+
+```
+
+```{r transmission_by_area}
+
+west = c("BEN", "BFA", "GMB", "GHA", "GIN", "GNB", "CIV", "LBR", "MLI", "MRT", "NER", "NGA", "SEN", "SLE", "TGO")
+
+tp = tp %>% mutate(WE = ifelse(adm0 %in% west, "West", "East and central"))
+
+ggplot(tp) + geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + facet_wrap(WE~.)
+
+```
