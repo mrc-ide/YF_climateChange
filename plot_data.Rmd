@@ -69,7 +69,7 @@ country34 = Countries$country34
 ```
 
 ```{r occurrence, fig.cap="Location of YF occurrence from 1984 to 2018. Red indicates occurrence, white no reports and black indicates that area is not in the YF endemic region."}
-Env_Table_path = paste0("../Data/","Environment/dat_with_worldclim/dat_worldclim_baseline_2019-03-22.csv")
+Env_Table_path = paste0("../Data/","Environment/dat_worldclim_all_2019-04-15.csv") 
 dat_full = read.csv(Env_Table_path, stringsAsFactors=FALSE)
 
 ### data ###
@@ -88,16 +88,46 @@ plot(shp0,lwd=2, add=TRUE)
 
 ```
 
-# ERA.mean 
+# Worldclim mid 
 
-```{r ERA, fig.cap="worldclim_temp_min. Black indicates that area is not in the YF endemic region."}
+```{r worldclim, fig.cap="worldclim_temp_mid. Black indicates that area is not in the YF endemic region."}
 
 par(mar = 0*c(5.1,4.1,4.1,2.1))
 
-mybreaks= seq(min(dat_full$worldclim_temp_min)-0.1, max(dat_full$worldclim_temp_min)+0.1, length.out=100)
+dat_full = dat_full %>% mutate(worldclim_temp_mid = (dat_full$X1970_1990tnnow + dat_full$X1970_1990txnow)/2)
+  
+dat_full = dat_full %>% mutate(worldclim_temp_range = (dat_full$X1970_1990txnow - dat_full$X1970_1990tnnow))
+
+mybreaks= seq(min(dat_full$worldclim_temp_mid)-0.1, max(dat_full$worldclim_temp_mid)+0.1, length.out=100)
 mycols =   colorRampPalette(brewer.pal(9, "Oranges") )(length(mybreaks)-1)
 mm = match(shp1$adm0_adm1, dat_full$adm0_adm1)
-vcols = findInterval(dat_full$worldclim_temp_min,mybreaks)
+vcols = findInterval(dat_full$worldclim_temp_mid,mybreaks)
+
+plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
+mm0 = match(shp0$ISO,c34) #
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+plot(shp0, lwd=2, add=TRUE)
+plot(shp0[is.na(mm0),],col="black",add=T) 
+
+image.plot(legend.only=TRUE,
+           breaks=mybreaks,
+           col=mycols,
+           zlim=c(0,1), 
+           horizontal = FALSE)
+
+```
+
+# Worldclim range
+
+```{r worldclim_range, fig.cap="worldclim_temp_range. Black indicates that area is not in the YF endemic region."}
+
+par(mar = 0*c(5.1,4.1,4.1,2.1))
+
+
+mybreaks= seq(min(dat_full$worldclim_temp_range)-0.1, max(dat_full$worldclim_temp_range)+0.1, length.out=100)
+mycols =   snapalette("Bouquet", n = length(mybreaks)-1, type = "continuous")
+mm = match(shp1$adm0_adm1, dat_full$adm0_adm1)
+vcols = findInterval(dat_full$worldclim_temp_range,mybreaks)
 
 plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
 mm0 = match(shp0$ISO,c34) #

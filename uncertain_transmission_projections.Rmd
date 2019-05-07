@@ -74,9 +74,13 @@ country34 = Countries$country34
 
 sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 
+
+
 ```
 
 # Visualising transmission intensity
+
+## Direct values
 
 ```{r load_transmission}
 
@@ -84,14 +88,27 @@ transmission_proj = read.csv( "transmission_intensity_samples.csv", stringsAsFac
 
 transmission_proj = transmission_proj %>% mutate(year = as.character(year), scenario = as.character(scenario))
 
-tp = filter(transmission_proj, scenario %in% c(26, 85))
+tp = filter(transmission_proj, !(scenario %in% c(45, 60, 85) & year == "now"))
+tp$scenario[tp$year == "now"] = "now"
 
 ```
 
 ```{r transmission_by_country, fig.height = 12, fig.width = 10}
-ggplot(tp) + geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + facet_wrap(adm0~., scales = "free_y")
+ggplot(tp) + 
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + 
+  facet_wrap(adm0~., scales = "free_y") +
+  scale_fill_manual(values = snapalette("Camden", 3))
 
 ```
+
+```{r transmission_by_country_subset, fig.height = 12, fig.width = 10}
+ggplot( filter(tp, scenario %in% c("now",26, 85)) ) + 
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + 
+  facet_wrap(adm0~., scales = "free_y") +
+  scale_fill_manual(values = snapalette("Camden", 3))
+
+```
+
 
 ```{r transmission_by_area}
 
@@ -99,6 +116,81 @@ west = c("BEN", "BFA", "GMB", "GHA", "GIN", "GNB", "CIV", "LBR", "MLI", "MRT", "
 
 tp = tp %>% mutate(WE = ifelse(adm0 %in% west, "West", "East and central"))
 
-ggplot(tp) + geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + facet_wrap(WE~.)
+ggplot(tp) + 
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + 
+  facet_wrap(WE~.)+
+  scale_fill_manual(values = snapalette("Camden", 3))
+
+
+```
+
+```{r transmission_by_area_subset}
+
+ggplot(filter(tp, scenario %in% c("now",26, 85))) + 
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + 
+  facet_wrap(WE~.)+
+  scale_fill_manual(values = snapalette("Camden", 3))
+
+```
+
+## Relative difference
+
+```{r calc_diff}
+
+percent_diff = transmission_proj
+
+for(i in c(2050, 2070)){
+  percent_diff[percent_diff$year == i, "FOI"] = (percent_diff[percent_diff$year == i, "FOI"] - percent_diff[percent_diff$year == "now", "FOI"])/
+                                                    percent_diff[percent_diff$year == "now", "FOI"] * 100
+}
+
+```
+
+
+```{r difference_by_country, fig.height = 12, fig.width = 10}
+
+ggplot( filter(percent_diff, year %in% c(2050, 2070)) ) + 
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + 
+  facet_wrap(adm0~., scales = "free_y") + ylab("FOI change %")+
+  scale_fill_manual(values = snapalette("Camden", 3))
+
+
+```
+
+```{r difference_by_country_subset, fig.height = 12, fig.width = 10}
+
+ggplot( filter(percent_diff, year %in% c(2050, 2070) & scenario %in% c(26, 85)) ) + 
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + 
+  facet_wrap(adm0~., scales = "free_y") + ylab("FOI change %")+
+  scale_fill_manual(values = snapalette("Camden", 3))
+
+
+```
+
+```{r difference_by_area, fig.height = 12, fig.width = 10}
+
+percent_diff = percent_diff %>% mutate(WE = ifelse(adm0 %in% west, "West", "East and central"))
+
+ggplot(filter(percent_diff, year %in% c(2050, 2070))) + 
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + facet_wrap(WE~.)+
+  scale_fill_manual(values = snapalette("Camden", 3))
+
+```
+
+
+```{r difference_by_area_subset, fig.height = 12, fig.width = 10}
+
+ggplot(filter(percent_diff, year %in% c(2050, 2070) & scenario %in% c(26, 85))) + 
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + facet_wrap(WE~.)+
+  scale_fill_manual(values = snapalette("Camden", 3))
+
+```
+
+
+```{r save_median}
+
+med_out = transmission_proj %>% group_by(adm0, year, scenario) %>% summarise(median_FOI = median(FOI))
+
+write.csv(med_out, "Median_FOI_projections.csv", row.names = FALSE)
 
 ```
