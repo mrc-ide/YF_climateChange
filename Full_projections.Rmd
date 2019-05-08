@@ -305,7 +305,7 @@ quantile(peak, c(0.025, 0.5, 0.975))
 
 We will map the median predictions and then examine uncertainty.
 
-```{r plot_glm, fig.height=7, fig.width=7, fig.cap="Actual versus predicted probability of a yellow fever report for median posterior parameter estimates."}
+```{r plot_glm, fig.height=7, fig.width=10, fig.cap="Actual versus predicted probability of a yellow fever report for median posterior parameter estimates."}
 snapal = "BudapestCitadel"
 
 
@@ -331,6 +331,34 @@ Est_beta =  apply(mcmc_out[,1:21], 2, median) #as.numeric(mcmc_out[ind, 1:21])#
 
 
 plot_glm_map(shp0, shp1, c34, envdat$dat, Est_beta, x, snapalette(snapal, 1000, type="continuous"))
+```
+
+
+```{r AUC}
+
+library(pROC)
+### TEMP SUITABILITY ###
+dat_full_temp = cbind(dat_full,
+                      temp_suitability(dat_full[,temp_type] , #mcmc_out[ind,22:30]))
+                                       apply(mcmc_out[,22:30], 2 ,"median")) )
+names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
+
+envdat = YFestimation::launch_env_dat(filepath = NA, dat_full= dat_full_temp , c34 = c34)  
+
+### GET x ###
+
+object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
+x = object_glm[[2]]
+
+### preds
+Est_beta =  apply(mcmc_out[,1:21], 2, median)
+
+glmpreds = fun_calcPred( Est_beta ,x,type="response")
+
+ROC_out = roc(response = envdat$dat$cas.or.out, predictor = glmpreds)
+
+auc(ROC_out)
+
 ```
 
 ```{r plot_temp_suit, fig.height=10, fig.width=7, fig.cap = "Normalized temperature suitability from median of posterior predicted distribution."}
