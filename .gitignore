@@ -16,3 +16,5 @@ contexts
 *.png
 Data
 climate_images_*
+Burden_uncertainty_*
+Transmission_uncertainty_*

@@ -451,7 +451,9 @@ We now use the estimated model to calculate the transmission intensity assuming 
 #########################################################################################################
 
 Serology = read.csv(paste0("../Data/","Serology/serology.csv"), stringsAsFactors = FALSE)
+Serology = Serology %>% filter(country_zone != "CAF") # IGNORE CAF
 seroout = process_serology(Serology)
+
 #########################################################################################################
 ### POPULATION AND VACCINATION DATA ###
 #########################################################################################################
@@ -551,7 +553,7 @@ P_tot_survey = list_pop_at_survey$P_tot_survey_2d
 
 ```{r import_serology_fit}
 
-filepath = "Z:/MultiModelInference/chains/multi_model_MCMC_chain_20180510" 
+filepath = "Z:/MultiModelInference/multi_model_MCMC_chain_20180622" 
 
 
 mcmc_out_sero = get_chains(filepath, burnin = 1, thin = 100)
