@@ -88,6 +88,7 @@ pop_all = montagu_demographic_data(type_code = "int_pop",
 
 pop_all = pop_all %>% filter( year>=1939 & country_code %in% transmission_proj$adm0)
 
+write.csv(pop_all, "population.csv", row.names = FALSE)
 
 ### fixed values ###
 # P_severe = 0.12
@@ -142,6 +143,7 @@ fun_calc_burden = function(i){
   
   
   tmp_burden = NULL
+  pop_out = NULL
   for(y in 1:length(years)){
     
     if(y == 1){
@@ -152,6 +154,18 @@ fun_calc_burden = function(i){
                                          old_coverage = coverage_country_prev)
       
       out_prev = run_infections_unit(model_type = "Foi",
+                                     transmission_param = as.numeric(df[2+y]),
+                                     vac_eff,
+                                     years_in = years[y],
+                                     age_max = 100,
+                                     pop = pop_new,
+                                     coverage = coverage_country_prev,      #this is a subset of pop_moments_whole for adm1s of interest
+                                     immunityStart = immunity_start)
+    } else{
+      
+      #calculate burden in year of interest
+      
+      out_prev = run_infections_unit_changing_FOI(model_type = "Foi",
                                                   transmission_param = as.numeric(df[2+y]),
                                                   vac_eff,
                                                   years_in = years[y],
@@ -159,18 +173,6 @@ fun_calc_burden = function(i){
                                                   pop = pop_new,
                                                   coverage = coverage_country_prev,      #this is a subset of pop_moments_whole for adm1s of interest
                                                   immunityStart = immunity_start)
-    } else{
-    
-    #calculate burden in year of interest
-    
-    out_prev = run_infections_unit_changing_FOI(model_type = "Foi",
-                                               transmission_param = as.numeric(df[2+y]),
-                                               vac_eff,
-                                               years_in = years[y],
-                                               age_max = 100,
-                                               pop = pop_new,
-                                               coverage = coverage_country_prev,      #this is a subset of pop_moments_whole for adm1s of interest
-                                               immunityStart = immunity_start)
     }
     
     immunity_start = out_prev$immunity

@@ -160,14 +160,23 @@ ggplot(df ) +
 
 ```
 
-```{r median_deaths_percap_country, fig.height=12, fig.width=10, eval = FALSE}
+```{r median_deaths_percap_country, fig.height=12, fig.width=10}
+
+pop_all = read.csv("population.csv", stringsAsFactors = FALSE)
+
+pop_all = pop_all %>% filter(year %in% 2018:2070) %>% group_by(country_code, year) %>% summarise(total_pop = sum(value))
+
+pop_all = pop_all %>% dplyr::rename(adm0 = country_code, Year = year)
+
+df = left_join(df, pop_all, by = c("adm0", "Year"))
 
 ggplot(df ) + 
-  geom_line(aes(x = Year, y = Deaths/population, colour = scenario, group = scenario), stat='summary', fun.y=sum, size = 2) + 
+  geom_line(aes(x = Year, y = Deaths/total_pop, colour = scenario, group = scenario), stat='summary', fun.y=sum, size = 2) + 
   scale_colour_manual(values = snapalette("Camden", 5))+
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  facet_wrap(~adm0)#, scales = "free_y")
+  ylab("Deaths per capita")+
+  facet_wrap(~adm0)
 
 ```
 
