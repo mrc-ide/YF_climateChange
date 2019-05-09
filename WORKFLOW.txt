@@ -1,0 +1,54 @@
+
+Data:
+
+plot_data
+
+Individual estimations:
+
+biterate_estimation
+PDR_estimation
+mortality_estimation
+
+Main Estimation:
+
+GLM_tempsuit_estimation
+run_estimation
+run_on_cluster
+
+Analysing results:
+
+Full_projections
+
+THEN
+
+climate_change_projections
+
+THEN
+
+posterior_burden_median
+
+THEN
+
+median_projections
+
+then
+
+posterior_transmission_samples
+
+THEN
+
+posterior_burden_samples
+
+THEN
+
+uncertain_projections
+
+
+
+
+
+
+IE
+
+GLM_tempsuit_estimation -> run_on_cluster -> Full_projections -> climate_change_projections -> posterior_burden_median -> median_burden_projections -> posterior_transmission_samples -> posterior_burden_samples -> uncertain_projections
+
