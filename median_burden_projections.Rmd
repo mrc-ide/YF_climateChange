@@ -1,0 +1,173 @@
+---
+title: "Median burden projections"
+author: "Katy Gaythorpe"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes: 
+- \usepackage{placeins}
+output: 
+  pdf_document:
+    df_print: "kable"
+params:
+  save_samples: FALSE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
+knitr::opts_chunk$set(
+  fig.path = paste0("Burden_median_", Sys.Date(), "/"),
+  dpi = 300,
+  dev = c('png')
+)
+
+
+```
+
+# Median Predictions
+
+## Changing FOI
+
+Just to quickly look at what the FOI looks like when interpolated.
+
+```{r import_median_FOI}
+library(maptools)
+library(sp) 
+library(shapefiles)
+library(Hmisc)
+library(fields)
+library(dplyr)
+library(EnvStats)
+library(readr)
+library(tibble)
+library(gridExtra)
+library(R.utils)
+library(tidyr)
+
+library(YFestimation)
+library(snapalette)
+library(KsetupR)
+
+
+param_samples_interp = read.csv( "transmission_intensity_median_interp.csv", stringsAsFactors  = FALSE)
+
+df = gather(param_samples_interp,  "Year", "Foi", -c(adm0, scenario))
+
+df$Year = gsub("X", "", df$Year)
+
+df = df %>% mutate( Year = as.numeric(Year), Foi = as.numeric(Foi))
+```
+
+
+```{r median_FOI}
+ggplot(df ) + 
+  geom_line(aes(x = Year, y = Foi, colour = scenario, group = scenario), stat='summary', fun.y=mean, size = 2) + 
+  scale_colour_manual(values = snapalette("Camden", 5))+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Mean FOI")
+
+```
+
+```{r median_FOI_country, fig.height=12, fig.width=10}
+ggplot(df ) + 
+  geom_line(aes(x = Year, y = Foi, colour = scenario, group = scenario), stat='summary', fun.y=mean, size = 2) + 
+  scale_colour_manual(values = snapalette("Camden", 5))+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  facet_wrap(~adm0, scales = "free_y")
+
+```
+
+\FloatBarrier
+
+## Infections
+
+```{r import_median}
+
+infections_median = read.csv( paste0("infections_per_scenario_year_country_median.csv"), stringsAsFactors = FALSE)
+
+df = gather(infections_median,  "Year", "Infections", -c(adm0, scenario))
+
+df$Year = gsub("X", "", df$Year)
+
+df = df %>% mutate( Year = as.numeric(Year), Infections = as.numeric(Infections))
+
+```
+
+```{r median_infections}
+
+ggplot(df, aes(x = Year, y = Infections, colour = scenario, group = scenario)) + 
+  geom_line(stat='summary', fun.y=sum, size = 2) + 
+  scale_colour_manual(values = snapalette("Camden"))+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+```{r median_infections_country, fig.height=12, fig.width=10}
+
+ggplot(df ) + 
+  geom_line(aes(x = Year, y = Infections, colour = scenario, group = scenario), stat='summary', fun.y=median, size = 2) + 
+  scale_colour_manual(values = snapalette("Camden", 5))+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  facet_wrap(~adm0, scales = "free_y")
+
+```
+
+## Cases and Deaths
+
+```{r get_burden_median}
+
+P_severe = 0.12
+P_severeDeath = 0.47
+
+df = df %>% mutate(Cases = Infections*P_severe,
+                   Deaths = Infections*P_severe*P_severeDeath)
+
+```
+
+```{r median_burden, fig.height=12, fig.width=10}
+
+g1 = ggplot(df, aes(x = Year, y = Cases, colour = scenario, group = scenario)) + 
+  geom_line(stat='summary', fun.y=sum, size = 2) + 
+  scale_colour_manual(values = snapalette("Camden"))+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+g2 = ggplot(df, aes(x = Year, y = Deaths, colour = scenario, group = scenario)) + 
+  geom_line(stat='summary', fun.y=sum, size = 2) + 
+  scale_colour_manual(values = snapalette("Camden"))+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+grid.arrange(g1,g2)
+```
+
+```{r median_deaths_table}
+
+df %>% group_by( Year, scenario) %>% summarise(sum_deaths = sum(Deaths, na.rm = TRUE)) %>% filter(Year %in% c(2018, 2050, 2070))
+
+```
+
+```{r median_deaths_country, fig.height=12, fig.width=10}
+
+ggplot(df ) + 
+  geom_line(aes(x = Year, y = Deaths, colour = scenario, group = scenario), stat='summary', fun.y=sum, size = 2) + 
+  scale_colour_manual(values = snapalette("Camden", 5))+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  facet_wrap(~adm0, scales = "free_y")
+
+```
+
+```{r median_deaths_percap_country, fig.height=12, fig.width=10, eval = FALSE}
+
+ggplot(df ) + 
+  geom_line(aes(x = Year, y = Deaths/population, colour = scenario, group = scenario), stat='summary', fun.y=sum, size = 2) + 
+  scale_colour_manual(values = snapalette("Camden", 5))+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  facet_wrap(~adm0)#, scales = "free_y")
+
+```
+
