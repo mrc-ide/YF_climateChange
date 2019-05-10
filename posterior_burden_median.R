@@ -90,14 +90,7 @@ pop_all = pop_all %>% filter( year>=1939 & country_code %in% transmission_proj$a
 
 write.csv(pop_all, "population.csv", row.names = FALSE)
 
-### fixed values ###
-# P_severe = 0.12
-# P_severeDeath = 0.47
-# 
-# d_acute = 17.8 / 365 #report
-# dw_acute = 0.172
-# d_conv = 28 / 365
-# dw_conv = 0.024
+
 
 vac_eff = 0.9447782 # from median of serology estiamtion 0622
 

@@ -32,10 +32,18 @@ transmission_proj = read.csv( "transmission_intensity_samples.csv", stringsAsFac
 
 transmission_proj = transmission_proj %>% mutate(year = as.character(year), scenario = as.character(scenario))
 
-transmission_proj = transmission_proj[,-1]
+param_samples = filter(transmission_proj, !(scenario %in% c(45, 60, 85) & year == "now"))
+param_samples$scenario[param_samples$year == "now"] = "now"
 
-param_samples = spread(transmission_proj, year, FOI)
-param_samples[is.na(param_samples)] = 0
+param_samples = spread(param_samples, year, FOI) # spread and split
+param_samples_now = filter(param_samples, scenario == "now")
+param_samples = filter(param_samples, scenario != "now")
+
+param_samples$now = filter(transmission_proj, year == "now")$FOI
+param_samples_now$`2050` = param_samples_now$`2070` = param_samples_now$now
+
+param_samples = bind_rows(param_samples, param_samples_now)
+
 
 ### interpolate for each year ###
 fun_interp = function(i){
@@ -55,6 +63,9 @@ fun_interp = function(i){
 param_samples_interp = lapply(1:nrow(param_samples), fun_interp)
 param_samples_interp = bind_rows(param_samples_interp)
 
+write.csv(param_samples_interp, "transmission_intensity_samples_interp.csv", row.names = FALSE)
+
+#param_samples_interp = read.csv("transmission_intensity_samples_interp.csv", stringsAsFactors = FALSE)
 #-----------------------------------------------------------------------------
 
 montagu::montagu_server_global_default_set(
@@ -72,25 +83,14 @@ pop_all = montagu_demographic_data(type_code = "int_pop",
 pop_all = pop_all %>% filter( year>=1939 & country_code %in% transmission_proj$adm0)
 
 
-### fixed values ###
-P_severe = 0.12
-P_severeDeath = 0.47
-
-d_acute = 17.8 / 365 #report
-dw_acute = 0.172
-d_conv = 28 / 365
-dw_conv = 0.024
-
-vac_eff = 0.9447782 # from median of serology estiamtion 0622
-
 ### sort out coverage ###
 GAVI_vac = montagu_coverage_data("IC-Garske", touchstone_version,  "yf-preventive-gavi")
 
-GAVI_vac_fix = filter(GAVI_vac, year< 2018)
+GAVI_vac_fix = filter(GAVI_vac, year< 2019)
 
 fix_tmp = NULL
-for(i in 2018:2070){
-  tmp = filter(GAVI_vac, year == 2018)
+for(i in 2019:2070){
+  tmp = filter(GAVI_vac, year == 2018 & activity_type == "routine")
   tmp$year = i
   fix_tmp = bind_rows(fix_tmp, tmp)
 }
@@ -98,7 +98,21 @@ for(i in 2018:2070){
 GAVI_vac_fix = bind_rows(GAVI_vac_fix, fix_tmp)
 
 
+
 #-----------------------------------------------------------------------------
+
+## load vaccine efficacy
+
+filepath = "Z:/MultiModelInference/multi_model_MCMC_chain_20180622" 
+
+
+mcmc_out_sero = get_chains(filepath, burnin = 1, thin = 1)
+
+#sample vac eff
+vac_eff_vec = exp(mcmc_out_sero$vac_eff[sample(1:nrow(mcmc_out_sero), nrow(param_samples_interp))] )
+
+#-----------------------------------------------------------------------------
+
 
 years = 2018:2070
 
@@ -106,6 +120,7 @@ years = 2018:2070
 # for(i in 1:nrow(param_samples_interp)){
   
 fun_calc_burden = function(i){
+  
   df = param_samples_interp[i, ]
   
   #get coverage for that country
@@ -135,19 +150,28 @@ fun_calc_burden = function(i){
                                          age_max = 100,
                                          pop = pop_new,
                                          old_coverage = coverage_country_prev)
-    }
+      
+      out_prev = run_infections_unit(model_type = "Foi",
+                                                  transmission_param = as.numeric(df[3+y]),
+                                                  vac_eff = vac_eff_vec[i],
+                                                  years = years[y],
+                                                  age_max = 100,
+                                                  pop = pop_new,
+                                                  coverage = coverage_country_prev,      #this is a subset of pop_moments_whole for adm1s of interest
+                                                  immunity_start)
+    } else {
     
     #calculate burden in year of interest
     
-    out_prev = run_infections_unit(model_type = "Foi",
+    out_prev = run_infections_unit_changing_FOI(model_type = "Foi",
                                    transmission_param = as.numeric(df[3+y]),
-                                   vac_eff,
+                                   vac_eff = vac_eff_vec[i],
                                    years = years[y],
                                    age_max = 100,
                                    pop = pop_new,
                                    coverage = coverage_country_prev,      #this is a subset of pop_moments_whole for adm1s of interest
                                    immunity_start)
-    
+    }
     
     immunity_start = out_prev$immunity
     
@@ -160,9 +184,17 @@ fun_calc_burden = function(i){
   }
   
   tmp_burden_out = spread(tmp_burden, year, infections)
-  #infections_out = bind_rows(infections_out, spread(tmp_burden, year, infections))
   return(tmp_burden_out)
 }
 
-infections_out_l = mclapply(1:nrow(param_samples_interp), fun_calc_burden, nc.cores = 6)
-infections_out = bind_rows(infections_out_l)
+
+#split it into chunks of 10,000 rows and run
+for(i in 1:(nrow(param_samples_interp)/1e3)){
+  
+  ind = c( ((i-1)*1e3 + 1) : (i*1e3))
+  infections_out_l = lapply(ind, fun_calc_burden)#, mc.cores = 4)
+  infections_out = bind_rows(infections_out_l)
+  
+  
+  write.csv(infections_out, paste0("infections/infections_per_scenario_year_country_sample_", i, ".csv"), row.names = FALSE)
+}

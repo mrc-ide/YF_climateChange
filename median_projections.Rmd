@@ -22,9 +22,8 @@ knitr::opts_chunk$set(
 
 ```
 
-# Median Predictions
 
-## Changing FOI
+# Changing FOI
 
 Just to quickly look at what the FOI looks like when interpolated.
 
@@ -79,7 +78,7 @@ ggplot(df ) +
 
 \FloatBarrier
 
-## Infections
+# Infections
 
 ```{r import_median}
 
@@ -93,7 +92,7 @@ df = df %>% mutate( Year = as.numeric(Year), Infections = as.numeric(Infections)
 
 ```
 
-```{r median_infections}
+```{r median_infections, fig.cap="Infections."}
 
 ggplot(df, aes(x = Year, y = Infections, colour = scenario, group = scenario)) + 
   geom_line(stat='summary', fun.y=sum, size = 2) + 
@@ -103,7 +102,7 @@ ggplot(df, aes(x = Year, y = Infections, colour = scenario, group = scenario)) +
 
 ```
 
-```{r median_infections_country, fig.height=12, fig.width=10}
+```{r median_infections_country, fig.height=12, fig.width=10, fig.cap="Infections per country."}
 
 ggplot(df ) + 
   geom_line(aes(x = Year, y = Infections, colour = scenario, group = scenario), stat='summary', fun.y=median, size = 2) + 
@@ -114,7 +113,9 @@ ggplot(df ) +
 
 ```
 
-## Cases and Deaths
+\FloatBarrier
+
+# Cases and Deaths
 
 ```{r get_burden_median}
 
@@ -126,7 +127,7 @@ df = df %>% mutate(Cases = Infections*P_severe,
 
 ```
 
-```{r median_burden, fig.height=12, fig.width=10}
+```{r median_burden, fig.height=12, fig.width=10, fig.cap="Cases or deaths."}
 
 g1 = ggplot(df, aes(x = Year, y = Cases, colour = scenario, group = scenario)) + 
   geom_line(stat='summary', fun.y=sum, size = 2) + 
@@ -149,7 +150,7 @@ df %>% group_by( Year, scenario) %>% summarise(sum_deaths = sum(Deaths, na.rm = 
 
 ```
 
-```{r median_deaths_country, fig.height=12, fig.width=10}
+```{r median_deaths_country, fig.height=12, fig.width=10, fig.cap="Deaths per country."}
 
 ggplot(df ) + 
   geom_line(aes(x = Year, y = Deaths, colour = scenario, group = scenario), stat='summary', fun.y=sum, size = 2) + 
@@ -160,7 +161,7 @@ ggplot(df ) +
 
 ```
 
-```{r median_deaths_percap_country, fig.height=12, fig.width=10}
+```{r median_deaths_percap_country, fig.height=12, fig.width=10, fig.cap="Deaths per capita per country."}
 
 pop_all = read.csv("population.csv", stringsAsFactors = FALSE)
 
@@ -180,3 +181,73 @@ ggplot(df ) +
 
 ```
 
+
+\FloatBarrier
+
+## Relative deaths per scenario
+
+```{r relative_deaths_country, fig.height=12, fig.width=10, fig.cap="Proportion of deaths relative to baseline per country."}
+
+tmp = filter(df, scenario == "now") 
+tmp = tmp %>% dplyr::rename(Deaths_now = Deaths) %>% select("adm0", "Year", "Deaths_now")
+
+df = left_join(df, tmp, by = c("adm0", "Year"))
+
+ggplot(df ) + 
+  geom_line(aes(x = Year, y = ((Deaths - Deaths_now)/ Deaths_now)*100, colour = scenario, group = scenario), size = 2) + 
+  scale_colour_manual(values = snapalette("Camden", 5))+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Change in deaths %")+
+  facet_wrap(~adm0)
+
+
+```
+
+```{r relative_deaths,  fig.cap="Proportion of deaths relative to baseline per country."}
+
+
+ggplot(df ) + 
+  geom_line(aes(x = Year, y = ((Deaths - Deaths_now)/ Deaths_now)*100, colour = scenario, group = scenario), stat='summary', fun.y=mean, size = 2) + 
+  scale_colour_manual(values = snapalette("Camden", 5))+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Change in deaths %")
+
+
+```
+
+\FloatBarrier
+
+## Deaths by region
+
+```{r change_deaths_by_region, fig.cap = "Mean change in deaths per region"}
+
+west = c("BEN", "BFA", "GMB", "GHA", "GIN", "GNB", "CIV", "LBR", "MLI", "MRT", "NER", "NGA", "SEN", "SLE", "TGO")
+
+df = df %>% mutate(WE = ifelse(adm0 %in% west, "West", "East and central"))
+
+ggplot(df ) + 
+  geom_line(aes(x = Year, y = ((Deaths - Deaths_now)/ Deaths_now)*100, colour = scenario, group = scenario), stat='summary', fun.y=mean, size = 2) + 
+  scale_colour_manual(values = snapalette("Camden", 5))+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Change in deaths %")+
+  facet_wrap(~WE)
+
+
+```
+
+```{r deaths_by_region, fig.cap = "Deaths per region"}
+
+
+ggplot(df ) + 
+  geom_line(aes(x = Year, y = Deaths, colour = scenario, group = scenario), stat='summary', fun.y=sum, size = 2) + 
+  scale_colour_manual(values = snapalette("Camden", 5))+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  ylab("Deaths")+
+  facet_wrap(~WE)
+
+
+```

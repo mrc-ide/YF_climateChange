@@ -62,6 +62,7 @@ mcmc_out = mcmc_out[, 1:(ncol(mcmc_out)-2)]
 
 # serology #
 Serology = read.csv(paste0("../Data/","Serology/serology.csv"), stringsAsFactors = FALSE)
+Serology = Serology %>% filter(country_zone != "CAF") # IGNORE CAF
 seroout = process_serology(Serology)
 
 # population data #
@@ -153,14 +154,79 @@ P_tot_survey = list_pop_at_survey$P_tot_survey_2d
 #-----------------------------------------------------------------------------
 # import serology fit
 
-filepath = "Z:/MultiModelInference/chains/multi_model_MCMC_chain_20180510" 
+filepath = "Z:/MultiModelInference/multi_model_MCMC_chain_20180622" 
 
 
-mcmc_out_sero = get_chains(filepath, burnin = 1, thin = 100)
+mcmc_out_sero = get_chains(filepath, burnin = 1, thin = 1)
 
 #-----------------------------------------------------------------------------
-ii= 2:22
+
+#####
+
 fun_sample_transmission = function(sample_ind){
+  
+
+  ii= 2:22
+  #### SET UP ####
+  dat_tmp = prepare_climate_dat(dat_full, "now" , 26)
+  ### TEMP SUITABILITY ###
+  dat_full_temp = cbind(dat_tmp,
+                        temp_suitability(dat_tmp[,temp_type] , 
+                                         mcmc_out[sample_ind,22:30]) )
+  names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
+  
+  envdat = YFestimation::launch_env_dat(filepath = NA, dat_full= dat_full_temp , c34 = c34)  
+  
+  ### GET x ###
+  
+  object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
+  x = object_glm[[2]]
+  
+  
+  varsin_nc=ii[-grep("adm0",colnames(x))] - 1 
+  
+  mcmc_out_f = filter(mcmc_out_sero, model_chain == 0)
+  
+  adjusted_params = c(exp(mcmc_out_f[sample_ind,1]), 
+                      as.numeric(mcmc_out[sample_ind,1:21]), 
+                      exp(as.numeric(mcmc_out_f[sample_ind,c(2:41)])),
+                      exp(mcmc_out_f[sample_ind,ncol(mcmc_out_f)]) )
+  
+  names(adjusted_params) = c("vac_eff", names(mcmc_out)[1:21], names(mcmc_out_f)[2:41], "vc_factor_CMRs")
+
+  
+  ### P DETECT ###
+  #get aggregated vc and pop over observation period
+  aggout=create_pop30_agg_vc30_agg(pop1, vc2d)
+  
+  #glm predictions
+  mypreds_nc  = fun_calcPred(coefs = as.numeric(adjusted_params)[ii],
+                             newdata=x,
+                             type="link",
+                             varsin=varsin_nc)
+  
+  #probability of detection
+  p_detect =  fun_calc_pdetect_multi_both(x,
+                                          seroout,
+                                          adjusted_params,
+                                          envdat$dat,
+                                          t0_vac_africa,
+                                          dim_year,
+                                          dim_age,
+                                          p_prop_3d,
+                                          P_tot_2d,
+                                          inc_v3d,
+                                          pop_moments_whole,
+                                          varsin_nc,
+                                          aggout$vc30_agg,
+                                          aggout$pop30_agg,
+                                          model_type = "Foi")
+  p_detect_link = mean(p_detect)
+  
+  polydeg = 5
+  
+  ####
+  
   runs_clim_change = NULL
   for(year in c(2050, 2070, "now")){
     
@@ -189,38 +255,57 @@ fun_sample_transmission = function(sample_ind){
       
       mcmc_out_f = filter(mcmc_out_sero, model_chain == 0)
       
-      adjusted_params = c(exp(median(mcmc_out_f[,1])), 
-                          as.numeric(mcmc_out[sample_ind,1:21]), #apply(mcmc_out[,1:21], 2, median, na.rm = T), # 
-                          exp(apply(mcmc_out_f[,c(2:41)], 2, median, na.rm = T)),
-                          exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
+      adjusted_params = c(exp(mcmc_out_f[sample_ind,1]), 
+                          as.numeric(mcmc_out[sample_ind,1:21]), 
+                          exp(as.numeric(mcmc_out_f[sample_ind,c(2:41)])),
+                          exp(mcmc_out_f[sample_ind,ncol(mcmc_out_f)]) )
       
-      names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
+      names(adjusted_params) = c("vac_eff", names(mcmc_out)[1:21], names(mcmc_out_f)[2:41], "vc_factor_CMRs")
       
       
-      runs = YFestimation::fun_calc_transmission_Africa(x ,
-                                                        ii ,
-                                                        seroout ,
-                                                        params = adjusted_params ,
-                                                        dat = envdat$dat ,
-                                                        t0_vac_africa ,
-                                                        dim_year ,
-                                                        dim_age ,
-                                                        p_prop_3d ,
-                                                        P_tot_2d ,
-                                                        inc_v3d ,
-                                                        pop1,
-                                                        vc2d,
-                                                        varsin_nc,
-                                                        polydeg = 5,
-                                                        R0_lookup,
-                                                        model_type = "Foi")
+      #glm predictions
+      mypreds_nc  = fun_calcPred(coefs = as.numeric(adjusted_params)[ii],
+                                 newdata=x,
+                                 type="link",
+                                 varsin=varsin_nc)
+      
+      #calculating number of infections over the observation period for the whole region
+      Ninf_whole = exp( mypreds_nc - p_detect_link)
+      
+      pop_vc_moments = aggout$pop_vc_moments
+      
+      if(polydeg>ncol(pop_vc_moments)) error("fun_calc_transmission_Africa: invalid value for polydeg.\n")
+      
+      z = -Ninf_whole
+      
+      if(polydeg>0) for(i in 1:polydeg) {
+        z = cbind(z,(-1)^(i+1)*pop_vc_moments[,i+1]/factorial(i-1))
+      }
+      
+      transmission_whole = sapply(1:nrow(x), function(i) polyroot(z[i,]))
+      transmission_whole[abs(Arg(transmission_whole))<=1e-10] = Re(transmission_whole)[abs(Arg(transmission_whole))<=1e-10]
+      transmission_whole[abs(Arg(transmission_whole))>1e-10] = NA
+      
+      dt = dim(transmission_whole)
+      transmission_whole = as.numeric(transmission_whole)
+      dim(transmission_whole) = dt
+      transmission_whole = apply(transmission_whole,2,min,na.rm=T)
+      # ------------------------------------------------------------------------------------#
+      
+      runs = transmission_whole
+      
+      
       names(runs) = envdat$dat$adm0_adm1
       
       runs = as.data.frame(cbind(runs, adm0 = envdat$dat$adm0))
       
       runs_adm0 = runs %>% group_by(adm0) %>% summarise(FOI = mean(as.numeric(as.character(runs))))
       
-      runs_clim_change = rbind(runs_clim_change, cbind(runs_adm0, data.frame("year" = year, "scenario" = scenario, sample = sample_ind)))
+      runs_clim_change = rbind(runs_clim_change, 
+                               cbind(runs_adm0, 
+                                     data.frame("year" = year, 
+                                                "scenario" = scenario, 
+                                                sample = sample_ind)))
     }
     
   }
@@ -229,8 +314,10 @@ fun_sample_transmission = function(sample_ind){
 
 n_samples = 1000
 
-all_runs = lapply(base::sample(1:nrow(mcmc_out), n_samples), FUN =fun_sample_transmission)
+all_runs = lapply(base::sample(1:min(nrow(mcmc_out), nrow(mcmc_out_f)), n_samples), FUN =fun_sample_transmission)
 
 all_runs_out = bind_rows(all_runs)
 
-write.csv(all_runs_out, "transmission_intensity_samples.csv")
+write.csv(all_runs_out, "transmission_intensity_samples.csv", row.names = FALSE)
+
+beepr::beep(3)

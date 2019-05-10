@@ -1,5 +1,5 @@
 ---
-title: "Uncertain transmission projections"
+title: "Uncertain projections"
 author: "Katy Gaythorpe"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 header-includes: 
@@ -14,7 +14,7 @@ params:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
 knitr::opts_chunk$set(
-  fig.path = paste0("Transmission_uncertainty_", Sys.Date(), "/"),
+  fig.path = paste0("Uncertain_projections_", Sys.Date(), "/"),
   dpi = 300,
   dev = c('png')
 )
@@ -36,6 +36,7 @@ library(mvtnorm)
 library(RColorBrewer)
 library(truncdist)
 library(tibble)
+library(tidyr)
 
 library(ggmcmc)
 library(mcmcplots)
@@ -75,6 +76,7 @@ country34 = Countries$country34
 sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 
 
+snapal = "Camden"
 
 ```
 
@@ -88,6 +90,8 @@ transmission_proj = read.csv( "transmission_intensity_samples.csv", stringsAsFac
 
 transmission_proj = transmission_proj %>% mutate(year = as.character(year), scenario = as.character(scenario))
 
+transmission_proj = transmission_proj %>% mutate(year = factor(year, levels = c("now", 2050, 2070)))
+
 tp = filter(transmission_proj, !(scenario %in% c(45, 60, 85) & year == "now"))
 tp$scenario[tp$year == "now"] = "now"
 
@@ -95,17 +99,19 @@ tp$scenario[tp$year == "now"] = "now"
 
 ```{r transmission_by_country, fig.height = 12, fig.width = 10}
 ggplot(tp) + 
-  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + 
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge", draw_quantiles = 0.5) + 
   facet_wrap(adm0~., scales = "free_y") +
-  scale_fill_manual(values = snapalette("Camden", 3))
+  scale_fill_manual(values = snapalette(snapal, 3)) +
+  theme_bw()
 
 ```
 
 ```{r transmission_by_country_subset, fig.height = 12, fig.width = 10}
 ggplot( filter(tp, scenario %in% c("now",26, 85)) ) + 
-  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + 
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge", draw_quantiles = 0.5) + 
   facet_wrap(adm0~., scales = "free_y") +
-  scale_fill_manual(values = snapalette("Camden", 3))
+  scale_fill_manual(values = snapalette(snapal, 3))+
+  theme_bw()
 
 ```
 
@@ -117,9 +123,10 @@ west = c("BEN", "BFA", "GMB", "GHA", "GIN", "GNB", "CIV", "LBR", "MLI", "MRT", "
 tp = tp %>% mutate(WE = ifelse(adm0 %in% west, "West", "East and central"))
 
 ggplot(tp) + 
-  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + 
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge", draw_quantiles = 0.5) + 
   facet_wrap(WE~.)+
-  scale_fill_manual(values = snapalette("Camden", 3))
+  scale_fill_manual(values = snapalette(snapal, 3))+
+  theme_bw()
 
 
 ```
@@ -127,9 +134,10 @@ ggplot(tp) +
 ```{r transmission_by_area_subset}
 
 ggplot(filter(tp, scenario %in% c("now",26, 85))) + 
-  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + 
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge", draw_quantiles = 0.5) + 
   facet_wrap(WE~.)+
-  scale_fill_manual(values = snapalette("Camden", 3))
+  scale_fill_manual(values = snapalette(snapal, 3))+
+  theme_bw()
 
 ```
 
@@ -150,9 +158,10 @@ for(i in c(2050, 2070)){
 ```{r difference_by_country, fig.height = 12, fig.width = 10}
 
 ggplot( filter(percent_diff, year %in% c(2050, 2070)) ) + 
-  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + 
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge", draw_quantiles = 0.5) + 
   facet_wrap(adm0~., scales = "free_y") + ylab("FOI change %")+
-  scale_fill_manual(values = snapalette("Camden", 3))
+  scale_fill_manual(values = snapalette(snapal, 3))+
+  theme_bw()
 
 
 ```
@@ -160,37 +169,83 @@ ggplot( filter(percent_diff, year %in% c(2050, 2070)) ) +
 ```{r difference_by_country_subset, fig.height = 12, fig.width = 10}
 
 ggplot( filter(percent_diff, year %in% c(2050, 2070) & scenario %in% c(26, 85)) ) + 
-  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + 
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge", draw_quantiles = 0.5) + 
   facet_wrap(adm0~., scales = "free_y") + ylab("FOI change %")+
-  scale_fill_manual(values = snapalette("Camden", 3))
+  scale_fill_manual(values = snapalette(snapal, 3))+
+  theme_bw()
 
 
 ```
 
-```{r difference_by_area, fig.height = 12, fig.width = 10}
+```{r difference_by_area}
 
 percent_diff = percent_diff %>% mutate(WE = ifelse(adm0 %in% west, "West", "East and central"))
 
 ggplot(filter(percent_diff, year %in% c(2050, 2070))) + 
-  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + facet_wrap(WE~.)+
-  scale_fill_manual(values = snapalette("Camden", 3))
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge", draw_quantiles = 0.5) + 
+  facet_wrap(WE~.)+
+  scale_fill_manual(values = snapalette(snapal, 3))+ 
+  ylab("FOI change %")+
+  theme_bw()
 
 ```
 
 
-```{r difference_by_area_subset, fig.height = 12, fig.width = 10}
+```{r difference_by_area_subset}
 
 ggplot(filter(percent_diff, year %in% c(2050, 2070) & scenario %in% c(26, 85))) + 
-  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge") + facet_wrap(WE~.)+
-  scale_fill_manual(values = snapalette("Camden", 3))
+  geom_violin(aes(x = scenario, y = FOI, fill = year), position="dodge", draw_quantiles = 0.5) + 
+  facet_wrap(WE~.)+
+  scale_fill_manual(values = snapalette(snapal, 3))+ ylab("FOI change %")+
+  theme_bw()
+
+```
+
+# Visualising burden
+
+```{r load_burden}
+
+#get files in infections directory
+
+fil = list.files("infections")
+
+inf_in = NULL
+for(i in 1:length(fil)){
+  inf_in[[i]] = mutate_all( read.csv(paste0("infections/", fil[i]), stringsAsFactors = FALSE), as.character)
+}
+
+inf_in = bind_rows(inf_in)
+
+inf_df = gather(inf_in,   "Year", "Infections", -c(adm0, scenario, sample))
+
+inf_df$Year = gsub("X", "", inf_df$Year)
+
+inf_df = inf_df %>% mutate( Year = as.character(Year), Infections = as.numeric(Infections))
 
 ```
 
 
-```{r save_median}
+```{r infections, fig.cap="Infections."}
 
-med_out = transmission_proj %>% group_by(adm0, year, scenario) %>% summarise(median_FOI = median(FOI))
+ggplot(filter(inf_df, Year %in% c(2018, 2050, 2070)),
+       aes(x = Year, y = log10(Infections), fill = scenario)) + 
+  geom_violin( position="dodge", draw_quantiles = 0.5) + 
+  scale_fill_manual(values = snapalette(snapal))+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-write.csv(med_out, "Median_FOI_projections.csv", row.names = FALSE)
+```
+
+```{r infections_scenario_subset, fig.cap="Infections."}
+tmp = filter(inf_df, 
+             Year %in% c(2018, 2050, 2070) & 
+                           scenario %in% c("26", "85", "now"))
+
+ggplot(tmp,
+       aes(x = Year, y = log10(Infections), fill = scenario)) + 
+  geom_violin( position="dodge", draw_quantiles = 0.5) + 
+  scale_fill_manual(values = snapalette(snapal)[c(1,4,5)])+
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 ```
