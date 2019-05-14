@@ -30,7 +30,7 @@ sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 #-----------------------------------------------------------------------------
 transmission_proj = read.csv( "transmission_intensity_med.csv", stringsAsFactors = FALSE)
 
-transmission_proj = transmission_proj %>% mutate(adm0 = substr(X, 1,3))
+transmission_proj = transmission_proj %>% mutate(adm0 = substr(adm0_adm1, 1,3))
 
 transmission_proj1 = transmission_proj %>% group_by(adm0, year, scenario) %>% summarise(median_FOI = mean(runs))
 

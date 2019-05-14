@@ -106,7 +106,9 @@ dat_mort = filter(dat_mort, Alive+Dead+Censored>0)
 dat_EIP <- read_csv("Data/davis_EIP.csv")
 
 ### posterior samples
-n_samples = 1000
+snapal = "BudapestCitadel"
+
+
 
 ```
 
@@ -432,12 +434,13 @@ for(year in c(2050, 2070, "now")){
     
     runs = transmission_whole
     
-    names(runs) = envdat$dat$adm0_adm1
+    #names(runs) = envdat$dat$adm0_adm1
     
-    runs_clim_change = rbind(runs_clim_change, cbind(runs, data.frame("year" = year, "scenario" = scenario)))
+    runs_clim_change = rbind(runs_clim_change, cbind(runs, data.frame("year" = year, "scenario" = scenario, "adm0_adm1" = envdat$dat$adm0_adm1)))
   }
 }
 colours = (snapalette("Camden", 100, type = "continuous"))
+
 
 write.csv(runs_clim_change, "transmission_intensity_med.csv")
 ```
@@ -447,13 +450,13 @@ write.csv(runs_clim_change, "transmission_intensity_med.csv")
 
 
 ```{r plot_transmission_base, fig.height=10, fig.width=7, fig.cap="Force of infection, %, baseline.", echo=TRUE}
+snapal = "Ipanema"
 
-colours = (snapalette("Ipanema", 100, type = "continuous"))
+colours = (snapalette(snapal, 100, type = "continuous"))
 
 runs = runs_clim_change %>% filter(year == "now" & scenario == 26)
 
-mybreaks= seq(-6, 
-              -1, length.out=101)
+mybreaks= seq(-6, -1, length.out=101)
 mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
 vcols = findInterval(log10(runs$runs),mybreaks)
 
@@ -472,21 +475,20 @@ image.plot(legend.only=TRUE, breaks=mybreaks, col=colours, zlim=c(0,1), horizont
 
 ```
 
-```{r plot_transmission_all, fig.height=10, fig.width=7, fig.cap="Force of infection, %, scenarios.", echo=TRUE}
+```{r plot_transmission_all, fig.height=7, fig.width=7, fig.cap="Force of infection, %, scenarios.", echo=TRUE}
 
 par(mfrow = c(2, 4), mar = c(2,2,2,2))
-for(year in c(2050, 2070)){
+for(y in c(2050, 2070)){
   
-  for(scenario in c(26, 45, 60, 85)){
+  for(s in c("26", "45", "60", "85")){
     
-    runs = runs_clim_change %>% filter(year == year & scenario == scenario)
+    runs = runs_clim_change %>% filter(year == y & scenario == s)
     
-    mybreaks= seq(-6, 
-              -1, length.out=101)
+    mybreaks= seq(-6, -1, length.out=101)
     mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
     vcols = findInterval(log10(runs$runs),mybreaks)
     
-    plot(shp0, xlim=c(-15,50),ylim=c(-20,30), main = paste0(year, "_", scenario))
+    plot(shp0, xlim=c(-15,50),ylim=c(-20,30), main = paste0(y, "_", s))
     mm0 = match(shp0$ISO,Countries$c34) #
     plot(shp0[is.na(mm0),],col="black",add=T)
     plot(shp1[!is.na(mm),],col=colours[vcols], xlim=c(-15,50),ylim=c(-20,30) , lty=0, add=T)
@@ -503,26 +505,31 @@ for(year in c(2050, 2070)){
 
 ```
 
-```{r plot_transmission_diff_2050, fig.height=10, fig.width=7, fig.cap="Force of infection, relative difference 2050.", echo=TRUE}
+```{r plot_transmission_diff_2050, fig.height=10, fig.width=10, fig.cap="Force of infection, relative difference 2050.", echo=TRUE}
 
 colours = (snapalette("Fjord", 100, type = "continuous"))
 
-trans_diff = data.frame(scenario = filter(runs_clim_change, year == 2050)$scenario)
 
-trans_diff$year_2050 = (filter(runs_clim_change, year == 2050)$runs - filter(runs_clim_change, year == "now")$runs)/filter(runs_clim_change, year == "now")$runs
-trans_diff$year_2070 = (filter(runs_clim_change, year == 2070)$runs - filter(runs_clim_change, year == "now")$runs)/filter(runs_clim_change, year == "now")$runs 
+
+tmp = filter(runs_clim_change, year == "now") 
+tmp$scenario = "now"
+tmp = tmp %>% dplyr::rename(runs_now = runs) %>% select("adm0_adm1", "runs_now")
+
+df = left_join(runs_clim_change, tmp, by = c("adm0_adm1"))
+df = unique(df)
 
 par(mfrow = c(2, 2), mar = c(2,2,2,2))
 
-for(scenario in c(26, 45, 60, 85)){
+for(s in c("26", "45", "60", "85")){
 
-  runs = filter(trans_diff, scenario == scenario)$year_2050
+    df_subs = filter(df, scenario == s & year == 2050)
+    runs = (df_subs$runs - df_subs$runs_now) / df_subs$runs_now
     
-    mybreaks= seq(-1.1, 1.1, length.out=101)
+    mybreaks= seq(-2, 2, length.out=101)
     mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
     vcols = findInterval(runs, mybreaks)
     
-    plot(shp0, xlim=c(-15,50),ylim=c(-20,30), main = paste0( scenario))
+    plot(shp0, xlim=c(-15,50),ylim=c(-20,30), main = paste0( "RCP ",  sub( '(?<=.{1})', '.', s, perl=TRUE )))
     mm0 = match(shp0$ISO, Countries$c34) #
     plot(shp0[is.na(mm0),],col="black",add=T)
     plot(shp1[!is.na(mm),],col=colours[vcols], xlim=c(-15,50),ylim=c(-20,30) , lty=0, add=T)
@@ -537,20 +544,21 @@ for(scenario in c(26, 45, 60, 85)){
 
 ```
 
-```{r plot_transmission_diff_2070, fig.height=10, fig.width=7, fig.cap="Force of infection, relative difference 2070.", echo=TRUE}
+```{r plot_transmission_diff_2070, fig.height=10, fig.width=10, fig.cap="Force of infection, relative difference 2070.", echo=TRUE}
 
 
 par(mfrow = c(2, 2), mar = c(2,2,2,2))
 
-for(scenario in c(26, 45, 60, 85)){
+for(s in c("26", "45", "60", "85")){
 
-  runs = filter(trans_diff, scenario == scenario)$year_2070
+    df_subs = filter(df, scenario == s & year == 2070)
+    runs = (df_subs$runs - df_subs$runs_now) / df_subs$runs_now
     
-    mybreaks= seq(-1.1, 1.1, length.out=101)
+    mybreaks= seq(-6, 6, length.out=101)
     mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
     vcols = findInterval(runs, mybreaks)
     
-    plot(shp0, xlim=c(-15,50),ylim=c(-20,30), main = paste0( scenario))
+    plot(shp0, xlim=c(-15,50),ylim=c(-20,30), main = paste0( "RCP ",  sub( '(?<=.{1})', '.', s, perl=TRUE )) )
     mm0 = match(shp0$ISO, Countries$c34) #
     plot(shp0[is.na(mm0),],col="black",add=T)
     plot(shp1[!is.na(mm),],col=colours[vcols], xlim=c(-15,50),ylim=c(-20,30) , lty=0, add=T)
