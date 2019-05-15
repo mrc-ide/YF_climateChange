@@ -505,7 +505,7 @@ for(y in c(2050, 2070)){
 
 ```
 
-```{r plot_transmission_diff_2050, fig.height=10, fig.width=10, fig.cap="Force of infection, relative difference 2050.", echo=TRUE}
+```{r plot_transmission_diff_2050, fig.height=10, fig.width=10, fig.cap="Force of infection, percentage difference 2050.", echo=TRUE}
 
 colours = (snapalette("Fjord", 100, type = "continuous"))
 
@@ -523,9 +523,9 @@ par(mfrow = c(2, 2), mar = c(2,2,2,2))
 for(s in c("26", "45", "60", "85")){
 
     df_subs = filter(df, scenario == s & year == 2050)
-    runs = (df_subs$runs - df_subs$runs_now) / df_subs$runs_now
+    runs = 100*(df_subs$runs - df_subs$runs_now) / df_subs$runs_now
     
-    mybreaks= seq(-2, 2, length.out=101)
+    mybreaks= seq(-200, 200, length.out=101)
     mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
     vcols = findInterval(runs, mybreaks)
     
@@ -544,7 +544,7 @@ for(s in c("26", "45", "60", "85")){
 
 ```
 
-```{r plot_transmission_diff_2070, fig.height=10, fig.width=10, fig.cap="Force of infection, relative difference 2070.", echo=TRUE}
+```{r plot_transmission_diff_2070, fig.height=10, fig.width=10, fig.cap="Force of infection, percentage difference 2070.", echo=TRUE}
 
 
 par(mfrow = c(2, 2), mar = c(2,2,2,2))
@@ -552,9 +552,9 @@ par(mfrow = c(2, 2), mar = c(2,2,2,2))
 for(s in c("26", "45", "60", "85")){
 
     df_subs = filter(df, scenario == s & year == 2070)
-    runs = (df_subs$runs - df_subs$runs_now) / df_subs$runs_now
+    runs = 100*(df_subs$runs - df_subs$runs_now) / df_subs$runs_now
     
-    mybreaks= seq(-6, 6, length.out=101)
+    mybreaks= seq(-600, 600, length.out=101)
     mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
     vcols = findInterval(runs, mybreaks)
     
