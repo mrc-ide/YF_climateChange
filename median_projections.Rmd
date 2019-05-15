@@ -123,7 +123,7 @@ P_severe = 0.12
 P_severeDeath = 0.47
 
 df = df %>% mutate(Cases = Infections*P_severe,
-                   Deaths = Cases*P_severe*P_severeDeath)
+                   Deaths = Cases*P_severeDeath)
 
 ```
 
