@@ -30,22 +30,15 @@ sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 #-----------------------------------------------------------------------------
 transmission_proj = read.csv( "transmission_intensity_med.csv", stringsAsFactors = FALSE)
 
-transmission_proj = transmission_proj %>% mutate(adm0 = substr(adm0_adm1, 1,3))
+transmission_proj %<>% mutate(adm0 = substr(adm0_adm1, 1,3))
 
 transmission_proj1 = transmission_proj %>% group_by(adm0, year, scenario) %>% summarise(median_FOI = mean(runs))
 
-transmission_proj1 = transmission_proj1 %>% ungroup() %>% mutate(year = as.character(year), scenario = as.character(scenario))
+transmission_proj1 %<>% ungroup() %>% mutate(year = as.character(year), scenario = as.character(scenario))
 
-param_samples = filter(transmission_proj1, !(scenario %in% c(45, 60, 85) & year == "now"))
-param_samples$scenario[param_samples$year == "now"] = "now"
+param_samples = spread(transmission_proj1, year, median_FOI)
 
-param_samples = spread(param_samples, year, median_FOI) # spread and split
-param_samples_now = filter(param_samples, scenario == "now")
-param_samples = filter(param_samples, scenario != "now")
-
-param_samples$now = filter(transmission_proj1, year == "now")$median_FOI
-
-param_samples_now$`2050` = param_samples_now$`2070` = param_samples_now$now
+param_samples_now = param_samples %>% mutate(`2050` = param_samples$now , `2070` = param_samples$now, scenario = "now") %>% unique()
 
 param_samples = bind_rows(param_samples, param_samples_now)
 
