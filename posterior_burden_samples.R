@@ -18,6 +18,7 @@ library(ggmcmc)
 library(mcmcplots)
 library(R.utils)
 library(parallelsugar)
+library(magrittr)
 
 library(YFestimation)
 library(snapalette)
@@ -34,7 +35,8 @@ sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 # 
 # param_samples = spread(transmission_proj, year, FOI)
 # 
-# param_samples_now = param_samples %>% mutate(`2050` = param_samples$now , `2070` = param_samples$now, scenario = "now")
+# param_samples_now = param_samples %>% 
+#   mutate(`2050` = param_samples$now , `2070` = param_samples$now, scenario = "now") %>% unique()
 # 
 # param_samples %<>% bind_rows(param_samples_now)
 # 
@@ -60,7 +62,7 @@ sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 
 param_samples_interp = read.csv("transmission_intensity_samples_interp.csv", stringsAsFactors = FALSE)
 
-param_samples_interp %<>% filter(sample %in% unique(param_samples_interp$sample)[1:100])
+#param_samples_interp %<>% filter(sample %in% unique(param_samples_interp$sample)[1:100])
 #-----------------------------------------------------------------------------
 
 montagu::montagu_server_global_default_set(
@@ -182,14 +184,14 @@ fun_calc_burden = function(i){
   return(tmp_burden_out)
 }
 
-
+i=1
 #split it into chunks of 10,000 rows and run
-for(i in 1:(nrow(param_samples_interp)/1e3)){
+for(i in i:(nrow(param_samples_interp)/1e3)){
   
   ind = c( ((i-1)*1e3 + 1) : (i*1e3))
   infections_out_l = lapply(ind, fun_calc_burden)#, mc.cores = 4)
   infections_out = bind_rows(infections_out_l)
   
   
-  write.csv(infections_out, paste0("infections/infections_per_scenario_year_country_sample_", i, ".csv"), row.names = FALSE)
+  write.csv(infections_out, paste0("infections2/infections_per_scenario_year_country_sample_", i, ".csv"), row.names = FALSE)
 }
