@@ -193,12 +193,13 @@ for(s in 1:4){
       theme_bw()+
       xlab("Change in force of infection (%)") + 
       ylab("Country")+
-      labs(title = paste0("Year ", y, ", scenario ", s))+
+      #labs(title = paste0("Year ", y, ", scenario ", s))+
       scale_y_discrete(expand = c(0.01, 0)) +
       geom_hline(yintercept = 0, color = snapalette(snapal)[5])+
       xlim(-100, 500) +
       geom_vline(xintercept = 0)+
-      guides(fill = FALSE)
+      guides(fill = FALSE)+
+      theme(text = element_text(size = 20))
     
     print(g)
     
@@ -271,6 +272,51 @@ ggplot( filter( transmission_proj, year %in% c(2050, 2070) )) +
 #rm(transmission_proj, tmp, tp)
 
 ```
+
+```{r transmission_difference_table}
+
+p <- c(0.025, 0.25, 0.5, 0.75, 0.975)
+
+p_names <- map_chr(p, ~paste0(.x*100, "%"))
+
+p_funs <- map(p, ~partial(quantile, probs = .x, na.rm = TRUE)) %>% 
+  set_names(nm = p_names)
+
+
+out_df = transmission_proj %>% 
+  group_by( year, scenario) %>% 
+  summarise_at(vars(percent_diff), funs(!!!p_funs)) %>% 
+  filter(year %in% c( 2050, 2070))
+
+write.csv(out_df, "table_of_change_foi.csv", row.names = FALSE)
+
+kableExtra::kable(out_df, caption = "FOI per year in each scenario")
+
+```
+
+```{r transmission_difference_table}
+
+scen_vec = c(26, 45, 60, 85)
+
+for(s in 1:4){
+  for(y in c(2050, 2070)){
+    
+    out_df = transmission_proj %>% 
+      group_by( year, scenario, adm0) %>% 
+      summarise_at(vars(percent_diff), funs(!!!p_funs)) %>% 
+      filter(year %in% y & scenario == scen_vec[s]) %>%
+      arrange(year, scenario, `50%`)
+    
+    write.csv(out_df, paste0("table_of_change_foi_country_", y, "_", scen_vec[s],".csv"), row.names = FALSE)
+    
+    kableExtra::kable(out_df, caption = paste0("Change in FOI in ", y, "in scenario", scen_vec[s]))
+    
+    
+  }
+}
+
+```
+
 
 # Visualising burden
 
