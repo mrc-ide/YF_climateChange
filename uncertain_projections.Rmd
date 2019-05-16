@@ -93,7 +93,7 @@ tp$scenario[tp$year == "now"] = "now"
 
 ```
 
-```{r transmission_by_country, fig.height = 12, fig.width = 10}
+```{r transmission_by_country, fig.height = 10, fig.width = 10}
 ggplot(tp) + 
   geom_violin(aes(fill = scenario, y = FOI, x = year), position="dodge", draw_quantiles = 0.5) + 
   facet_wrap(adm0~.) +
@@ -106,7 +106,7 @@ ggplot(tp) +
 
 
 
-```{r transmission_by_area}
+```{r transmission_by_area_calc}
 
 west = c("BEN", "BFA", "GMB", "GHA", "GIN", "GNB", "CIV", "LBR", "MLI", "MRT", "NER", "NGA", "SEN", "SLE", "TGO")
 
@@ -116,6 +116,11 @@ tp %<>% mutate(WE = ifelse(adm0 %in% west, "West",
                                ifelse(adm0 %in% central, "Central and Sudan",
                                       "East")))
 
+```
+
+
+
+```{r transmission_by_area , eval = FALSE}
 ggplot(tp) + 
   geom_violin(aes(fill = scenario, y = FOI, x = year), position="dodge", draw_quantiles = 0.5) + 
   facet_wrap(WE~.)+
@@ -126,6 +131,7 @@ ggplot(tp) +
 
 
 ```
+
 ```{r transmission_by_area2}
 ggplot(tp, aes(x = FOI, y =  year, fill = scenario)) + 
   geom_density_ridges(alpha = 0.6 , scale = 1) +
@@ -133,6 +139,7 @@ ggplot(tp, aes(x = FOI, y =  year, fill = scenario)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   scale_fill_manual(values = c(snapalette(snapal)[1:4], "white")) +
   scale_x_log10()+
+  scale_y_discrete(expand = c(0.01, 0)) +
   xlab("Force of infection")+
   facet_wrap(~WE) 
 
@@ -156,7 +163,7 @@ transmission_proj %<>% mutate(percent_diff = ((FOI - FOI_now)/FOI_now)*100)
 ```
 
 
-```{r difference_by_country, fig.height = 12, fig.width = 10}
+```{r difference_by_country, fig.height = 12, fig.width = 10, eval = FALSE}
 
 ggplot( filter( transmission_proj, year %in% c(2050, 2070) )) + 
   geom_violin(aes(x = year, y = percent_diff, fill = scenario), position="dodge", draw_quantiles = 0.5) + 
@@ -180,20 +187,25 @@ ggplot( filter( transmission_proj, year %in% c( 2050, 2070) )) +
   theme_bw()+
   xlab("Change in force of infection (%)") + 
   ylab("Country")+
+  scale_y_discrete(expand = c(0.01, 0)) +
   geom_hline(yintercept = 0, color = snapalette(snapal)[5])+
   xlim(-100, 500) +
   geom_vline(xintercept = 0)+
-  facet_wrap(~scenario)
+  facet_wrap(~scenario)+
+  guides(fill = FALSE)
 
 
 ```
 
 
-```{r difference_by_area}
+```{r difference_by_area_calc}
 
 transmission_proj %<>% mutate(WE = ifelse(adm0 %in% west, "West", 
                                ifelse(adm0 %in% central, "Central and Sudan",
                                       "East")))
+```
+
+```{r difference_by_area,  eval = FALSE}
 
 ggplot( filter( transmission_proj, year %in% c(2050, 2070) )) + 
   geom_violin(aes(x = year, y = percent_diff, fill = scenario), position="dodge", draw_quantiles = 0.5) + 
@@ -207,7 +219,7 @@ ggplot( filter( transmission_proj, year %in% c(2050, 2070) )) +
 
 ```
 
-```{r difference_by_area2, fig.width=10, fig.height=8}
+```{r difference_by_area2, fig.width=10, fig.height=8, eval = FALSE}
 
 
 ggplot( filter( transmission_proj, year %in% c(2050, 2070) )) + 
@@ -217,6 +229,7 @@ ggplot( filter( transmission_proj, year %in% c(2050, 2070) )) +
   theme_bw()+
   xlab("Change in force of infection (%)") + 
   ylab("Year")+
+  scale_y_discrete(expand = c(0.01, 0)) +
   geom_hline(yintercept = 0, color = snapalette(snapal)[5])+
   xlim(-100, 500) +
   geom_vline(xintercept = 0)
@@ -239,9 +252,11 @@ ggplot( filter( transmission_proj, year %in% c(2050, 2070) )) +
   theme_bw()+
   xlab("Change in force of infection (%)") + 
   ylab("")+
+  scale_y_discrete(expand = c(0.01, 0)) +
   geom_hline(yintercept = 0, color = snapalette(snapal)[5])+
   xlim(-100, 500) +
-  geom_vline(xintercept = 0)
+  geom_vline(xintercept = 0)+
+  guides(fill = FALSE)
 
 #rm(transmission_proj, tmp, tp)
 
@@ -253,11 +268,11 @@ ggplot( filter( transmission_proj, year %in% c(2050, 2070) )) +
 
 #get files in infections directory
 
-fil = list.files("infections")
+fil = list.files("infections2")
 
 inf_df = NULL
 for(i in 1:length(fil)){
-  inf_df[[i]] = mutate_all( read.csv(paste0("infections/", fil[i]), stringsAsFactors = FALSE), as.character)
+  inf_df[[i]] = mutate_all( read.csv(paste0("infections2/", fil[i]), stringsAsFactors = FALSE), as.character)
 }
 
 inf_df = bind_rows(inf_df)
@@ -325,7 +340,7 @@ rm(P_severe_runs, P_death_runs, n_samples)
 
 ```
 
-```{r deaths_scenario_country, fig.cap="Deaths.", fig.height = 12, fig.width = 10}
+```{r deaths_scenario_country, fig.cap="Deaths.", fig.height = 12, fig.width = 10, eval = FALSE}
  
 ggplot(inf_df,
        aes(x = Year, y = Deaths, fill = scenario)) + 
@@ -335,6 +350,22 @@ ggplot(inf_df,
   theme(axis.text.x = element_text(angle = 90, hjust = 1))+
   facet_wrap(~adm0)+
   scale_y_log10()
+
+```
+
+```{r deaths_scenario_country2, fig.height=12, fig.width=10, fig.cap="Deaths per country."}
+ggplot( filter(inf_df, Year %in% c(2050, 2070) )) + 
+  geom_density_ridges(scale = 1, 
+                      alpha = 0.7,
+                      aes(x = Deaths, y = adm0, fill = scenario)) + 
+  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
+  scale_alpha_manual(values = c(0.1,0.5))+
+  theme_bw()+
+  xlab("Deaths per capita") + 
+  ylab("Country")+
+  scale_y_discrete(expand = c(0.01, 0)) +
+  facet_wrap(Year~., nrow = 1)+
+  scale_x_log10()
 
 ```
 
@@ -358,7 +389,7 @@ kableExtra::kable(inf_df %>%
 ```
 
 
-```{r deaths_percap_country, fig.height=12, fig.width=10, fig.cap="Deaths per capita per country."}
+```{r deaths_percap_calc}
 
 pop_all = read.csv("population.csv", stringsAsFactors = FALSE)
 
@@ -372,6 +403,9 @@ pop_all %<>% dplyr::rename(adm0 = country_code, Year = year) %>%
 inf_df %<>% left_join( pop_all, by = c("adm0", "Year"))
 
 rm(pop_all)
+```
+
+```{r deaths_percap_country, fig.height=12, fig.width=10, fig.cap="Deaths per capita per country.", eval = FALSE}
 
 ggplot(inf_df,
        aes(x = Year, y = Deaths/total_pop, fill = scenario)) + 
@@ -385,6 +419,7 @@ ggplot(inf_df,
 
 ```
 
+
 ```{r deaths_percap_country2, fig.height=12, fig.width=10, fig.cap="Deaths per capita per country."}
 ggplot( filter(inf_df, Year %in% c(2050, 2070) )) + 
   geom_density_ridges(scale = 1, 
@@ -396,6 +431,7 @@ ggplot( filter(inf_df, Year %in% c(2050, 2070) )) +
   xlab("Deaths per capita") + 
   ylab("Country")+
   xlim(-100, 500) +
+  scale_y_discrete(expand = c(0.01, 0)) +
   geom_vline(xintercept = 0)+
   facet_wrap(Year~., nrow = 1)+
   scale_x_log10()
@@ -454,7 +490,7 @@ ggplot(inf_df,
 
 
 
-```{r relative_deaths, fig.height=12, fig.width=10, fig.cap="Proportion of deaths relative to baseline."}
+```{r relative_deaths, fig.height=12, fig.width=10, fig.cap="Proportion of deaths relative to baseline.", eval = FALSE}
 
 ggplot(inf_df, aes(x = Year, y = relative_deaths, fill = scenario)) + 
   geom_violin( position="dodge", draw_quantiles = 0.5) +
@@ -480,7 +516,7 @@ write.csv(out_df, "table_of_deaths.csv", row.names = FALSE)
 kableExtra::kable(out_df, caption = "Deaths per year in each scenario")
 ```
 
-```{r percentage_change_deaths_per_scenario_table}
+```{r percentage_change_deaths_per_scenario_table, eval = FALSE}
 
 
 out_df = inf_df %>% 
@@ -501,7 +537,7 @@ kableExtra::kable(out_df, caption = "Median percentage change in deaths per year
 
 ## Deaths by region
 
-```{r change_deaths_by_region, fig.cap = "Change in deaths per region"}
+```{r region_calc}
 
 
 west = c("BEN", "BFA", "GMB", "GHA", "GIN", "GNB", "CIV", "LBR", "MLI", "MRT", "NER", "NGA", "SEN", "SLE", "TGO")
@@ -511,6 +547,10 @@ central = c("TCD", "CAF", "CMR", "GAB", "COD", "COG", "AGO", "SSD", "SDN")
 inf_df %<>% mutate(WE = ifelse(adm0 %in% west, "West", 
                                ifelse(adm0 %in% central, "Central and Sudan",
                                       "East")))
+
+```
+
+```{r change_deaths_by_region, fig.cap = "Change in deaths per region", eval = FALSE}
 
 ggplot(inf_df, aes(x = Year, y = relative_deaths, fill = scenario)) + 
   geom_violin( position="dodge", draw_quantiles = 0.5) +
@@ -541,7 +581,7 @@ ggplot(inf_df, aes(x = Year, y = Deaths, fill = scenario)) +
 
 ```
 
-```{r deaths_percap_by_region}
+```{r deaths_percap_by_region, eval = FALSE}
 
 ggplot(inf_df, aes(x = Year, y = Deaths_percap, fill = scenario)) + 
   geom_boxplot( position="dodge", draw_quantiles = 0.5) +
@@ -556,17 +596,22 @@ ggplot(inf_df, aes(x = Year, y = Deaths_percap, fill = scenario)) +
 ```
 
 
-```{r deaths_percap_by_region2, out.width="1\\linewidth"}
+```{r deaths_percap_by_region2, fig.width=10, fig.height=8}
 
 
-ggplot(inf_df, aes(x = Deaths_percap, y =  Year, fill = scenario)) + 
-  geom_density_ridges(alpha = 0.6 , scale = 1) +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white")) +
+ggplot( filter(inf_df, scenario != "now")) + 
+  geom_density_ridges(#alpha = 0.6 , 
+                      scale = 1, 
+                      aes(x = Deaths_percap, y = WE, fill = scenario, alpha = Year)) + 
+  facet_wrap(~scenario) +
+  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
+  scale_alpha_manual(values = c(0.1,0.5, 0.8))+
+  theme_bw()+
+  xlab("Deaths per capita") + 
+  ylab("")+
   scale_x_log10()+
-  xlab("Deaths per capita")+
-  facet_wrap(~WE) 
+  scale_y_discrete(expand = c(0.01, 0))+
+  guides(fill = FALSE)
 
 
 ```
