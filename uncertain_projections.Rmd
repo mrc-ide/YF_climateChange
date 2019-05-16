@@ -179,21 +179,31 @@ ggplot( filter( transmission_proj, year %in% c(2050, 2070) )) +
 
 
 ```{r difference_by_country2, fig.width=10, fig.height=12}
+scen_vec = c(26, 45, 60, 85)
 
-ggplot( filter( transmission_proj, year %in% c( 2050, 2070) )) + 
-  geom_density_ridges(scale = 5, aes(x = percent_diff, y = adm0, fill = scenario, alpha = year)) + 
-  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
-  scale_alpha_manual(values = c(0.1,0.8))+
-  theme_bw()+
-  xlab("Change in force of infection (%)") + 
-  ylab("Country")+
-  scale_y_discrete(expand = c(0.01, 0)) +
-  geom_hline(yintercept = 0, color = snapalette(snapal)[5])+
-  xlim(-100, 500) +
-  geom_vline(xintercept = 0)+
-  facet_wrap(~scenario)+
-  guides(fill = FALSE)
-
+for(s in 1:4){
+  for(y in c(2050, 2070)){
+    
+    col = snapalette(snapal)[s]
+    
+    g = ggplot( filter( transmission_proj, year %in% y & scenario %in% scen_vec[s] )) + 
+      geom_density_ridges(scale = 2, aes(x = percent_diff, y = reorder(adm0, percent_diff) ), 
+                          fill = col,
+                          alpha = 0.5) + 
+      theme_bw()+
+      xlab("Change in force of infection (%)") + 
+      ylab("Country")+
+      labs(title = paste0("Year ", y, ", scenario ", s))+
+      scale_y_discrete(expand = c(0.01, 0)) +
+      geom_hline(yintercept = 0, color = snapalette(snapal)[5])+
+      xlim(-100, 500) +
+      geom_vline(xintercept = 0)+
+      guides(fill = FALSE)
+    
+    print(g)
+    
+  }
+}
 
 ```
 
