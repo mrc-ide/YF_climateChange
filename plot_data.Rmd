@@ -90,7 +90,7 @@ plot(shp0,lwd=2, add=TRUE)
 
 # Worldclim mid 
 
-```{r worldclim, fig.cap="worldclim_temp_mid. Black indicates that area is not in the YF endemic region."}
+```{r worldclim, fig.cap="worldclim_temp_mid. Black indicates that area is not in the YF endemic region at baseline."}
 
 par(mar = 0*c(5.1,4.1,4.1,2.1))
 
@@ -114,6 +114,39 @@ image.plot(legend.only=TRUE,
            col=mycols,
            zlim=c(0,1), 
            horizontal = FALSE)
+
+```
+
+```{r worldclim_scenario, fig.cap="worldclim_temp_mid_scenario. Black indicates that area is not in the YF endemic region."}
+
+source('Z:/YF_climateChange/FUNCTIONS/clim_change_fun.R')
+
+par(mar = 0*c(5.1,4.1,4.1,2.1))
+
+for(s in c(26,45,60,85)){
+  for(y in c(2050, 2070)){
+    
+    dat = prepare_climate_dat(dat_full, scenario = s, year = y)
+    
+    mybreaks = seq(7.269308 , 34, length.out=100)
+
+    mycols =   colorRampPalette(brewer.pal(9, "Oranges") )(length(mybreaks)-1)
+    mm = match(shp1$adm0_adm1, dat$adm0_adm1)
+    vcols = findInterval(dat$worldclim_temp_mid,mybreaks)
+    
+    plot(shp0, xlim=c(-15,45),ylim=c(-20,30), main = paste0("Year ", y, ", scenario ", s))
+    mm0 = match(shp0$ISO,c34) #
+    plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+    plot(shp0, lwd=2, add=TRUE)
+    plot(shp0[is.na(mm0),],col="black",add=T) 
+    
+    image.plot(legend.only=TRUE,
+               breaks=mybreaks,
+               col=mycols,
+               zlim=c(0,1), 
+               horizontal = FALSE)
+  }
+}
 
 ```
 
@@ -143,16 +176,47 @@ image.plot(legend.only=TRUE,
 
 ```
 
+```{r worldclim_range_scenario, fig.cap="worldclim_temp_range_scenario. Black indicates that area is not in the YF endemic region."}
+
+
+par(mar = 0*c(5.1,4.1,4.1,2.1))
+
+for(s in c(26,45,60,85)){
+  for(y in c(2050, 2070)){
+    
+    dat = prepare_climate_dat(dat_full, scenario = s, year = y)
+    
+    mybreaks= seq(8.432164, 42.88494, length.out=100)
+    mycols =   snapalette("Bouquet", n = length(mybreaks)-1, type = "continuous")
+    mm = match(shp1$adm0_adm1, dat$adm0_adm1)
+    vcols = findInterval(dat$worldclim_temp_range,mybreaks)
+    
+    plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
+    mm0 = match(shp0$ISO,c34) #
+    plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+    plot(shp0, lwd=2, add=TRUE)
+    plot(shp0[is.na(mm0),],col="black",add=T) 
+    
+    image.plot(legend.only=TRUE,
+               breaks=mybreaks,
+               col=mycols,
+               zlim=c(0,1), 
+               horizontal = FALSE)
+  }
+}
+
+```
+
 # Rainfall mean
 
 ```{r RFE, fig.cap="RFE mean. Black indicates that area is not in the YF endemic region."}
 
 par(mar = 0*c(5.1,4.1,4.1,2.1))
 
-mybreaks= seq(min(dat_full$RFE.mean)-0.1, max(dat_full$RFE.mean)+0.1, length.out=100)
+mybreaks= seq(min(dat_full$X1970_1990prnow)-0.1, max(dat_full$X1970_1990prnow)+0.1, length.out=100)
 mycols =   colorRampPalette(brewer.pal(9, "Blues") )(length(mybreaks)-1)
 mm = match(shp1$adm0_adm1, dat_full$adm0_adm1)
-vcols = findInterval(dat_full$RFE.mean,mybreaks)
+vcols = findInterval(dat_full$X1970_1990prnow,mybreaks)
 
 plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
 mm0 = match(shp0$ISO,c34) #
@@ -167,6 +231,39 @@ image.plot(legend.only=TRUE,
            horizontal = FALSE)
 
 ```
+
+
+```{r RFE_scenario, fig.cap="RFE scenario. Black indicates that area is not in the YF endemic region."}
+
+
+par(mar = 0*c(5.1,4.1,4.1,2.1))
+
+for(s in c(26,45,60,85)){
+  for(y in c(2050, 2070)){
+    
+    dat = prepare_climate_dat(dat_full, scenario = s, year = y)
+    
+    mybreaks= seq(min(dat$RFE.mean)-0.1, max(dat$RFE.mean)+0.1, length.out=100)
+    mycols =   colorRampPalette(brewer.pal(9, "Blues") )(length(mybreaks)-1)
+    mm = match(shp1$adm0_adm1, dat_full$adm0_adm1)
+    vcols = findInterval(dat$RFE.mean,mybreaks)
+    
+    plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
+    mm0 = match(shp0$ISO,c34) #
+    plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45),ylim=c(-20,30) , lty=0, add=T)
+    plot(shp0, lwd=2, add=TRUE)
+    plot(shp0[is.na(mm0),],col="black",add=T) 
+    
+    image.plot(legend.only=TRUE,
+               breaks=mybreaks,
+               col=mycols,
+               zlim=c(0,1), 
+               horizontal = FALSE)
+  }
+}
+
+```
+
 
 
 # log.surv.qual.adm0

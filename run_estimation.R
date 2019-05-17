@@ -36,18 +36,16 @@ run_estimation = function(run_id){
   ### LOAD ENVIRONMENTAL DATA ###
   #########################################################################################################
   
-  Env_Table_path = (paste0("../Data/","Environment/dat_with_worldclim/dat_worldclim_baseline_2019-03-22.csv")) 
+  Env_Table_path = paste0("../Data/","Environment/dat_worldclim_all_2019-04-15.csv") 
   
   dat_full = read.csv(Env_Table_path, 
                       stringsAsFactors = FALSE)
   
-  dat_full = dat_full %>% add_column(worldclim_temp_mid = (dat_full$worldclim_temp_min + dat_full$worldclim_temp_max)/2)
-  
-  dat_full = dat_full %>% add_column(worldclim_temp_range = (dat_full$worldclim_temp_max - dat_full$worldclim_temp_min))
+  dat_full = prepare_climate_dat(dat_full, year = "now", scenario = NA)
   
   temp_type = "worldclim_temp_mid"
   
-  modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+worldclim_temp_range+RFE.mean" 
+  modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+worldclim_temp_range+worldclim_rainfall" 
   
   #########################################################################################################
   ### LOAD TEMPSUIT DATA ###
@@ -97,12 +95,14 @@ run_estimation = function(run_id){
                         "adm05KEN","adm05MRT","adm05RWA" ,
                         "adm05SDN" ,"adm05SOM" ,"adm05SSD" ,"adm05TZA",
                         "adm05UGA","adm05ZMB" , "lon" ,"logpop","temp_suitability",
-                        "worldclim_temp_range", "RFE.mean",
+                        "worldclim_temp_range", "worldclim_rainfall",
                         "a_T0" ,"a_Tm" ,"a_c", "mu_T0","mu_Tm",
                         "mu_c" ,"PDR_T0","PDR_Tm","PDR_c") ]
   
-  pars_ini[grep("^adm05", names(pars_ini))] = 0
-  pars_ini[grep("^adm05AGO", names(pars_ini))] = 1
+  names(pars_ini)[is.na(pars_ini)] = "worldclim_rainfall"
+  pars_ini["worldclim_rainfall"] = 0.2
+  
+  
   #########################################################################################################
   ### MCMC ###
   #########################################################################################################
