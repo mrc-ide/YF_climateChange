@@ -88,19 +88,16 @@ sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 ### LOAD ENVIRONMENTAL DATA ###
 #########################################################################################################
 
-Env_Table_path = paste0("../Data/","Environment/dat_with_worldclim/dat_worldclim_baseline_2019-03-22.csv") 
-#Env_Table_path = paste0("../Data/","Environment/Africa_adm1_dat_2017.csv") 
+Env_Table_path = paste0("../Data/","Environment/dat_worldclim_all_2019-04-15.csv")
 
-dat_full = read.csv(Env_Table_path, stringsAsFactors=FALSE)
-# 
-dat_full = dat_full %>% add_column(worldclim_temp_mid = (dat_full$worldclim_temp_min + dat_full$worldclim_temp_max)/2)
+dat_full = read.csv(Env_Table_path, 
+                    stringsAsFactors = FALSE)
 
-dat_full = dat_full %>% add_column(worldclim_temp_range = (dat_full$worldclim_temp_max - dat_full$worldclim_temp_min))
+dat_full = prepare_climate_dat(dat_full, year = "now", scenario = NA)
 
 temp_type = "worldclim_temp_mid"
 
-modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+worldclim_temp_range+RFE.mean" 
-#modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+LC14+EVI.mean" 
+modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+worldclim_temp_range+worldclim_rainfall" 
 #########################################################################################################
 ### LOAD TEMPSUIT DATA ###
 #########################################################################################################
@@ -133,10 +130,9 @@ n_samples = 1000
 
 path = get_latest_file(pattern = "GLM_tempsuit_MCMC_chain_")
 
-#path = "Z:/MultiModelInference/chains/GLM_MCMC_chain_20180515"
 
 #get_chains
-mcmc_out = get_chains(path, burnin = 1.5e6, thin = 100)
+mcmc_out = get_chains(path, burnin = 1e4, thin = 1)
 
 plot(mcmc_out$posteriorProb, type = "l", ylab = "Posterior probability", xlab = "Iteration")
 
@@ -220,7 +216,7 @@ plot(dat_bite$T,
 for (i in 1:n_samples){
   ind = sample(nrow(mcmc_out), 1)
   lines(dat_bite$T, briere(dat_bite$T, c(mcmc_out$a_T0[ind], mcmc_out$a_Tm[ind], mcmc_out$a_c[ind])), 
-                           col = rgb(0,0,0,alpha=0.01)  )
+        col = rgb(0,0,0,alpha=0.01)  )
 }
 points(dat_bite$T, dat_bite$bite_rate, col = "red", pch =20)
 
@@ -239,11 +235,11 @@ plot(Temp, mu, xlab = "Temperature", ylab = "Mortality rate", type = "l", ylim =
 for (i in 1:n_samples){
   ind = sample(nrow(mcmc_out), 1)
   lf = quad(Temp, c(mcmc_out$mu_T0[ind],
-            mcmc_out$mu_Tm[ind], 
-            mcmc_out$mu_c[ind]) )
-lf[lf<0] = 0
-mu = ifelse( lf<=0, 1, 1/ lf ) + 1e-8
-lines(Temp, mu, col = rgb(0,0,0,alpha=0.1))
+                    mcmc_out$mu_Tm[ind], 
+                    mcmc_out$mu_c[ind]) )
+  lf[lf<0] = 0
+  mu = ifelse( lf<=0, 1, 1/ lf ) + 1e-8
+  lines(Temp, mu, col = rgb(0,0,0,alpha=0.1))
 }
 
 points(dat_mort$Temp, dat_mort$Dead/(dat_mort$Dead+dat_mort$Alive), 
@@ -404,7 +400,7 @@ for(i in 1:n_samples){
   envdat = YFestimation::launch_env_dat(filepath = NA, dat_full = dat_full_temp, c34 = c34)  
   
   ### GET x ###
- 
+  
   object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
   x = object_glm[[2]]
   
@@ -435,8 +431,8 @@ plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45), ylim=c(-20,35) , lty=0
 plot(shp0, xlim=c(-15,45),ylim=c(-20,35), add=T)
 
 image.plot(legend.only=TRUE,breaks=mybreaks,col=mycols,zlim=c(0,1), horizontal = TRUE, 
-                    axis.args = list(at = c(-2:4), labels =c( "0.01","0.1","1", "10", "100","1,000","10,000"), las =2),
-                    legend.mar = 3.5)
+           axis.args = list(at = c(-2:4), labels =c( "0.01","0.1","1", "10", "100","1,000","10,000"), las =2),
+           legend.mar = 3.5)
 
 ```
 
@@ -502,7 +498,7 @@ t0_vac_africa = calc_t0_vac_africa(vc3d)
 
 # inc_v3d #
 inc_v3d = calc_incidence_vac_general(vc3d)
-    
+
 # CALCULATE population moments #
 pop_moments_whole = calc_pop_moments(p_prop_3d, 
                                      t0_vac_africa,
@@ -585,9 +581,9 @@ varsin_nc=ii[-grep("adm0",colnames(x))] - 1
 mcmc_out_f = filter(mcmc_out_sero, model_chain == 0)
 
 adjusted_params = c(exp(median(mcmc_out_f[,1])), 
-                        apply(mcmc_out[,1:21], 2, median, na.rm = T), # as.numeric(mcmc_out[ind,1:21]), #
-                        exp(apply(mcmc_out_f[,c(2:41)], 2, median, na.rm = T)),
-                        exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
+                    apply(mcmc_out[,1:21], 2, median, na.rm = T), # as.numeric(mcmc_out[ind,1:21]), #
+                    exp(apply(mcmc_out_f[,c(2:41)], 2, median, na.rm = T)),
+                    exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
 
 names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
 
@@ -596,22 +592,22 @@ colours = (snapalette("Camden", 100, type = "continuous"))
 
 
 runs = YFestimation::fun_calc_transmission_Africa(x,
-                                      ii ,
-                                      seroout ,
-                                      params = adjusted_params ,
-                                      dat = envdat$dat ,
-                                      t0_vac_africa ,
-                                      dim_year ,
-                                      dim_age ,
-                                      p_prop_3d ,
-                                      P_tot_2d ,
-                                      inc_v3d ,
-                                      pop1,
-                                      vc2d,
-                                      varsin_nc,
-                                      polydeg = 5,
-                                      R0_lookup,
-                                      model_type = "Foi")
+                                                  ii ,
+                                                  seroout ,
+                                                  params = adjusted_params ,
+                                                  dat = envdat$dat ,
+                                                  t0_vac_africa ,
+                                                  dim_year ,
+                                                  dim_age ,
+                                                  p_prop_3d ,
+                                                  P_tot_2d ,
+                                                  inc_v3d ,
+                                                  pop1,
+                                                  vc2d,
+                                                  varsin_nc,
+                                                  polydeg = 5,
+                                                  R0_lookup,
+                                                  model_type = "Foi")
 names(runs) = envdat$dat$adm0_adm1
 
 mybreaks= seq(-3, 1, length.out=101)
