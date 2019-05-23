@@ -38,9 +38,9 @@ dat_full = read.csv(Env_Table_path, stringsAsFactors=FALSE)
 
 temp_type = "worldclim_temp_mid"
 
-modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+worldclim_temp_range+RFE.mean" 
+modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+worldclim_temp_range+worldclim_rainfall" 
 
-path = "GLM_tempsuit_MCMC_chain_20190325"
+path = "GLM_tempsuit_MCMC_chain_20190517"
 
 #read countries in
 Countries = read_csv(paste0("../Data/","Countries.csv"))

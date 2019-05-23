@@ -18,6 +18,7 @@ library(ggmcmc)
 library(mcmcplots)
 library(R.utils)
 library(parallelsugar)
+library(magrittr)
 
 library(YFestimation)
 library(snapalette)

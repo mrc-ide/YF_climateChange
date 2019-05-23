@@ -84,7 +84,7 @@ dat_full = read.csv(Env_Table_path, stringsAsFactors=FALSE)
 
 temp_type = "worldclim_temp_mid"
 
-modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+worldclim_temp_range+RFE.mean" 
+modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+worldclim_temp_range+worldclim_rainfall" 
 #########################################################################################################
 ### LOAD TEMPSUIT DATA ###
 #########################################################################################################
@@ -114,10 +114,10 @@ snapal = "BudapestCitadel"
 
 ```{r import_chains}
 
-path = "GLM_tempsuit_MCMC_chain_20190325"
+path = "GLM_tempsuit_MCMC_chain_20190517"
 
 #get_chains
-mcmc_out = get_chains(path, burnin = 1.5e6, thin = 100)
+mcmc_out = get_chains(path, burnin = 1e4, thin = 1)
 
 plot(mcmc_out$posteriorProb, type = "l", ylab = "Posterior probability", xlab = "Iteration")
 
@@ -525,7 +525,7 @@ for(s in c("26", "45", "60", "85")){
     df_subs = filter(df, scenario == s & year == 2050)
     runs = 100*(df_subs$runs - df_subs$runs_now) / df_subs$runs_now
     
-    mybreaks= seq(-200, 200, length.out=101)
+    mybreaks= seq(-100, 100, length.out=101)
     mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
     vcols = findInterval(runs, mybreaks)
     
@@ -554,7 +554,7 @@ for(s in c("26", "45", "60", "85")){
     df_subs = filter(df, scenario == s & year == 2070)
     runs = 100*(df_subs$runs - df_subs$runs_now) / df_subs$runs_now
     
-    mybreaks= seq(-600, 600, length.out=101)
+    mybreaks= seq(-150, 150, length.out=101)
     mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
     vcols = findInterval(runs, mybreaks)
     

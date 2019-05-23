@@ -29,38 +29,38 @@ library(YFburden)
 sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 
 #-----------------------------------------------------------------------------
-# transmission_proj = read.csv( "transmission_intensity_samples.csv", stringsAsFactors = FALSE)
-# 
-# transmission_proj = transmission_proj %>% mutate(year = as.character(year), scenario = as.character(scenario))
-# 
-# param_samples = spread(transmission_proj, year, FOI)
-# 
-# param_samples_now = param_samples %>% 
-#   mutate(`2050` = param_samples$now , `2070` = param_samples$now, scenario = "now") %>% unique()
-# 
-# param_samples %<>% bind_rows(param_samples_now)
-# 
-# ### interpolate for each year ###
-# fun_interp = function(i){
-#   df = param_samples[i,]
-#   new_df = data.frame(adm0 = df$adm0,
-#                       scenario = df$scenario,
-#                       sample = df$sample,
-#                       year = 2018:2070,
-#                       FOI = NA)
-#   new_df$FOI = approx(x = c(2018, 2050, 2070),
-#                       y = c(df$now, df$`2050`, df$`2070`),
-#                       xout = c(2018:2070))$y
-#   out = spread(new_df, year, FOI)
-#   return(out)
-# }
-# 
-# param_samples_interp = lapply(1:nrow(param_samples), fun_interp)
-# param_samples_interp = bind_rows(param_samples_interp)
-# 
-# write.csv(param_samples_interp, "transmission_intensity_samples_interp.csv", row.names = FALSE)
+transmission_proj = read.csv( "transmission_intensity_samples.csv", stringsAsFactors = FALSE)
 
-param_samples_interp = read.csv("transmission_intensity_samples_interp.csv", stringsAsFactors = FALSE)
+transmission_proj = transmission_proj %>% mutate(year = as.character(year), scenario = as.character(scenario))
+
+param_samples = spread(transmission_proj, year, FOI)
+
+param_samples_now = param_samples %>%
+  mutate(`2050` = param_samples$now , `2070` = param_samples$now, scenario = "now") %>% unique()
+
+param_samples %<>% bind_rows(param_samples_now)
+
+### interpolate for each year ###
+fun_interp = function(i){
+  df = param_samples[i,]
+  new_df = data.frame(adm0 = df$adm0,
+                      scenario = df$scenario,
+                      sample = df$sample,
+                      year = 2018:2070,
+                      FOI = NA)
+  new_df$FOI = approx(x = c(2018, 2050, 2070),
+                      y = c(df$now, df$`2050`, df$`2070`),
+                      xout = c(2018:2070))$y
+  out = spread(new_df, year, FOI)
+  return(out)
+}
+
+param_samples_interp = lapply(1:nrow(param_samples), fun_interp)
+param_samples_interp = bind_rows(param_samples_interp)
+
+write.csv(param_samples_interp, "transmission_intensity_samples_interp.csv", row.names = FALSE)
+
+#param_samples_interp = read.csv("transmission_intensity_samples_interp.csv", stringsAsFactors = FALSE)
 
 #param_samples_interp %<>% filter(sample %in% unique(param_samples_interp$sample)[1:100])
 #-----------------------------------------------------------------------------
@@ -193,5 +193,5 @@ for(i in i:(nrow(param_samples_interp)/1e3)){
   infections_out = bind_rows(infections_out_l)
   
   
-  write.csv(infections_out, paste0("infections2/infections_per_scenario_year_country_sample_", i, ".csv"), row.names = FALSE)
+  write.csv(infections_out, paste0("infections3/infections_per_scenario_year_country_sample_", i, ".csv"), row.names = FALSE)
 }
