@@ -27,7 +27,7 @@ GLM_tempsuit_MCMC_step = function(modelVec,
     
     ### TEMP SUITABILITY ###
     dat_full_temp = cbind(dat_full, 
-                          temp_suitability(dat_full[,temp_type] , 
+                          temp_suitability(dat_full[,temp_type], 
                                            param_prop[22:30]))
     names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
     
@@ -185,7 +185,7 @@ GLMprior_ts = function(param) {
   
   #GLM
   jj = grep("^adm05", names(param)) 
-  sd.prior = 2 ##changed this
+  sd.prior = 0.5 ##changed this
   
   Prior[1] =  - 0.5 * sum((param[jj] / sd.prior) ^ 2) # adjustment for reduced variation between countries?
   

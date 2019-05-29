@@ -191,6 +191,43 @@ for(year in c(2050, 2070)){
 }
 ```
 
+```{r plot_temp_suit_proj, fig.height=10, fig.width=7, fig.cap = "Normalized temperature suitability from median of posterior predicted distribution."}
+par(mfrow = c(2, 4), mar = c(2,2,2,2))
+
+for(year in c(2050, 2070)){
+  
+  for(scenario in c(26, 45, 60, 85)){
+    
+    dat_tmp = prepare_climate_dat(dat_full, year , scenario)
+    ### TEMP SUITABILITY ###
+    dat_full_temp = cbind(dat_tmp,
+                          temp_suitability(dat_tmp[,temp_type] , 
+                                           apply(mcmc_out[,22:30], 2 ,"median")) )
+    
+    names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
+    temp_suit = (dat_full_temp$temp_suitability)
+    
+    mybreaks= seq(0, 60, length.out=100)
+    mycols =   snapalette( "ST_art", length(mybreaks)-1, type = "continuous" )
+    vcols = findInterval(temp_suit,mybreaks)
+    
+    mm = match(shp1$adm0_adm1, dat_full_temp$adm0_adm1)
+    
+    plot(shp0, xlim=c(-15,50),ylim=c(-20,35))
+    mm0 = match(shp0$ISO,c34) #
+    plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,50), ylim=c(-20,35) , lty=0, add=TRUE)
+    plot(shp0,  add=TRUE)
+    
+    image.plot(legend.only=TRUE,
+               breaks=mybreaks,
+               col=mycols,
+               zlim=c(0,1), 
+               horizontal = TRUE,
+               legend.shrink = 0.75)
+  }
+}
+```
+
 
 ```{r setup_fit}
 

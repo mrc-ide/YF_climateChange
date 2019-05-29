@@ -27,7 +27,7 @@ obj <- didehpc::queue_didehpc(ctx)
 
 # run for a number
 
-run_id = 100:119
+run_id = 100:120
 grp <- obj$lapply(run_id, run_estimation)
 
 

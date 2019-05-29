@@ -46,6 +46,7 @@ library(mvtnorm)
 library(RColorBrewer)
 library(truncdist)
 library(tibble)
+library(magrittr)
 
 library(ggmcmc)
 library(mcmcplots)
@@ -128,17 +129,20 @@ n_samples = 1000
 ```{r import_chains}
 
 
-path = get_latest_file(pattern = "GLM_tempsuit_MCMC_chain_")
+path =  get_latest_file(pattern = "GLM_tempsuit_MCMC_chain_") #"Z:/YF_climateChange/GLM_tempsuit_MCMC_chain_20190517" #
 
 
 #get_chains
-mcmc_out = get_chains(path, burnin = 1e6, thin = 100)
+mcmc_out = get_chains(path, burnin = 1, thin = 1)
 
-plot(mcmc_out$posteriorProb, type = "l", ylab = "Posterior probability", xlab = "Iteration")
+#mcmc_out %<>% filter(is.finite(posteriorProb))
+
+plot(mcmc_out$posteriorProb, type = "l", ylab = "Posterior probability", xlab = "Iteration" , ylim = c(-2e3, -1.8e3))
 
 ind = which.max(mcmc_out$posteriorProb)
 
 mcmc_out = mcmc_out[, 1:(ncol(mcmc_out)-2)]
+
 
 ```
 
@@ -208,14 +212,14 @@ We do this first for the temperature suitability parameters and then for the GLM
 ```{r bite_rate_fit, fig.cap="Estimated bite rate (black) with bite rate data (red).", fig.height = 4, fig.width = 7}
 
 dat_bite = dat_bite[order(dat_bite$T),]
-plot(dat_bite$T, 
-     briere(dat_bite$T, c(median(mcmc_out$a_T0), median(mcmc_out$a_Tm) ,median(mcmc_out$a_c )  )), 
+plot(10:42, 
+     briere(10:42, c(median(mcmc_out$a_T0), median(mcmc_out$a_Tm) ,median(mcmc_out$a_c )  )), 
      type = "l", ylim = c(0,3), lwd =1, 
      xlab = "Temperature", ylab = "Bite rate")
 
 for (i in 1:n_samples){
   ind = sample(nrow(mcmc_out), 1)
-  lines(dat_bite$T, briere(dat_bite$T, c(mcmc_out$a_T0[ind], mcmc_out$a_Tm[ind], mcmc_out$a_c[ind])), 
+  lines(10:42, briere(10:42, c(mcmc_out$a_T0[ind], mcmc_out$a_Tm[ind], mcmc_out$a_c[ind])), 
         col = rgb(0,0,0,alpha=0.01)  )
 }
 points(dat_bite$T, dat_bite$bite_rate, col = "red", pch =20)
@@ -225,7 +229,7 @@ points(dat_bite$T, dat_bite$bite_rate, col = "red", pch =20)
 
 ```{r mortality_fit, fig.cap="Estimated mortality rate (black) with mortlity rate data (red)." , fig.height = 4, fig.width = 7}
 
-Temp = unique(dat_mort$Temp)
+Temp = 10:42
 
 lf = quad(Temp, c(median(mcmc_out$mu_T0 ),median(mcmc_out$mu_Tm ), median(mcmc_out$mu_c )))
 lf[lf<0] = 0
@@ -249,15 +253,15 @@ points(dat_mort$Temp, dat_mort$Dead/(dat_mort$Dead+dat_mort$Alive),
 
 ```{r PDR_fit, fig.cap="Estimated PDR (black) with PDR data (red).", fig.height = 4, fig.width = 7}
 
-plot(dat_EIP$T, briere(dat_EIP$T, c( median(mcmc_out$PDR_T0 ),
+plot(10:42, briere(10:42, c( median(mcmc_out$PDR_T0 ),
                                      median(mcmc_out$PDR_Tm ),
                                      median(mcmc_out$PDR_c ) ) ), 
      type = "l", ylim = c(0,1), lwd =1, 
-     xlab = "Temperature", ylab = "PDR")
+     xlab = "Temperature", ylab = "1 / Extrinsic incubation period")
 
 for (i in 1:n_samples){
   ind = sample(nrow(mcmc_out), 1)
-  lines(dat_EIP$T, briere(dat_EIP$T, c( mcmc_out$PDR_T0[ind] ,
+  lines(10:42, briere(10:42, c( mcmc_out$PDR_T0[ind] ,
                                         mcmc_out$PDR_Tm[ind] ,
                                         mcmc_out$PDR_c[ind] )  ), 
         col = rgb(0,0,0,alpha=0.01)  )
@@ -268,7 +272,7 @@ points(dat_EIP$T, dat_EIP$PDR, col = "red", pch =20)
 
 ```{r temp_suit_fit, fig.cap="Estimated temperature index.", fig.height = 4, fig.width = 7}
 
-Temp = seq(15, 42, by=0.01)
+Temp = seq(10, 42, by=0.01)
 
 plot(Temp, temp_suitability(Temp ,apply(mcmc_out[,22:30], 2, median)), 
      ylim = c(0,100), type = "l", lwd =1, 
@@ -360,21 +364,21 @@ auc(ROC_out)
 ```{r plot_temp_suit, fig.height=10, fig.width=7, fig.cap = "Normalized temperature suitability from median of posterior predicted distribution."}
 par(mar = 0*c(5.1,4.1,4.1,2.1))
 
-#temp_suit = (dat_full_temp$temp_suitability)
-temp_suit = envdat$dat$temp_suitability
+temp_suit = (dat_full_temp$temp_suitability)
+#temp_suit = dat_full_temp$worldclim_temp_mid
 
 mybreaks= seq(0, max(temp_suit)+0.01, length.out=100)
 mycols =   snapalette( "ST_art", length(mybreaks)-1, type = "continuous" )
 vcols = findInterval(temp_suit,mybreaks)
 
-mm = match(shp1$adm0_adm1, envdat$dat$adm0_adm1)
+mm = match(shp1$adm0_adm1, dat_full_temp$adm0_adm1)
 
-plot(shp0, xlim=c(-15,45),ylim=c(-20,35))
+plot(shp0, xlim=c(-15,50),ylim=c(-20,35))
 mm0 = match(shp0$ISO,c34) #
-plot(shp0[is.na(mm0),],col="black",add=TRUE) 
-plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,45), ylim=c(-20,35) , lty=0, add=TRUE)
+#plot(shp0[is.na(mm0),],col="black",add=TRUE) 
+plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,50), ylim=c(-20,35) , lty=0, add=TRUE)
 plot(shp0,  add=TRUE)
-plot(shp0[is.na(mm0),],col="black",add=TRUE) 
+#plot(shp0[is.na(mm0),],col="black",add=TRUE) 
 
 image.plot(legend.only=TRUE,
            breaks=mybreaks,

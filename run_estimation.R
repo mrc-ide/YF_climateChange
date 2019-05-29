@@ -99,9 +99,7 @@ run_estimation = function(run_id){
                         "a_T0" ,"a_Tm" ,"a_c", "mu_T0","mu_Tm",
                         "mu_c" ,"PDR_T0","PDR_Tm","PDR_c") ]
   
-  names(pars_ini)[is.na(pars_ini)] = "worldclim_rainfall"
-  pars_ini["worldclim_rainfall"] = 0.2
-  
+  pars_ini = YFestimation::GLMproposal(pars_ini, adapt = 0)
   
   #########################################################################################################
   ### MCMC ###
