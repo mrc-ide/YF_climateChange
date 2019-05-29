@@ -50,10 +50,12 @@ fun_tempsuitPrior = function( param ){
   
   #prior distributions for the three parameters defining bite rate, mortality rate
   #and parasite development rate
-  prior_prob_a =  dnorm(param[names(param) == "a_T0"] , 
-                        mean = 13.35, 
-                        sd = 2*2, 
-                        log = TRUE) +   #set from Mordecai
+  prior_prob_a =  log( dtrunc(param[names(param) == "a_T0"] , 
+                              "norm",
+                              a=0,
+                              b = Inf,
+                              mean = 13.35, 
+                              sd = 2*2)) +   #set from Mordecai
     dnorm(param[names(param) == "a_Tm"], 
           mean = 40.08, 
           sd = 0.05*2, 
@@ -65,10 +67,13 @@ fun_tempsuitPrior = function( param ){
                 mean = 2.02e-4, 
                 sd = 2e-5*2) ) #keep it positive
   
-  prior_prob_mu = dnorm(param[names(param) == "mu_T0"], 
-                        mean = 11, 
-                        sd = 1*2, 
-                        log = TRUE)  +    # set from Tesla
+  prior_prob_mu = log( dtrunc(param[names(param) == "mu_T0"], 
+                              "norm",
+                              a = 0,
+                              b = Inf,
+                              mean = 11, 
+                              sd = 1*2, 
+                              log = TRUE))  +    # set from Tesla
     dnorm(param[names(param) == "mu_Tm"], 
           mean = 37, 
           sd = 0.8*2, 
@@ -80,10 +85,13 @@ fun_tempsuitPrior = function( param ){
                 mean = -3e-1, 
                 sd = 2e-2*2) ) #keep it negative
   
-  prior_prob_PDR = dnorm(param[names(param) == "PDR_T0"], 
-                         mean = 18.3, 
-                         sd = 3*2, 
-                         log = TRUE) +  # these are set from Tesla for zikv
+  prior_prob_PDR = log( dtrunc(param[names(param) == "PDR_T0"], 
+                               "norm",
+                               a = 0,
+                               b = Inf,
+                               mean = 18.3, 
+                               sd = 3*2, 
+                               log = TRUE)) +  # these are set from Tesla for zikv
     dnorm(param[names(param) == "PDR_Tm"], 
           mean = 42.3, 
           sd =1*2, 
