@@ -114,10 +114,10 @@ snapal = "BudapestCitadel"
 
 ```{r import_chains}
 
-path = "GLM_tempsuit_MCMC_chain_20190517"
+path = "GLM_tempsuit_MCMC_chain_20190529"
 
 #get_chains
-mcmc_out = get_chains(path, burnin = 1e4, thin = 1)
+mcmc_out = get_chains(path, burnin = 1.5e6, thin = 1)
 
 plot(mcmc_out$posteriorProb, type = "l", ylab = "Posterior probability", xlab = "Iteration")
 
@@ -544,7 +544,7 @@ for(y in c(2050, 2070)){
 
 ```{r plot_transmission_diff_2050, fig.height=10, fig.width=10, fig.cap="Force of infection, percentage difference 2050.", echo=TRUE}
 
-colours = (snapalette("Fjord", 100, type = "continuous"))
+colours = (snapalette("Stavanger", 100, type = "continuous"))
 
 
 
@@ -562,7 +562,10 @@ for(s in c("26", "45", "60", "85")){
     df_subs = filter(df, scenario == s & year == 2050)
     runs = 100*(df_subs$runs - df_subs$runs_now) / df_subs$runs_now
     
-    mybreaks= seq(-100, 100, length.out=101)
+    print(min(runs))
+    print(max(runs))
+    
+    mybreaks= seq(-6, 60, length.out=101)
     mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
     vcols = findInterval(runs, mybreaks)
     
@@ -591,7 +594,9 @@ for(s in c("26", "45", "60", "85")){
     df_subs = filter(df, scenario == s & year == 2070)
     runs = 100*(df_subs$runs - df_subs$runs_now) / df_subs$runs_now
     
-    mybreaks= seq(-150, 150, length.out=101)
+
+    
+    mybreaks= seq(-17, 80, length.out=101)
     mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
     vcols = findInterval(runs, mybreaks)
     

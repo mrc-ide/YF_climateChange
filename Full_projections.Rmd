@@ -47,6 +47,7 @@ library(RColorBrewer)
 library(truncdist)
 library(tibble)
 library(magrittr)
+library(pROC)
 
 library(ggmcmc)
 library(mcmcplots)
@@ -133,11 +134,11 @@ path =  get_latest_file(pattern = "GLM_tempsuit_MCMC_chain_") #"Z:/YF_climateCha
 
 
 #get_chains
-mcmc_out = get_chains(path, burnin = 1, thin = 1)
+mcmc_out = get_chains(path, burnin = 1.5e6, thin = 1)
 
 #mcmc_out %<>% filter(is.finite(posteriorProb))
 
-plot(mcmc_out$posteriorProb, type = "l", ylab = "Posterior probability", xlab = "Iteration" , ylim = c(-2e3, -1.8e3))
+plot(mcmc_out$posteriorProb, type = "l", ylab = "Posterior probability", xlab = "Iteration")# , ylim = c(-2e3, -1.8e3))
 
 ind = which.max(mcmc_out$posteriorProb)
 
@@ -253,17 +254,17 @@ points(dat_mort$Temp, dat_mort$Dead/(dat_mort$Dead+dat_mort$Alive),
 
 ```{r PDR_fit, fig.cap="Estimated PDR (black) with PDR data (red).", fig.height = 4, fig.width = 7}
 
-plot(10:42, briere(10:42, c( median(mcmc_out$PDR_T0 ),
+plot(10:42, pmax( briere(10:42, c( median(mcmc_out$PDR_T0 ),
                                      median(mcmc_out$PDR_Tm ),
-                                     median(mcmc_out$PDR_c ) ) ), 
+                                     median(mcmc_out$PDR_c ) ) ), 0), 
      type = "l", ylim = c(0,1), lwd =1, 
      xlab = "Temperature", ylab = "1 / Extrinsic incubation period")
 
 for (i in 1:n_samples){
   ind = sample(nrow(mcmc_out), 1)
-  lines(10:42, briere(10:42, c( mcmc_out$PDR_T0[ind] ,
+  lines(10:42, pmax( briere(10:42, c( mcmc_out$PDR_T0[ind] ,
                                         mcmc_out$PDR_Tm[ind] ,
-                                        mcmc_out$PDR_c[ind] )  ), 
+                                        mcmc_out$PDR_c[ind] )  ), 0), 
         col = rgb(0,0,0,alpha=0.01)  )
 }
 points(dat_EIP$T, dat_EIP$PDR, col = "red", pch =20)
@@ -336,7 +337,7 @@ plot_glm_map(shp0, shp1, c34, envdat$dat, Est_beta, x, snapalette(snapal, 1000, 
 
 ```{r AUC}
 
-library(pROC)
+
 ### TEMP SUITABILITY ###
 dat_full_temp = cbind(dat_full,
                       temp_suitability(dat_full[,temp_type] , #mcmc_out[ind,22:30]))
