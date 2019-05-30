@@ -40,7 +40,7 @@ temp_type = "worldclim_temp_mid"
 
 modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+worldclim_temp_range+worldclim_rainfall" 
 
-path = "GLM_tempsuit_MCMC_chain_20190517"
+path = "GLM_tempsuit_MCMC_chain_20190529"
 
 #read countries in
 Countries = read_csv(paste0("../Data/","Countries.csv"))
@@ -159,6 +159,7 @@ filepath = "Z:/MultiModelInference/multi_model_MCMC_chain_20180622"
 
 mcmc_out_sero = get_chains(filepath, burnin = 1, thin = 1)
 
+mcmc_out_f = filter(mcmc_out_sero, model_chain == 0)
 #-----------------------------------------------------------------------------
 
 #####
@@ -207,6 +208,7 @@ fun_sample_transmission = function(sample_ind){
   
   #probability of detection
   p_detect =  fun_calc_pdetect_multi_both(x,
+                                          ii,
                                           seroout,
                                           adjusted_params,
                                           envdat$dat,
@@ -252,8 +254,7 @@ fun_sample_transmission = function(sample_ind){
       ii= 2:22
       
       varsin_nc=ii[-grep("adm0",colnames(x))] - 1 
-      
-      mcmc_out_f = filter(mcmc_out_sero, model_chain == 0)
+    
       
       adjusted_params = c(exp(mcmc_out_f[sample_ind,1]), 
                           as.numeric(mcmc_out[sample_ind,1:21]), 
@@ -312,7 +313,7 @@ fun_sample_transmission = function(sample_ind){
   return(runs_clim_change)
 }
 
-n_samples = 1000
+n_samples = 100
 
 all_runs = lapply(base::sample(1:min(nrow(mcmc_out), nrow(mcmc_out_f)), n_samples), FUN =fun_sample_transmission)
 

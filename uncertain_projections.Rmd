@@ -316,7 +316,7 @@ out_df = transmission_proj %>%
 
 write.csv(out_df, "table_of_change_foi.csv", row.names = FALSE)
 
-kableExtra::kable(out_df, caption = "FOI per year in each scenario")
+kableExtra::kable(out_df, caption = "FOI change per year in each scenario")
 
 ```
 
@@ -349,12 +349,11 @@ for(s in 1:4){
 ```{r load_burden}
 
 #get files in infections directory
-
-fil = list.files("infections3")
+fil = list.files("infections")
 
 inf_df = NULL
 for(i in 1:length(fil)){
-  inf_df[[i]] = mutate_all( read.csv(paste0("infections3/", fil[i]), stringsAsFactors = FALSE), as.character)
+  inf_df[[i]] = mutate_all( read.csv(paste0("infections/", fil[i]), stringsAsFactors = FALSE), as.character)
 }
 
 inf_df = bind_rows(inf_df)
@@ -512,7 +511,6 @@ ggplot( filter(inf_df, Year %in% c(2050, 2070) )) +
   theme_ridges()+
   xlab("Deaths per capita") + 
   ylab("Country")+
-  xlim(-100, 500) +
   scale_y_discrete(expand = c(0.01, 0)) +
   geom_vline(xintercept = 0)+
   facet_wrap(Year~., nrow = 1)+

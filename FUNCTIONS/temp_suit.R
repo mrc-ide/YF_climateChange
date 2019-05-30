@@ -72,8 +72,7 @@ fun_tempsuitPrior = function( param ){
                               a = 0,
                               b = Inf,
                               mean = 11, 
-                              sd = 1*2, 
-                              log = TRUE))  +    # set from Tesla
+                              sd = 1*2))  +    # set from Tesla
     dnorm(param[names(param) == "mu_Tm"], 
           mean = 37, 
           sd = 0.8*2, 
@@ -90,8 +89,7 @@ fun_tempsuitPrior = function( param ){
                                a = 0,
                                b = Inf,
                                mean = 18.3, 
-                               sd = 3*2, 
-                               log = TRUE)) +  # these are set from Tesla for zikv
+                               sd = 3*2)) +  # these are set from Tesla for zikv
     dnorm(param[names(param) == "PDR_Tm"], 
           mean = 42.3, 
           sd =1*2, 

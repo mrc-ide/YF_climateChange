@@ -142,7 +142,7 @@ GLM_tempsuit_MCMC = function(Niter,
         fileIndex  = iter/10000
       }
       write.csv(cbind(chain,  posteriorProb, acceptRate)[min((fileIndex * 10000+1),iter):iter,], 
-                paste0(name_dir,"/","GLM_tempsuit_rain_chain",fileIndex,"_output_", run_id,".csv") ) 
+                paste0(name_dir,"/","GLM_tempsuit_rain_chain",run_id,"_output_", fileIndex,".csv") ) 
     }
     
     
