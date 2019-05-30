@@ -128,11 +128,16 @@ for(s in c(26,45,60,85)){
     
     dat = prepare_climate_dat(dat_full, scenario = s, year = y)
     
-    mybreaks = seq(7.269308 , 34, length.out=100)
+    temp_change = dat$worldclim_temp_mid - (dat_full$X1970_1990tnnow + dat_full$X1970_1990txnow)/2
+    
+    print(min(temp_change))
+    print(max(temp_change))
+    
+    mybreaks = seq(-0.1, 5, length.out=100)
 
     mycols =   colorRampPalette(brewer.pal(9, "Oranges") )(length(mybreaks)-1)
     mm = match(shp1$adm0_adm1, dat$adm0_adm1)
-    vcols = findInterval(dat$worldclim_temp_mid,mybreaks)
+    vcols = findInterval(temp_change,mybreaks)
     
     plot(shp0, xlim=c(-15,45),ylim=c(-20,30), main = paste0("Year ", y, ", scenario ", s))
     mm0 = match(shp0$ISO,c34) #
@@ -186,10 +191,12 @@ for(s in c(26,45,60,85)){
     
     dat = prepare_climate_dat(dat_full, scenario = s, year = y)
     
-    mybreaks= seq(8.432164, 42.88494, length.out=100)
+    wr = dat$worldclim_temp_range - (dat_full$X1970_1990txnow - dat_full$X1970_1990tnnow)
+    
+    mybreaks= seq(-5, 5, length.out=100)
     mycols =   snapalette("Bouquet", n = length(mybreaks)-1, type = "continuous")
     mm = match(shp1$adm0_adm1, dat$adm0_adm1)
-    vcols = findInterval(dat$worldclim_temp_range,mybreaks)
+    vcols = findInterval(wr,mybreaks)
     
     plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
     mm0 = match(shp0$ISO,c34) #
@@ -243,10 +250,13 @@ for(s in c(26,45,60,85)){
     
     dat = prepare_climate_dat(dat_full, scenario = s, year = y)
     
-    mybreaks= seq(0, 350, length.out=100)
-    mycols =   rev( snapalette("Venice", type = "continuous", length(mybreaks)-1)) #colorRampPalette(brewer.pal(9, "Blues") )(length(mybreaks)-1)
+    rfe_diff = dat$worldclim_rainfall - dat_full$X1970_1990prnow
+    
+    mybreaks= seq(-50, 50, length.out=100)
+    mycols =   rev( snapalette("Venice", type = "continuous", length(mybreaks)-1)) 
+    
     mm = match(shp1$adm0_adm1, dat$adm0_adm1)
-    vcols = findInterval(dat$worldclim_rainfall,mybreaks)
+    vcols = findInterval(rfe_diff,mybreaks)
     
     plot(shp0, xlim=c(-15,45),ylim=c(-20,30))
     mm0 = match(shp0$ISO,c34) #
