@@ -134,7 +134,7 @@ path =  get_latest_file(pattern = "GLM_tempsuit_MCMC_chain_") #"Z:/YF_climateCha
 
 
 #get_chains
-mcmc_out = get_chains(path, burnin = 1.5e6, thin = 1)
+mcmc_out = get_chains(path, burnin = 2e6, thin = 1)
 
 #mcmc_out %<>% filter(is.finite(posteriorProb))
 
