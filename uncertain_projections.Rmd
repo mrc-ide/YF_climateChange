@@ -34,6 +34,7 @@ library(magrittr)
 library(readr)
 library(purrr)
 library(ggridges)
+library(boot)
 
 library(ggmcmc)
 library(mcmcplots)
@@ -291,11 +292,11 @@ for(s in 1:4){
 ```{r load_burden}
 
 #get files in infections directory
-fil = list.files("infections")
+fil = list.files("infections2")
 
 inf_df = NULL
 for(i in 1:length(fil)){
-  inf_df[[i]] = mutate_all( read.csv(paste0("infections/", fil[i]), stringsAsFactors = FALSE), as.character)
+  inf_df[[i]] = mutate_all( read.csv(paste0("infections2/", fil[i]), stringsAsFactors = FALSE), as.character)
 }
 
 inf_df = bind_rows(inf_df)
@@ -470,6 +471,10 @@ inf_df %<>% mutate(relative_deaths = 100* (Deaths - Deaths_now)/ Deaths_now  )
 
 inf_df %<>% unique()
 
+inf_df %<>% mutate(death_diff = Deaths - Deaths_now ) 
+
+inf_df %<>% unique()
+
 ```
 
 
@@ -501,7 +506,18 @@ write.csv(out_df, "table_of_median_percent_change_deaths.csv", row.names = FALSE
 kableExtra::kable(out_df, caption = "Median percentage change in deaths per year in each scenario")
 ```
 
+```{r diff_deaths_per_scenario_table}
 
+
+out_df = inf_df %>% 
+  group_by( Year, scenario) %>% 
+  summarise_at(vars(death_diff), funs(!!!p_funs)) %>% 
+  filter(Year %in% c( 2050, 2070))
+
+write.csv(out_df, "table_of_median_change_deaths.csv", row.names = FALSE)
+
+kableExtra::kable(out_df, caption = "Median change in deaths per year in each scenario")
+```
 
 
 
@@ -555,5 +571,44 @@ ggplot( filter(inf_df, scenario != "now")) +
   scale_y_discrete(expand = c(0.01, 0))+
   guides(fill = FALSE)
 
+
+```
+
+# Proportion increasing
+
+```{r increasing_calc}
+
+fun_positive = function(vec, ind){
+  vec = vec[ind]
+  length(vec[vec>0])/length(vec)
+}
+
+
+propn_pos = NULL
+
+
+scen_vec = c(26, 45, 60, 85)
+
+for(s in 1:4){
+  for(y in c(2050, 2070)){
+
+    tmp = filter(inf_df, scenario == scen_vec[s] & Year == y)$relative_deaths
+
+    boot_out = boot(tmp, fun_positive, 1000)
+    
+    bout_ci_calc = quantile(boot_out$t, c(0.025, 0.5,0.975))
+
+    tmp_df = data.frame(scenario = scen_vec[s],
+                        year = y,
+                        proportion_pos = bout_ci_calc[2],
+                        proportion_pos_ci = paste0("[",bout_ci_calc[1], ", ", bout_ci_calc[3], "]"))
+    
+    propn_pos = bind_rows(propn_pos, tmp_df)
+  }
+}
+
+write.csv(propn_pos, "table_of_proportion_of_change_in_deaths_positive.csv", row.names = FALSE)
+
+kableExtra::kable(propn_pos, caption = "Proportion of death change that are positive per year in each scenario")
 
 ```

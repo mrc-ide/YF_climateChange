@@ -8,7 +8,7 @@ didehpc_config()
 
 context::context_log_start()
 
-root = "contexts2"
+root = "contexts"
 
 packages <- list( attached = c("dplyr", "readr", "reshape", "mvtnorm", "truncdist","R.utils", "tibble", "YFestimation", "KsetupR"))
 

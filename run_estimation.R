@@ -106,7 +106,7 @@ run_estimation = function(run_id){
   #########################################################################################################
   #create a directory to save the output in
   date=format(Sys.time(),"%Y%m%d")
-  name_dir = paste0("GLM_tempsuit_MCMC_chain", "_", date)
+  name_dir = paste0("test_GLM_tempsuit_MCMC_chain", "_", date)
   dir.create(name_dir)
   
   Niter = 500000

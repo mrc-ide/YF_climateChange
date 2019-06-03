@@ -65,7 +65,9 @@ Countries = read_csv(paste0("../Data/","Countries.csv"))
 c34 = Countries$c34
 country34 = Countries$country34
 
+Serology = read.csv(paste0("../Data/","Serology/serology.csv"), stringsAsFactors = FALSE)
 
+seroout = process_serology(Serology)
 ```
 
 ```{r occurrence, fig.cap="Location of YF occurrence from 1984 to 2018. Red indicates occurrence, white no reports and black indicates that area is not in the YF endemic region."}
@@ -85,6 +87,26 @@ mm1<-match(pres, shp1$adm0_adm1)
 plot(shp1[mm1,], col="red", border = "red",  add=TRUE)
 plot(shp0,lwd=2, add=TRUE)
 
+
+```
+
+# Serology coverage
+
+```{r serology, fig.cap="Location of YF Serological studies. Blue indicates study coverage, white no reports and black indicates that area is not in the YF endemic region." }
+
+adm1_inc = unlist(seroout$adm1s)
+### data ###
+par(mar = 0*c(5.1,4.1,4.1,2.1))
+
+plot(shp0, col = "grey90", xlim=c(-15,45), ylim=c(-20,35))
+mm0 = match(shp0$ISO,c34) #
+plot(shp0[is.na(mm0),],col="black",add=T)
+
+pres= adm1_inc
+mm1<-match(pres, shp1$adm0_adm1)
+
+plot(shp1[mm1,], col=rgb(0,0,1,0.5), border = "blue",  add=TRUE)
+plot(shp0,lwd=2, add=TRUE)
 
 ```
 

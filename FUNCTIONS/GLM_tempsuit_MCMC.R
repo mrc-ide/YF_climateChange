@@ -181,7 +181,7 @@ GLM_tempsuit_MCMC = function(Niter,
 
 GLMprior_ts = function(param) {
   
-  Prior = rep(0,2)
+  Prior = rep(0,3)
   
   #GLM
   jj = grep("^adm05", names(param)) 
@@ -189,10 +189,17 @@ GLMprior_ts = function(param) {
   
   Prior[1] =  - 0.5 * sum((param[jj] / sd.prior) ^ 2) # adjustment for reduced variation between countries?
   
-  Prior[2] =  sum(dnorm(param[grepl("^adm05", names(param)) == FALSE],
+  Prior[2] =  sum(dnorm(param[grepl("^adm05", names(param)) == FALSE & grepl("temp_suitability", names(param)) == FALSE],
                         mean = 0,
                         sd = 30,
                         log = TRUE))
+  
+  Prior[3] =  log( dtrunc(param[names(param) == "temp_suitability"], 
+                          "norm", 
+                          a = 0, 
+                          b = Inf,  
+                          mean = 0, 
+                          sd = 30) ) 
   
   out = as.numeric( Prior )
   return( out )
