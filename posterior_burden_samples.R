@@ -193,5 +193,5 @@ for(i in i:(nrow(param_samples_interp)/1e3)){
   infections_out = bind_rows(infections_out_l)
   
   
-  write.csv(infections_out, paste0("infections2/infections_per_scenario_year_country_sample_", i, ".csv"), row.names = FALSE)
+  write.csv(infections_out, paste0("infections3/infections_per_scenario_year_country_sample_", i, ".csv"), row.names = FALSE)
 }

@@ -40,7 +40,7 @@ temp_type = "worldclim_temp_mid"
 
 modelVec = "cas.or.out~log.surv.qual.adm0+adm05+lon+logpop+temp_suitability+worldclim_temp_range+worldclim_rainfall" 
 
-path = "GLM_tempsuit_MCMC_chain_20190529"
+path = "test_GLM_tempsuit_MCMC_chain_20190603"
 
 #read countries in
 Countries = read_csv(paste0("../Data/","Countries.csv"))
@@ -49,7 +49,7 @@ country34 = Countries$country34
 
 #-----------------------------------------------------------------------------
 ### get_chains
-mcmc_out = get_chains(path, burnin = 1.5e6, thin = 100)
+mcmc_out = get_chains(path, burnin = 2e6, thin = 100)
 
 plot(mcmc_out$posteriorProb, type = "l", ylab = "Posterior probability", xlab = "Iteration")
 

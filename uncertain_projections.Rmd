@@ -292,11 +292,11 @@ for(s in 1:4){
 ```{r load_burden}
 
 #get files in infections directory
-fil = list.files("infections2")
+fil = list.files("infections3")
 
 inf_df = NULL
 for(i in 1:length(fil)){
-  inf_df[[i]] = mutate_all( read.csv(paste0("infections2/", fil[i]), stringsAsFactors = FALSE), as.character)
+  inf_df[[i]] = mutate_all( read.csv(paste0("infections3/", fil[i]), stringsAsFactors = FALSE), as.character)
 }
 
 inf_df = bind_rows(inf_df)

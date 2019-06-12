@@ -130,7 +130,7 @@ n_samples = 1000
 ```{r import_chains}
 
 
-path = "Z:/YF_climateChange/GLM_tempsuit_MCMC_chain_20190529" # get_latest_file(pattern = "test_GLM_tempsuit_MCMC_chain_") #
+path = get_latest_file(pattern = "test_GLM_tempsuit_MCMC_chain_") #"Z:/YF_climateChange/GLM_tempsuit_MCMC_chain_20190529" # 
 
 
 #get_chains
