@@ -360,6 +360,8 @@ ROC_out = roc(response = envdat$dat$cas.or.out, predictor = glmpreds)
 
 auc(ROC_out)
 
+write.csv(auc(ROC_out), "AUC.csv", row.names = FALSE)
+
 ```
 
 ```{r plot_temp_suit, fig.height=10, fig.width=7, fig.cap = "Normalized temperature suitability from median of posterior predicted distribution."}
@@ -379,7 +381,7 @@ mm0 = match(shp0$ISO,c34) #
 #plot(shp0[is.na(mm0),],col="black",add=TRUE) 
 plot(shp1[!is.na(mm),],col=mycols[vcols], xlim=c(-15,50), ylim=c(-20,35) , lty=0, add=TRUE)
 plot(shp0,  add=TRUE)
-#plot(shp0[is.na(mm0),],col="black",add=TRUE) 
+plot(shp0[is.na(mm0),],col="black",add=TRUE) 
 
 image.plot(legend.only=TRUE,
            breaks=mybreaks,

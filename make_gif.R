@@ -147,6 +147,9 @@ inf_df %<>% mutate(WE = ifelse(adm0 %in% west, "West",
 #   labs(title = "Year: {frame_time}")
 
 
+#------------------------------#
+inf_df %<>% filter(sample %in% head(unique(inf_df$sample), 100))
+#------------------------------#
 
 
 p<- ggplot(filter(inf_df, scenario != "now"), 
@@ -161,8 +164,29 @@ p<- ggplot(filter(inf_df, scenario != "now"),
 
 ap = p + transition_time(as.integer(Year) ) +
   labs(title = "Year: {frame_time}") + 
-  shadow_trail()
+  shadow_wake(wake_length = 0.1, alpha = FALSE)
   
 animate(ap, height = 800, width = 1000)
 
-anim_save("Percentage_change_in_deaths.gif")
+anim_save("Percentage_change_in_deaths2.gif")
+
+
+#---------------------------#
+
+p<- ggplot(filter(inf_df, scenario != "now"), 
+           aes(x = scenario, y=relative_deaths, fill = scenario, colour = scenario)) +
+  geom_violin(show.legend = FALSE, alpha = 0.7, draw_quantiles = 0.5) +
+  scale_fill_manual(values = c(snapalette(snapal)[c(1:4)], "black"))+
+  scale_colour_manual(values = c(snapalette(snapal)[c(1:4)], "black"))+
+  ylab("Percentage change in deaths")+
+  facet_wrap(adm0~., scales = "free_y") +
+  theme_bw() +
+  theme(text = element_text(size = 20))
+
+ap = p + transition_time(as.integer(Year) ) +
+  labs(title = "Year: {frame_time}") + 
+  shadow_wake(wake_length = 0.1, alpha = FALSE)
+
+animate(ap, height = 800, width = 1000)
+
+anim_save("Percentage_change_in_deaths_country.gif")

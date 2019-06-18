@@ -14,7 +14,7 @@ params:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
 knitr::opts_chunk$set(
-  fig.path = paste0("Uncertain_projections_", Sys.Date(), "/"),
+  fig.path = paste0("Uncertain_projections_stop_", Sys.Date(), "/"),
   dpi = 300,
   dev = c('png')
 )
@@ -150,7 +150,7 @@ g=ggplot( filter(tmp, year %in% c(2050, 2070) )) +
   theme_ridges()+
   xlab("Force of infection") + 
   ylab("Country")+
-  xlim(-100, 500) +
+  #xlim(-100, 500) +
   scale_y_discrete(expand = c(0.01, 0)) +
   facet_wrap(year~., nrow = 1)+
   scale_x_log10()+
@@ -292,11 +292,11 @@ for(s in 1:4){
 ```{r load_burden}
 
 #get files in infections directory
-fil = list.files("infections3")
+fil = list.files("infections_stop")
 
 inf_df = NULL
 for(i in 1:length(fil)){
-  inf_df[[i]] = mutate_all( read.csv(paste0("infections3/", fil[i]), stringsAsFactors = FALSE), as.character)
+  inf_df[[i]] = mutate_all( read.csv(paste0("infections_stop/", fil[i]), stringsAsFactors = FALSE), as.character)
 }
 
 inf_df = bind_rows(inf_df)
@@ -367,11 +367,15 @@ rm(P_severe_runs, P_death_runs, n_samples)
 
 ```{r deaths_scenario_country2, fig.height=12, fig.width=10, fig.cap="Deaths per country."}
 ggplot( filter(inf_df, Year %in% c(2050, 2070) )) + 
-  geom_density_ridges(scale = 1, 
-                      alpha = 0.8,
-                      aes(x = Deaths, y = adm0, fill = scenario)) + 
+  geom_density_ridges(scale = 2, 
+                      alpha = 0.5,
+                      aes(x = Deaths, y = reorder(adm0, Deaths), fill = scenario, colour = scenario),
+                      alpha = 0.7) + 
+                     #jittered_points = TRUE) + 
+                     #position =  "raincloud",
+                      # point_size = 3, alpha = 0.7, point_alpha = 0.1) + 
   scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
-  scale_alpha_manual(values = c(0.1,0.5))+
+  scale_color_manual(values = c(snapalette(snapal)[1:4], "black"))+
   theme_ridges()+
   xlab("Deaths") + 
   ylab("Country")+
@@ -422,11 +426,11 @@ rm(pop_all)
 
 ```{r deaths_percap_country2, fig.height=12, fig.width=10, fig.cap="Deaths per capita per country."}
 ggplot( filter(inf_df, Year %in% c(2050, 2070) )) + 
-  geom_density_ridges(scale = 1, 
-                      alpha = 0.8,
-                      aes(x = Deaths/total_pop, y = adm0, fill = scenario)) + 
+    geom_density_ridges(scale = 2, 
+                      aes(x = Deaths/total_pop, y = reorder(adm0, Deaths/total_pop), fill = scenario, colour = scenario),
+                      alpha = 0.7) + 
   scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
-  scale_alpha_manual(values = c(0.1,0.5))+
+  scale_color_manual(values = c(snapalette(snapal)[1:4], "black"))+
   theme_ridges()+
   xlab("Deaths per capita") + 
   ylab("Country")+
@@ -437,6 +441,47 @@ ggplot( filter(inf_df, Year %in% c(2050, 2070) )) +
   theme(text = element_text(size = 20))
 
 ```
+
+```{r deaths_percap_country3_2050, fig.height=12, fig.width=10, fig.cap="Deaths per capita per country."}
+
+tmp_df = filter(inf_df, Year %in% c(2050) )
+
+mu = tmp_df %>% group_by(scenario, adm0) %>% summarise(group_median = median(Deaths/total_pop))
+
+ggplot( tmp_df) + 
+  geom_density(aes( x = Deaths/total_pop,  fill = scenario), alpha = 0.7) + 
+  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
+  scale_color_manual(values = c(snapalette(snapal)[1:4], "white"))+
+  theme_ridges()+
+  xlab("Deaths per capita") + 
+  ylab("Country")+
+  #scale_y_discrete(expand = c(0.01, 0)) +
+  facet_wrap(~adm0, scales = "free_x")+
+  scale_x_log10()+
+  theme(text = element_text(size = 20)) +
+  geom_vline(data = mu, aes(xintercept = group_median, colour = scenario))
+```
+
+```{r deaths_percap_country3_2070, fig.height=12, fig.width=10, fig.cap="Deaths per capita per country."}
+
+tmp_df = filter(inf_df, Year %in% c(2070) )
+
+mu = tmp_df %>% group_by(scenario, adm0) %>% summarise(group_median = median(Deaths/total_pop))
+
+ggplot( tmp_df) + 
+  geom_density(aes( x = Deaths/total_pop,  fill = scenario), alpha = 0.7) + 
+  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
+  scale_color_manual(values = c(snapalette(snapal)[1:4], "white"))+
+  theme_ridges()+
+  xlab("Deaths per capita") + 
+  ylab("Country")+
+  #scale_y_discrete(expand = c(0.01, 0)) +
+  facet_wrap(~adm0, scales = "free_x")+
+  scale_x_log10()+
+  theme(text = element_text(size = 20)) +
+  geom_vline(data = mu, aes(xintercept = group_median, colour = scenario))
+```
+
 
 ```{r deaths_percap_table, fig.cap="Deaths per capita per year in each scenario"}
 
@@ -601,7 +646,9 @@ for(s in 1:4){
     tmp_df = data.frame(scenario = scen_vec[s],
                         year = y,
                         proportion_pos = bout_ci_calc[2],
-                        proportion_pos_ci = paste0("[",bout_ci_calc[1], ", ", bout_ci_calc[3], "]"))
+                        proportion_pos_ci = paste0("[",round(bout_ci_calc[1], digits = 4)
+                                                   , ", ", 
+                                                   round(bout_ci_calc[3], digits = 4) , "]"))
     
     propn_pos = bind_rows(propn_pos, tmp_df)
   }
