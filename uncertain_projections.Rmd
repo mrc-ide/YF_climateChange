@@ -645,10 +645,10 @@ for(s in 1:4){
 
     tmp_df = data.frame(scenario = scen_vec[s],
                         year = y,
-                        proportion_pos = bout_ci_calc[2],
-                        proportion_pos_ci = paste0("[",round(bout_ci_calc[1], digits = 4)
+                        proportion_pos = bout_ci_calc[2]*100,
+                        proportion_pos_ci = paste0("[",round(bout_ci_calc[1], digits = 4)*100
                                                    , ", ", 
-                                                   round(bout_ci_calc[3], digits = 4) , "]"))
+                                                   round(bout_ci_calc[3], digits = 4)*100 , "]"))
     
     propn_pos = bind_rows(propn_pos, tmp_df)
   }

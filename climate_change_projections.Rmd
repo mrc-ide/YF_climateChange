@@ -161,7 +161,6 @@ plot_glm_map(shp0, shp1, c34, envdat$dat, Est_beta, x, snapalette(snapal, 1000, 
 ```{r plot_glm_climate, fig.height=7, fig.width=7, fig.cap="Predicted probability of a yellow fever report for median posterior parameter estimates at various scenarios."}
 snapal = "BudapestCitadel"
 
-par(mfrow = c(2, 4), mar = c(2,2,2,2))
 
 for(year in c(2050, 2070)){
   

@@ -72,36 +72,6 @@ inf_df %<>% left_join( pop_all, by = c("adm0", "Year"))
 
 rm(pop_all)
 
-#-------------------#
-# p<- ggplot(inf_df, 
-#            aes(x = scenario, y=Deaths/total_pop, fill = scenario, colour = scenario)) +
-#   geom_violin(show.legend = FALSE, alpha = 0.7) +
-#   scale_fill_manual(values = c(snapalette(snapal)[c(1:4)], "black"))+
-#   scale_colour_manual(values = c(snapalette(snapal)[c(1:4)], "black"))+
-#   ylab("Deaths per capita")+
-#   scale_y_log10() +
-#   theme_bw()#+
-#   #facet_wrap(adm0~.)
-# 
-# p + transition_time(as.integer(Year) ) +
-#   labs(title = "Year: {frame_time}")
-# 
-# 
-# 
-# p<- ggplot(inf_df, 
-#            aes(x = scenario, y=Deaths/total_pop, fill = scenario, colour = scenario)) +
-#   geom_violin(show.legend = FALSE, alpha = 0.7) +
-#   scale_fill_manual(values = c(snapalette(snapal)[c(1:4)], "black"))+
-#   scale_colour_manual(values = c(snapalette(snapal)[c(1:4)], "black"))+
-#   ylab("Deaths per capita")+
-#   #xlab("Cases per capita")+
-#   #scale_y_log10() +
-#   #scale_x_log10()+
-#   facet_wrap()
-#   theme_bw()
-# 
-# p + transition_time(as.integer(Year) ) +
-#   labs(title = "Year: {frame_time}")
 
 #----------------#
 
@@ -131,20 +101,7 @@ inf_df %<>% mutate(WE = ifelse(adm0 %in% west, "West",
                                       "East")))
 
 
-# p<- ggplot(inf_df, 
-#            aes(x = scenario, y=Deaths/total_pop, fill = scenario, colour = scenario)) +
-#   geom_violin(show.legend = FALSE, alpha = 0.7) +
-#   scale_fill_manual(values = c(snapalette(snapal)[c(1:4)], "black"))+
-#   scale_colour_manual(values = c(snapalette(snapal)[c(1:4)], "black"))+
-#   ylab("Deaths per capita")+
-#   #xlab("Cases per capita")+
-#   scale_y_log10() +
-#   #scale_x_log10()+
-#   facet_wrap(WE~.) +
-#   theme_bw()
-# 
-# p + transition_time(as.integer(Year) ) +
-#   labs(title = "Year: {frame_time}")
+
 
 
 #------------------------------#

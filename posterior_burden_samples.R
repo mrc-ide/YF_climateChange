@@ -1,7 +1,5 @@
 ### --------------------------------------------------------------------- ###
-library(maptools)
-library(sp) 
-library(shapefiles)
+
 library(Hmisc)
 library(fields)
 library(dplyr)
@@ -142,11 +140,10 @@ fun_calc_burden = function(i){
   for(y in 1:length(years)){
     
     if(y == 1){
-      immunity_start = fun_immunityStart(model_type = "Foi",
-                                         transmission_param = as.numeric(df[3+y]),
-                                         age_max = 100,
-                                         pop = pop_new,
-                                         old_coverage = coverage_country_prev)
+      
+      ages = c(0:100)
+      foi = as.numeric(df[3+y])
+      immunity_start = 1 - (exp(-foi * ages))
       
       out_prev = run_infections_unit(model_type = "Foi",
                                                   transmission_param = as.numeric(df[3+y]),
