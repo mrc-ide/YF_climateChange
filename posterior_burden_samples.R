@@ -27,40 +27,40 @@ library(YFburden)
 sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
 
 #-----------------------------------------------------------------------------
-transmission_proj = read.csv( "transmission_intensity_samples.csv", stringsAsFactors = FALSE)
+# transmission_proj = read.csv( "transmission_intensity_samples.csv", stringsAsFactors = FALSE)
+# 
+# transmission_proj = transmission_proj %>% mutate(year = as.character(year), scenario = as.character(scenario))
+# 
+# param_samples = spread(transmission_proj, year, FOI)
+# 
+# param_samples_now = param_samples %>%
+#   mutate(`2050` = param_samples$now , `2070` = param_samples$now, scenario = "now") %>% unique()
+# 
+# param_samples %<>% bind_rows(param_samples_now)
+# 
+# ### interpolate for each year ###
+# fun_interp = function(i){
+#   df = param_samples[i,]
+#   new_df = data.frame(adm0 = df$adm0,
+#                       scenario = df$scenario,
+#                       sample = df$sample,
+#                       year = 2018:2070,
+#                       FOI = NA)
+#   new_df$FOI = approx(x = c(2018, 2050, 2070),
+#                       y = c(df$now, df$`2050`, df$`2070`),
+#                       xout = c(2018:2070))$y
+#   out = spread(new_df, year, FOI)
+#   return(out)
+# }
+# 
+# param_samples_interp = lapply(1:nrow(param_samples), fun_interp)
+# param_samples_interp = bind_rows(param_samples_interp)
+# 
+# write.csv(param_samples_interp, "transmission_intensity_samples_interp.csv", row.names = FALSE)
 
-transmission_proj = transmission_proj %>% mutate(year = as.character(year), scenario = as.character(scenario))
+param_samples_interp = read.csv("transmission_intensity_samples_interp.csv", stringsAsFactors = FALSE)
 
-param_samples = spread(transmission_proj, year, FOI)
-
-param_samples_now = param_samples %>%
-  mutate(`2050` = param_samples$now , `2070` = param_samples$now, scenario = "now") %>% unique()
-
-param_samples %<>% bind_rows(param_samples_now)
-
-### interpolate for each year ###
-fun_interp = function(i){
-  df = param_samples[i,]
-  new_df = data.frame(adm0 = df$adm0,
-                      scenario = df$scenario,
-                      sample = df$sample,
-                      year = 2018:2070,
-                      FOI = NA)
-  new_df$FOI = approx(x = c(2018, 2050, 2070),
-                      y = c(df$now, df$`2050`, df$`2070`),
-                      xout = c(2018:2070))$y
-  out = spread(new_df, year, FOI)
-  return(out)
-}
-
-param_samples_interp = lapply(1:nrow(param_samples), fun_interp)
-param_samples_interp = bind_rows(param_samples_interp)
-
-write.csv(param_samples_interp, "transmission_intensity_samples_interp.csv", row.names = FALSE)
-
-#param_samples_interp = read.csv("transmission_intensity_samples_interp.csv", stringsAsFactors = FALSE)
-
-#param_samples_interp %<>% filter(sample %in% unique(param_samples_interp$sample)[1:100])
+#param_samples_interp %<>% filter(sample %in% unique(param_samples_interp$sample)[1])
 #-----------------------------------------------------------------------------
 
 montagu::montagu_server_global_default_set(
@@ -104,7 +104,12 @@ filepath = "Z:/MultiModelInference/multi_model_MCMC_chain_20180622"
 mcmc_out_sero = get_chains(filepath, burnin = 1, thin = 1)
 
 #sample vac eff
-vac_eff_vec = exp(mcmc_out_sero$vac_eff[sample(1:nrow(mcmc_out_sero), nrow(param_samples_interp))] )
+vac_eff_vec = exp(mcmc_out_sero$vac_eff[sample(1:nrow(mcmc_out_sero), length(unique(param_samples_interp$sample)))] )
+
+tmp_vac = data.frame(vac_eff = vac_eff_vec, sample = unique(param_samples_interp$sample))
+
+param_samples_interp = left_join(param_samples_interp, tmp_vac, by = "sample")
+
 
 #-----------------------------------------------------------------------------
 
@@ -147,7 +152,7 @@ fun_calc_burden = function(i){
       
       out_prev = run_infections_unit(model_type = "Foi",
                                                   transmission_param = as.numeric(df[3+y]),
-                                                  vac_eff = vac_eff_vec[i],
+                                                  vac_eff = df$vac_eff,
                                                   years = years[y],
                                                   age_max = 100,
                                                   pop = pop_new,
@@ -159,7 +164,7 @@ fun_calc_burden = function(i){
     
     out_prev = run_infections_unit_changing_FOI(model_type = "Foi",
                                    transmission_param = as.numeric(df[3+y]),
-                                   vac_eff = vac_eff_vec[i],
+                                   vac_eff = df$vac_eff,
                                    years = years[y],
                                    age_max = 100,
                                    pop = pop_new,
