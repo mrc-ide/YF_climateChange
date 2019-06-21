@@ -369,8 +369,7 @@ rm(P_severe_runs, P_death_runs, n_samples)
 ggplot( filter(inf_df, Year %in% c(2050, 2070) )) + 
   geom_density_ridges(scale = 2, 
                       alpha = 0.5,
-                      aes(x = Deaths, y = reorder(adm0, Deaths), fill = scenario, colour = scenario),
-                      alpha = 0.7) + 
+                      aes(x = Deaths, y = reorder(adm0, Deaths), fill = scenario, colour = scenario)) + 
                      #jittered_points = TRUE) + 
                      #position =  "raincloud",
                       # point_size = 3, alpha = 0.7, point_alpha = 0.1) + 
@@ -428,7 +427,7 @@ rm(pop_all)
 ggplot( filter(inf_df, Year %in% c(2050, 2070) )) + 
     geom_density_ridges(scale = 2, 
                       aes(x = Deaths/total_pop, y = reorder(adm0, Deaths/total_pop), fill = scenario, colour = scenario),
-                      alpha = 0.7) + 
+                      alpha = 0.5) + 
   scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
   scale_color_manual(values = c(snapalette(snapal)[1:4], "black"))+
   theme_ridges()+
