@@ -182,8 +182,8 @@ ggs_crosscorrelation(chain_sub)
 ggs_caterpillar(chain_sub)
 
 ### save values 
-write.csv(ci(chain_sub), paste0("GLM_tempsuit_parameter_estimates_", 
-                                format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
+# write.csv(ci(chain_sub), paste0("GLM_tempsuit_parameter_estimates_", 
+#                                 format(Sys.time(),"%Y%m%d"), ".csv"), row.names = FALSE)
 
 ```
 
@@ -365,7 +365,6 @@ write.csv(auc(ROC_out), "AUC.csv", row.names = FALSE)
 ```
 
 ```{r plot_temp_suit, fig.height=10, fig.width=7, fig.cap = "Normalized temperature suitability from median of posterior predicted distribution."}
-par(mar = 0*c(5.1,4.1,4.1,2.1))
 
 temp_suit = (dat_full_temp$temp_suitability)
 #temp_suit = dat_full_temp$worldclim_temp_mid
