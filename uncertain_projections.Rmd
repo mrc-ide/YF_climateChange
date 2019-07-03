@@ -36,6 +36,7 @@ library(purrr)
 library(ggridges)
 library(boot)
 library(viridis)
+library(ggsci)
 
 library(ggmcmc)
 library(mcmcplots)
@@ -99,7 +100,7 @@ tp$scenario[tp$year == "now"] = "now"
 ggplot(tp) + 
   geom_violin(aes(fill = scenario, y = FOI, x = year), position="dodge", draw_quantiles = 0.5) + 
   facet_wrap(adm0~.) +
-  scale_fill_manual(values = c(c(snapalette(snapal)[1:4], "white")[1:4], "white") ) +
+  scale_fill_manual(values = c(c(magma(5)[c(3,2,1,4)], "white")[1:4], "white") ) +
   theme_bw() +
   ylab("Force of infection")+
   scale_y_log10()
@@ -127,7 +128,7 @@ ggplot(tp, aes(x = FOI, y =  year, fill = scenario)) +
   geom_density_ridges(alpha = 0.5 , scale = 1) +
   theme_ridges() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white")) +
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white")) +
   scale_x_log10()+
   scale_y_discrete(expand = c(0.01, 0)) +
   xlab("Force of infection")+
@@ -145,9 +146,9 @@ tmp = bind_rows(tmp,
 
 g=ggplot( filter(tmp, year %in% c(2050, 2070) )) + 
   geom_density_ridges(scale = 3, 
-                      alpha = 0.5,
+                      alpha = 0.7,
                       aes(x = FOI, y = adm0, fill = scenario)) + 
-  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
   theme_ridges()+
   xlab("Force of infection") + 
   ylab("Country")+
@@ -186,7 +187,7 @@ scen_vec = c(26, 45, 60, 85)
 for(s in 1:4){
   for(y in c(2050, 2070)){
     
-    col = snapalette(snapal)[s]
+    col = magma(5)[c(3,2,1,4)][s]
     
     g = ggplot( filter( transmission_proj, year %in% y & scenario %in% scen_vec[s] )) + 
       geom_density_ridges(scale = 3, aes(x = percent_diff, y = reorder(adm0, percent_diff) ), 
@@ -228,7 +229,7 @@ ggplot( filter( transmission_proj, year %in% c(2050, 2070) )) +
   geom_density_ridges(scale = 0.9, 
                       aes(x = percent_diff, y = WE, fill = scenario, alpha = year)) + 
   facet_wrap(~scenario) +
-  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
   scale_alpha_manual(values = c(0.1,0.8))+
   theme_ridges()+
   xlab("Change in force of infection (%)") + 
@@ -334,7 +335,7 @@ inf_df$scenario[inf_df$scenario == "now"] = "current"
 ggplot(inf_df,
        aes(x = Year, y = Infections, fill = scenario)) +
   geom_violin( position="dodge", draw_quantiles = 0.5) +
-  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))+
   scale_y_log10()
@@ -345,7 +346,7 @@ ggplot(inf_df,
 ggplot(inf_df,
        aes(x = Year, y = Infections, fill = scenario)) + 
   geom_violin( position="dodge", draw_quantiles = 0.5) + 
-  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))+
   facet_wrap(~adm0, scales = "free_y")+
@@ -387,8 +388,8 @@ ggplot( filter(inf_df, Year %in% c(2050) )) +
   geom_density_ridges(scale = 3, 
                       alpha = 0.5,
                       aes(x = Deaths, y = reorder(country_name, -x), fill = scenario, colour = scenario)) + 
-  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
-  scale_color_manual(values = c(snapalette(snapal)[1:4], "black"))+
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
+  scale_color_manual(values = c(magma(5)[c(3,2,1,4)], "black"))+
   theme_ridges()+
   xlab("Deaths") + 
   ylab("Country")+
@@ -402,8 +403,8 @@ ggplot( filter(inf_df, Year %in% c(2070) )) +
   geom_density_ridges(scale = 3, 
                       alpha = 0.5,
                       aes(x = Deaths, y = reorder(country_name, -x), fill = scenario, colour = scenario)) + 
-  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
-  scale_color_manual(values = c(snapalette(snapal)[1:4], "black"))+
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
+  scale_color_manual(values = c(magma(5)[c(3,2,1,4)], "black"))+
   theme_ridges()+
   xlab("Deaths") + 
   ylab("Country")+
@@ -455,8 +456,8 @@ ggplot( filter(inf_df, Year %in% c(2050) )) +
     geom_density_ridges(scale = 3, 
                       aes(x = Deaths/total_pop, y = reorder(country_name, -x), fill = scenario, colour = scenario),
                       alpha = 0.5) + 
-  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
-  scale_color_manual(values = c(snapalette(snapal)[1:4], "black"))+
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
+  scale_color_manual(values = c(magma(5)[c(3,2,1,4)], "black"))+
   theme_ridges()+
   xlab("Deaths per capita") + 
   ylab("Country")+
@@ -473,8 +474,8 @@ ggplot( filter(inf_df, Year %in% c(2070) )) +
     geom_density_ridges(scale = 3, 
                       aes(x = Deaths/total_pop, y = reorder(country_name, -x), fill = scenario, colour = scenario),
                       alpha = 0.5) + 
-  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
-  scale_color_manual(values = c(snapalette(snapal)[1:4], "black"))+
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
+  scale_color_manual(values = c(magma(5)[c(3,2,1,4)], "black"))+
   theme_ridges()+
   xlab("Deaths per capita") + 
   ylab("Country")+
@@ -593,8 +594,8 @@ ggplot( filter(inf_df, Year %in% c(2050, 2070) )) +
     geom_density_ridges(scale = 1, 
                       aes(x = Deaths/total_pop, y = reorder(WE, Deaths/total_pop), fill = scenario, colour = scenario),
                       alpha = 0.5) + 
-  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
-  scale_color_manual(values = c(snapalette(snapal)[1:4], "black"))+
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
+  scale_color_manual(values = c(magma(5)[c(3,2,1,4)], "black"))+
   theme_ridges()+
   xlab("Deaths per capita") + 
   ylab("Area")+
@@ -609,7 +610,7 @@ ggplot( filter(inf_df, Year %in% c(2050, 2070) )) +
 
 ggplot(inf_df, aes(x = Year, y = Deaths, fill = scenario)) + 
   geom_violin( position="dodge", draw_quantiles = 0.5) +
-  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   ylab("Deaths")+
@@ -627,7 +628,7 @@ ggplot( filter(inf_df, scenario != "current")) +
   geom_density_ridges(scale = 0.9, 
                       aes(x = Deaths_percap, y = WE, fill = scenario, alpha = Year)) + 
   facet_wrap(~scenario) +
-  scale_fill_manual(values = c(snapalette(snapal)[1:4], "white"))+
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
   scale_alpha_manual(values = c(0.1,0.5, 0.8))+
   theme_ridges()+
   xlab("Deaths per capita") + 

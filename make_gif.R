@@ -6,8 +6,29 @@ library(gganimate)
 library(ggridges)
 library(snapalette)
 library(magrittr)
+library(viridis)
 
 snapal = "Stavanger"
+
+shpdir = paste0("../","shapefiles/gadm2/")
+
+#########################################################################################################
+### LOADING SHAPEFILES AND COUNTRIES ###
+#########################################################################################################
+
+#read shapefiles in
+shp0 = readShapePoly(paste0(shpdir, "Africa_adm0.shp")) #if gadm2
+shp1 = readShapePoly(paste0(shpdir, "Africa_adm1.shp"))
+
+#adjust titles
+shp1$adm0_adm1 = paste(shp1$ISO, shp1$ID_1, sep="_")
+shp1 = shp1[order(shp1$adm0_adm1),]
+
+#read countries in
+Countries = read_csv(paste0("../Data/","Countries.csv"))
+c34 = Countries$c34
+country34 = Countries$country34
+
 #------------------------------#
 # transmission samples --------#
 transmission_proj = read.csv( "transmission_intensity_samples.csv", stringsAsFactors = FALSE)
@@ -101,8 +122,23 @@ inf_df %<>% mutate(WE = ifelse(adm0 %in% west, "West",
                                       "East")))
 
 
+#add coordinates of each country
+centroids = as.data.frame( getSpPPolygonsLabptSlots(shp0) )
+centroids %<>% mutate(adm0 = unique(shp0$ISO))
+names(centroids) = c("x", "y", "adm0")
 
+inf_df %<>% left_join( centroids, by = c("adm0") )
+inf_df %<>% unique()
 
+#add full names
+tmp_c = data.frame(adm0 = c34, country_name = country34)
+
+inf_df %<>% left_join(tmp_c, by = "adm0")
+inf_df %<>% unique()
+
+inf_df %<>% mutate(country_name = as.character(country_name))
+inf_df$country_name[inf_df$country_name == "Democratic Republic of Congo"] = "DRC"
+inf_df$country_name[inf_df$country_name == "Central African Republic"] = "CAR"
 
 #------------------------------#
 inf_df %<>% filter(sample %in% head(unique(inf_df$sample), 100))
@@ -112,16 +148,15 @@ inf_df %<>% filter(sample %in% head(unique(inf_df$sample), 100))
 p<- ggplot(filter(inf_df, scenario != "now"), 
            aes(x = scenario, y=relative_deaths, fill = scenario, colour = scenario)) +
   geom_jitter(show.legend = FALSE, alpha = 0.7, size = 2) +
-  scale_fill_manual(values = c(snapalette(snapal)[c(1:4)], "black"))+
-  scale_colour_manual(values = c(snapalette(snapal)[c(1:4)], "black"))+
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
+  scale_colour_manual(values = c(magma(5)[c(3,2,1,4)], "black"))+
   ylab("Percentage change in deaths")+
   facet_wrap(WE~.) +
   theme_bw() +
   theme(text = element_text(size = 20))
 
 ap = p + transition_time(as.integer(Year) ) +
-  labs(title = "Year: {frame_time}") + 
-  shadow_wake(wake_length = 0.1, alpha = FALSE)
+  labs(title = "Year: {frame_time}") #+ shadow_wake(wake_length = 0.1, alpha = FALSE)
   
 animate(ap, height = 800, width = 1000)
 
@@ -131,18 +166,19 @@ anim_save("Percentage_change_in_deaths2.gif")
 #---------------------------#
 
 p<- ggplot(filter(inf_df, scenario != "now"), 
-           aes(x = scenario, y=relative_deaths, fill = scenario, colour = scenario)) +
-  geom_violin(show.legend = FALSE, alpha = 0.7, draw_quantiles = 0.5) +
-  scale_fill_manual(values = c(snapalette(snapal)[c(1:4)], "black"))+
-  scale_colour_manual(values = c(snapalette(snapal)[c(1:4)], "black"))+
+           aes(x = scenario, y = relative_deaths, fill = scenario, colour = scenario)) +
+  geom_boxplot(show.legend = FALSE, alpha = 0.7) +
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
+  scale_colour_manual(values = c(magma(5)[c(3,2,1,4)], "black"))+
   ylab("Percentage change in deaths")+
-  facet_wrap(adm0~., scales = "free_y") +
+  xlab("Scenario")+
+  facet_wrap(reorder(country_name, x)~.) +
   theme_bw() +
-  theme(text = element_text(size = 20))
+  theme(text = element_text(size = 20))+
+  coord_flip()
 
 ap = p + transition_time(as.integer(Year) ) +
-  labs(title = "Year: {frame_time}") + 
-  shadow_wake(wake_length = 0.1, alpha = FALSE)
+  labs(title = "Year: {frame_time}") #+ shadow_wake(wake_length = 0.1, alpha = FALSE)
 
 animate(ap, height = 800, width = 1000)
 
