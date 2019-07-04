@@ -103,20 +103,20 @@ ggplot(tp) +
   scale_fill_manual(values = c(c(magma(5)[c(3,2,1,4)], "white")[1:4], "white") ) +
   theme_bw() +
   ylab("Force of infection")+
-  scale_y_log10()
+  scale_y_log10()+
+  theme(text = element_text(size = 20))
 
 ```
 
 
 
 ```{r transmission_by_area_calc}
-
 west = c("BEN", "BFA", "GMB", "GHA", "GIN", "GNB", "CIV", "LBR", "MLI", "MRT", "NER", "NGA", "SEN", "SLE", "TGO")
 
-central = c("TCD", "CAF", "CMR", "GAB", "COD", "COG", "AGO", "SSD", "SDN")
+central = c("TCD", "CAF", "CMR", "GAB", "COD", "COG", "AGO", "GNQ")
 
 tp %<>% mutate(WE = ifelse(adm0 %in% west, "West", 
-                               ifelse(adm0 %in% central, "Central and Sudan",
+                               ifelse(adm0 %in% central, "Central",
                                       "East")))
 
 ```
@@ -132,7 +132,8 @@ ggplot(tp, aes(x = FOI, y =  year, fill = scenario)) +
   scale_x_log10()+
   scale_y_discrete(expand = c(0.01, 0)) +
   xlab("Force of infection")+
-  facet_wrap(~WE) 
+  facet_wrap(~WE) +
+  theme(text = element_text(size = 20))
 
 ```
 
@@ -156,6 +157,7 @@ g=ggplot( filter(tmp, year %in% c(2050, 2070) )) +
   scale_y_discrete(expand = c(0.01, 0)) +
   facet_wrap(year~., nrow = 1)+
   scale_x_log10()+
+  theme(text = element_text(size = 20))+
   theme(text = element_text(size = 20))
 
 rm(tmp)
@@ -215,7 +217,7 @@ for(s in 1:4){
 ```{r difference_by_area_calc}
 
 transmission_proj %<>% mutate(WE = ifelse(adm0 %in% west, "West", 
-                               ifelse(adm0 %in% central, "Central and Sudan",
+                               ifelse(adm0 %in% central, "Central",
                                       "East")))
 ```
 
@@ -238,7 +240,8 @@ ggplot( filter( transmission_proj, year %in% c(2050, 2070) )) +
   geom_hline(yintercept = 0, color = snapalette(snapal)[5])+
   xlim(-100, 500) +
   geom_vline(xintercept = 0)+
-  guides(fill = FALSE)
+  guides(fill = FALSE)+
+  theme(text = element_text(size = 20))
 
 #rm(transmission_proj, tmp, tp)
 
@@ -338,11 +341,12 @@ ggplot(inf_df,
   scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))+
-  scale_y_log10()
+  scale_y_log10()+
+  theme(text = element_text(size = 20))
 
 ```
 
-```{r infections_scenario_country, fig.cap="Infections.", fig.height = 12, fig.width = 10}
+```{r infections_scenario_country, fig.cap="Infections.", fig.height = 12, fig.width = 10, eval = FALSE}
 ggplot(inf_df,
        aes(x = Year, y = Infections, fill = scenario)) + 
   geom_violin( position="dodge", draw_quantiles = 0.5) + 
@@ -350,7 +354,8 @@ ggplot(inf_df,
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))+
   facet_wrap(~adm0, scales = "free_y")+
-  scale_y_log10()
+  scale_y_log10()+
+  theme(text = element_text(size = 20))
 
 ```
 
@@ -395,7 +400,8 @@ ggplot( filter(inf_df, Year %in% c(2050) )) +
   ylab("Country")+
   scale_y_discrete(expand = c(0.01, 0)) +
   #facet_wrap(Year~., nrow = 1)+
-  scale_x_log10()
+  scale_x_log10()+
+  theme(text = element_text(size = 20))
 
 ```
 ```{r deaths_scenario_country_2070, fig.height=12, fig.width=10, fig.cap="Deaths per country."}
@@ -409,7 +415,8 @@ ggplot( filter(inf_df, Year %in% c(2070) )) +
   xlab("Deaths") + 
   ylab("Country")+
   scale_y_discrete(expand = c(0.01, 0)) +
-  scale_x_log10()
+  scale_x_log10()+
+  theme(text = element_text(size = 20))
 
 ```
 
@@ -579,12 +586,8 @@ kableExtra::kable(out_df, caption = "Median change in deaths per year in each sc
 ```{r region_calc}
 
 
-west = c("BEN", "BFA", "GMB", "GHA", "GIN", "GNB", "CIV", "LBR", "MLI", "MRT", "NER", "NGA", "SEN", "SLE", "TGO")
-
-central = c("TCD", "CAF", "CMR", "GAB", "COD", "COG", "AGO", "SSD", "SDN")
-
 inf_df %<>% mutate(WE = ifelse(adm0 %in% west, "West", 
-                               ifelse(adm0 %in% central, "Central and Sudan",
+                               ifelse(adm0 %in% central, "Central",
                                       "East")))
 
 ```
@@ -615,7 +618,8 @@ ggplot(inf_df, aes(x = Year, y = Deaths, fill = scenario)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   ylab("Deaths")+
   facet_wrap(~WE) +
-  scale_y_log10()
+  scale_y_log10()+
+  theme(text = element_text(size = 20))
 
 
 ```
@@ -635,7 +639,8 @@ ggplot( filter(inf_df, scenario != "current")) +
   ylab("")+
   scale_x_log10()+
   scale_y_discrete(expand = c(0.01, 0))+
-  guides(fill = FALSE)
+  guides(fill = FALSE)+
+  theme(text = element_text(size = 20))
 
 
 ```
@@ -665,7 +670,7 @@ for(s in 1:4){
     bout_ci_calc = quantile(boot_out$t, c(0.025, 0.5,0.975))
 
     tmp_df = data.frame(scenario = scen_vec[s],
-                        year = y,
+                        year = year_ind,
                         proportion_pos = bout_ci_calc[2]*100,
                         proportion_pos_ci = paste0("[",round(bout_ci_calc[1], digits = 4)*100
                                                    , ", ", 
@@ -749,5 +754,34 @@ for(s in c(26, 45, 60, 85)){
              horizontal = TRUE,
              legend.shrink = 0.75)
 }
+
+```
+
+
+```{r map_regions, fig.width=10, fig.height=8}
+
+tmp_df  = data.frame(adm0 = unique(inf_df$adm0), WE = NA)
+
+tmp_df %<>% mutate(WE = ifelse(adm0 %in% west, "West", 
+                               ifelse(adm0 %in% central, "Central",
+                                      "East")))
+
+tmp_df %<>% arrange(adm0)
+
+mybreaks = unique(tmp_df$WE)
+
+mycols = viridis(3)
+
+tmp_df$vcols = match(tmp_df$WE, mybreaks)
+  
+mm = match(as.character(shp0$ISO), as.character(tmp_df$adm0))
+  
+plot(shp0, xlim=c(-15,50),ylim=c(-20,35))
+mm0 = match(shp0$ISO,c34) #
+plot(shp0[!is.na(mm),], col=mycols[tmp_df$vcols], xlim=c(-15,50), ylim=c(-20,35) , lty=0, add=TRUE)
+plot(shp0,  add=TRUE)
+plot(shp0[is.na(mm0),],col="black",add=T)
+  
+
 
 ```
