@@ -1,0 +1,322 @@
+---
+title: "Poster figures"
+author: "Katy Gaythorpe"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+header-includes: 
+- \usepackage{placeins}
+output: 
+  pdf_document:
+    df_print: "kable"
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
+knitr::opts_chunk$set(
+  fig.path = paste0("Poster_images/"),
+  dpi = 1000,
+  dev = c('png')
+)
+```
+
+
+```{r set_up}
+
+library(maptools)
+library(sp) 
+library(shapefiles)
+library(Hmisc)
+library(fields)
+library(dplyr)
+library(tibble)
+library(tidyr)
+library(magrittr)
+library(readr)
+library(purrr)
+library(ggridges)
+library(boot)
+library(viridis)
+library(ggsci)
+
+library(ggmcmc)
+library(mcmcplots)
+library(R.utils)
+
+library(YFestimation)
+library(snapalette)
+library(KsetupR)
+
+#########################################################################################################
+### SETTING THE WORKING DIRECTORY ###
+#########################################################################################################
+
+shpdir = paste0("//fi--didenas1/YF/DATA/shapefiles/gadm2/")
+
+#########################################################################################################
+### LOADING SHAPEFILES AND COUNTRIES ###
+#########################################################################################################
+
+#read shapefiles in
+shp0 = readShapePoly(paste0(shpdir, "Africa_adm0.shp")) #if gadm2
+shp1 = readShapePoly(paste0(shpdir, "Africa_adm1.shp"))
+
+#adjust titles
+shp1$adm0_adm1 = paste(shp1$ISO, shp1$ID_1, sep="_")
+shp1 = shp1[order(shp1$adm0_adm1),]
+
+#read countries in
+Countries = read_csv(paste0("../Data/","Countries.csv"))
+c34 = Countries$c34
+country34 = Countries$country34
+
+#########################################################################################################
+### SOURCE FUNCTIONS ###
+#########################################################################################################
+
+sourceDirectory("FUNCTIONS", modifiedOnly = FALSE)
+
+
+snapal = "Stavanger"
+
+```
+
+
+```{r load_transmission}
+
+transmission_proj = read.csv( "transmission_intensity_samples.csv", stringsAsFactors = FALSE)
+
+transmission_proj %<>% mutate(year = as.character(year), scenario = as.character(scenario))  %>% 
+                       mutate(year = factor(year, levels = c("now", 2050, 2070)))
+
+tp = transmission_proj %>% filter( !(scenario %in% c(45, 60, 85) & year == "now"))
+tp$scenario[tp$year == "now"] = "now"
+
+```
+
+```{r transmission_by_area_calc}
+west = c("BEN", "BFA", "GMB", "GHA", "GIN", "GNB", "CIV", "LBR", "MLI", "MRT", "NER", "NGA", "SEN", "SLE", "TGO")
+
+central = c("TCD", "CAF", "CMR", "GAB", "COD", "COG", "AGO", "GNQ")
+
+tp %<>% mutate(WE = ifelse(adm0 %in% west, "West", 
+                               ifelse(adm0 %in% central, "Central",
+                                      "East")))
+
+```
+
+```{r calc_diff}
+tmp = filter(transmission_proj, year == "now") 
+tmp$scenario = "now"
+tmp %<>% dplyr::rename(FOI_now = FOI) %>% select("adm0", "FOI_now", "sample")
+
+transmission_proj %<>% left_join( tmp, by = c("adm0", "sample"))
+transmission_proj = unique(transmission_proj)
+
+transmission_proj %<>% mutate(percent_diff = ((FOI - FOI_now)/FOI_now)*100)
+
+
+```
+
+```{r difference_by_area_calc}
+
+transmission_proj %<>% mutate(WE = ifelse(adm0 %in% west, "West", 
+                               ifelse(adm0 %in% central, "Central",
+                                      "East")))
+```
+
+```{r difference_by_area3, fig.width=10, fig.height=8}
+
+
+ggplot( filter( transmission_proj, year %in% c(2050, 2070) )) + 
+  geom_density_ridges(scale = 0.9, 
+                      aes(x = percent_diff, y = WE, fill = scenario, alpha = year)) + 
+  facet_wrap(~scenario) +
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
+  scale_alpha_manual(values = c(0.1,0.8))+
+  theme_ridges()+
+  xlab("Change in force of infection (%)") + 
+  ylab("")+
+  scale_y_discrete(expand = c(0.01, 0)) +
+  geom_hline(yintercept = 0, color = snapalette(snapal)[5])+
+  xlim(-100, 500) +
+  geom_vline(xintercept = 0)+
+  guides(fill = FALSE)+
+  theme(text = element_text(size = 20))
+
+#rm(transmission_proj, tmp, tp)
+
+```
+
+
+```{r plot_transmission_diff_2050, fig.height=10, fig.width=10, fig.cap="Force of infection, percentage difference 2050.", echo=TRUE}
+
+colours =  magma(100)
+
+runs_clim_change = read.csv("transmission_intensity_med.csv", stringsAsFactors = FALSE)
+
+tmp = filter(runs_clim_change, year == "now") 
+tmp$scenario = "now"
+tmp = tmp %>% dplyr::rename(runs_now = runs) %>% select("adm0_adm1", "runs_now")
+
+df = left_join(runs_clim_change, tmp, by = c("adm0_adm1"))
+df = unique(df)
+
+par(mfrow = c(2, 2), mar = c(2,2,2,2))
+
+for(s in c("26", "45", "60", "85")){
+
+    df_subs = filter(df, scenario == s & year == 2050)
+    runs = 100*(df_subs$runs - df_subs$runs_now) / df_subs$runs_now
+    
+    mybreaks= seq(-6, 71, length.out=101)
+    mm = match(shp1$adm0_adm1, df_subs$adm0_adm1)
+    vcols = findInterval(runs, mybreaks)
+    
+    plot(shp0, xlim=c(-15,50),ylim=c(-20,30), main = paste0( "RCP ",  sub( '(?<=.{1})', '.', s, perl=TRUE )))
+    mm0 = match(shp0$ISO, Countries$c34) #
+    plot(shp0[is.na(mm0),],col="black",add=T)
+    plot(shp1[!is.na(mm),],col=colours[vcols], xlim=c(-15,50),ylim=c(-20,30) , lty=0, add=T)
+    
+    plot(shp0, lwd=2, add=T)
+    
+    
+    image.plot(legend.only=TRUE, breaks=mybreaks, col=colours, zlim=c(0,1), horizontal = TRUE,
+               legend.mar = 3.5)
+    
+  }
+
+```
+
+```{r plot_transmission_diff_2070, fig.height=10, fig.width=10, fig.cap="Force of infection, percentage difference 2070.", echo=TRUE}
+
+colours = magma(100) #(snapalette("Stavanger", 100, type = "continuous"))
+
+
+tmp = filter(runs_clim_change, year == "now") 
+tmp$scenario = "now"
+tmp = tmp %>% dplyr::rename(runs_now = runs) %>% select("adm0_adm1", "runs_now")
+
+df = left_join(runs_clim_change, tmp, by = c("adm0_adm1"))
+df = unique(df)
+
+par(mfrow = c(2, 2), mar = c(2,2,2,2))
+
+for(s in c("26", "45", "60", "85")){
+
+    df_subs = filter(df, scenario == s & year == 2070)
+    runs = 100*(df_subs$runs - df_subs$runs_now) / df_subs$runs_now
+    
+    mybreaks= seq(-6, 71, length.out=101)
+    mm = match(shp1$adm0_adm1, df_subs$adm0_adm1)
+    vcols = findInterval(runs, mybreaks)
+    
+    plot(shp0, xlim=c(-15,50),ylim=c(-20,30), main = paste0( "RCP ",  sub( '(?<=.{1})', '.', s, perl=TRUE )))
+    mm0 = match(shp0$ISO, Countries$c34) #
+    plot(shp0[is.na(mm0),],col="black",add=T)
+    plot(shp1[!is.na(mm),],col=colours[vcols], xlim=c(-15,50),ylim=c(-20,30) , lty=0, add=T)
+    
+    plot(shp0, lwd=2, add=T)
+    
+    
+    image.plot(legend.only=TRUE, breaks=mybreaks, col=colours, zlim=c(0,1), horizontal = TRUE,
+               legend.mar = 3.5)
+    
+  }
+
+```
+
+
+```{r load_burden}
+
+#get files in infections directory
+fil = list.files("infections_stop")
+
+inf_df = NULL
+for(i in 1:length(fil)){
+  inf_df[[i]] = mutate_all( read.csv(paste0("infections_stop/", fil[i]), stringsAsFactors = FALSE), as.character)
+}
+
+inf_df = bind_rows(inf_df)
+
+inf_df = gather(inf_df,   "Year", "Infections", -c(adm0, scenario, sample))
+
+inf_df$Year = gsub("X", "", inf_df$Year)
+
+inf_df %<>% mutate( Year = as.character(Year), Infections = as.numeric(Infections)) %>% filter(Year %in% c(2018, 2050, 2070))
+
+
+#add coordinates of each country
+centroids = as.data.frame( getSpPPolygonsLabptSlots(shp0) )
+centroids %<>% mutate(adm0 = unique(shp0$ISO))
+names(centroids) = c("x", "y", "adm0")
+
+inf_df %<>% left_join( centroids, by = c("adm0") )
+inf_df %<>% unique()
+
+#add full names
+tmp_c = data.frame(adm0 = c34, country_name = country34)
+
+inf_df %<>% left_join(tmp_c, by = "adm0")
+inf_df %<>% unique()
+
+#change scenario name from now to current
+inf_df$scenario[inf_df$scenario == "now"] = "current"
+
+```
+
+```{r get_burden}
+
+n_samples = length(unique(inf_df$sample))
+
+P_severe_runs = rbeta(n_samples, 6.367309,44.60736)
+P_death_runs = rbeta(n_samples, 16.43466, 18.49048)
+
+tmp_df = data.frame(sample = unique(inf_df$sample),
+                    P_severe = P_severe_runs,
+                    P_death = P_death_runs)
+
+inf_df %<>% left_join( tmp_df, by = "sample")
+
+inf_df= unique(inf_df)
+
+inf_df %<>% mutate(Cases = inf_df$Infections * inf_df$P_severe)
+inf_df %<>% mutate(Deaths = inf_df$Cases * inf_df$P_death)
+
+rm(P_severe_runs, P_death_runs, n_samples)
+
+```
+
+```{r deaths_percap_calc}
+
+pop_all = read.csv("population.csv", stringsAsFactors = FALSE)
+
+pop_all %<>% filter(year %in% 2018:2070) %>% 
+  group_by(country_code, year) %>% 
+  summarise(total_pop = sum(value))
+
+pop_all %<>% dplyr::rename(adm0 = country_code, Year = year) %>%
+  mutate(Year = as.character(Year))
+
+inf_df %<>% left_join( pop_all, by = c("adm0", "Year"))
+
+rm(pop_all)
+```
+
+
+```{r deaths_percap_country_2070, fig.height=12, fig.width=10, fig.cap="Deaths per capita per country."}
+ggplot( filter(inf_df, Year %in% c(2070) )) + 
+    geom_density_ridges(scale = 3, 
+                      aes(x = Deaths/total_pop, y = reorder(country_name, -x), fill = scenario, colour = scenario),
+                      alpha = 0.5) + 
+  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
+  scale_color_manual(values = c(magma(5)[c(3,2,1,4)], "black"))+
+  theme_ridges()+
+  xlab("Deaths per capita") + 
+  ylab("Country")+
+  scale_y_discrete(expand = c(0.01, 0)) +
+  geom_vline(xintercept = 0)+
+  #facet_wrap(Year~., nrow = 1)+
+  scale_x_log10()+
+  theme(text = element_text(size = 20))
+
+```
