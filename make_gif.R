@@ -10,22 +10,22 @@ library(viridis)
 
 snapal = "Stavanger"
 
-shpdir = paste0("../","shapefiles/gadm2/")
+shpdir = paste0("//fi--didenas1/YF/DATA/shapefiles/gadm2/")
 
 #########################################################################################################
 ### LOADING SHAPEFILES AND COUNTRIES ###
 #########################################################################################################
 
 #read shapefiles in
-shp0 = readShapePoly(paste0(shpdir, "Africa_adm0.shp")) #if gadm2
-shp1 = readShapePoly(paste0(shpdir, "Africa_adm1.shp"))
+shp0 = maptools::readShapePoly(paste0(shpdir, "Africa_adm0.shp")) #if gadm2
+shp1 = maptools::readShapePoly(paste0(shpdir, "Africa_adm1.shp"))
 
 #adjust titles
 shp1$adm0_adm1 = paste(shp1$ISO, shp1$ID_1, sep="_")
 shp1 = shp1[order(shp1$adm0_adm1),]
 
 #read countries in
-Countries = read_csv(paste0("../Data/","Countries.csv"))
+Countries = readr::read_csv(paste0("../Data/","Countries.csv"))
 c34 = Countries$c34
 country34 = Countries$country34
 
@@ -115,15 +115,15 @@ inf_df %<>% unique()
 
 west = c("BEN", "BFA", "GMB", "GHA", "GIN", "GNB", "CIV", "LBR", "MLI", "MRT", "NER", "NGA", "SEN", "SLE", "TGO")
 
-central = c("TCD", "CAF", "CMR", "GAB", "COD", "COG", "AGO", "SSD", "SDN")
+central = c("TCD", "CAF", "CMR", "GAB", "COD", "COG", "AGO", "GNQ")
 
 inf_df %<>% mutate(WE = ifelse(adm0 %in% west, "West", 
-                               ifelse(adm0 %in% central, "Central and Sudan",
+                               ifelse(adm0 %in% central, "Central",
                                       "East")))
 
 
 #add coordinates of each country
-centroids = as.data.frame( getSpPPolygonsLabptSlots(shp0) )
+centroids = as.data.frame( sp::getSpPPolygonsLabptSlots(shp0) )
 centroids %<>% mutate(adm0 = unique(shp0$ISO))
 names(centroids) = c("x", "y", "adm0")
 
