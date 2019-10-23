@@ -14,7 +14,7 @@ params:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
 knitr::opts_chunk$set(
-  fig.path = paste0("Uncertain_projections_stop_", Sys.Date(), "/"),
+  fig.path = paste0("Uncertain_projections_routine_", Sys.Date(), "/"),
   dpi = 300,
   dev = c('png')
 )
@@ -50,7 +50,7 @@ library(KsetupR)
 ### SETTING THE WORKING DIRECTORY ###
 #########################################################################################################
 
-shpdir = paste0("../","shapefiles/gadm2/")
+shpdir = paste0("//fi--didenas1/YF/DATA/","shapefiles/gadm2/")
 
 #########################################################################################################
 ### LOADING SHAPEFILES AND COUNTRIES ###
@@ -227,9 +227,17 @@ transmission_proj %<>% mutate(WE = ifelse(adm0 %in% west, "West",
 ```{r difference_by_area3, fig.width=10, fig.height=8}
 
 
-ggplot( filter( transmission_proj, year %in% c(2050, 2070) )) + 
+transmission_proj %<>% mutate(scenario = ifelse(scenario == "26",
+                                                "RCP 2.6", ifelse(scenario == "45",
+                                                                  "RCP 4.5", ifelse(scenario == "60",
+                                                                                    "RCP 6.0", "RCP 8.5"))))
+
+ggplot( filter( transmission_proj, year %in% c(2050, 2070) ) ) + 
   geom_density_ridges(scale = 0.9, 
-                      aes(x = percent_diff, y = WE, fill = scenario, alpha = year)) + 
+                      aes(x = percent_diff, 
+                          y = WE, 
+                          fill = scenario, 
+                          alpha = year)) + 
   facet_wrap(~scenario) +
   scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
   scale_alpha_manual(values = c(0.1,0.8))+
@@ -238,10 +246,10 @@ ggplot( filter( transmission_proj, year %in% c(2050, 2070) )) +
   ylab("")+
   scale_y_discrete(expand = c(0.01, 0)) +
   geom_hline(yintercept = 0, color = snapalette(snapal)[5])+
-  xlim(-100, 500) +
+  xlim(-50, 300) +
   geom_vline(xintercept = 0)+
   guides(fill = FALSE)+
-  theme(text = element_text(size = 20))
+  theme(text = element_text(size = 20)) 
 
 #rm(transmission_proj, tmp, tp)
 
@@ -270,7 +278,7 @@ kableExtra::kable(out_df, caption = "FOI change per year in each scenario")
 
 ```{r transmission_difference_country_table}
 
-scen_vec = c(26, 45, 60, 85)
+scen_vec = c("RCP 2.6", "RCP 4.5", "RCP 6.0", "RCP 8.5")
 
 for(s in 1:4){
   for(y in c(2050, 2070)){
@@ -297,11 +305,11 @@ for(s in 1:4){
 ```{r load_burden}
 
 #get files in infections directory
-fil = list.files("infections_stop")
+fil = list.files("infections_routine")
 
 inf_df = NULL
 for(i in 1:length(fil)){
-  inf_df[[i]] = mutate_all( read.csv(paste0("infections_stop/", fil[i]), stringsAsFactors = FALSE), as.character)
+  inf_df[[i]] = mutate_all( read.csv(paste0("infections_routine/", fil[i]), stringsAsFactors = FALSE), as.character)
 }
 
 inf_df = bind_rows(inf_df)
@@ -330,6 +338,18 @@ inf_df %<>% unique()
 #change scenario name from now to current
 inf_df$scenario[inf_df$scenario == "now"] = "current"
 
+inf_df %<>% mutate(scenario = ifelse(scenario == "26",
+                                     "RCP 2.6", ifelse(scenario == "45",
+                                                       "RCP 4.5", 
+                                                       ifelse(scenario == "60",
+                                                              "RCP 6.0", 
+                                                              ifelse(scenario == "85", 
+                                                                     "RCP 8.5",
+                                                                     "baseline")))))
+
+inf_df %<>% mutate(scenario = as.factor(scenario))
+inf_df$scenario <- factor(inf_df$scenario, levels = c("RCP 2.6", "RCP 4.5", "RCP 6.0", "RCP 8.5", "baseline"))
+
 ```
 
 
@@ -338,7 +358,7 @@ inf_df$scenario[inf_df$scenario == "now"] = "current"
 ggplot(inf_df,
        aes(x = Year, y = Infections, fill = scenario)) +
   geom_violin( position="dodge", draw_quantiles = 0.5) +
-  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
+  scale_fill_manual(values = c( magma(5)[c(3,2,1,4)], "white"))+
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))+
   scale_y_log10()+
@@ -350,7 +370,7 @@ ggplot(inf_df,
 ggplot(inf_df,
        aes(x = Year, y = Infections, fill = scenario)) + 
   geom_violin( position="dodge", draw_quantiles = 0.5) + 
-  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
+  scale_fill_manual(values = c( magma(5)[c(3,2,1,4)], "white"))+
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))+
   facet_wrap(~adm0, scales = "free_y")+
@@ -393,8 +413,8 @@ ggplot( filter(inf_df, Year %in% c(2050) )) +
   geom_density_ridges(scale = 3, 
                       alpha = 0.5,
                       aes(x = Deaths, y = reorder(country_name, -x), fill = scenario, colour = scenario)) + 
-  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
-  scale_color_manual(values = c(magma(5)[c(3,2,1,4)], "black"))+
+  scale_fill_manual(values = c( magma(5)[c(3,2,1,4)], "white"))+
+  scale_color_manual(values = c( magma(5)[c(3,2,1,4)], "black"))+
   theme_ridges()+
   xlab("Deaths") + 
   ylab("Country")+
@@ -409,8 +429,8 @@ ggplot( filter(inf_df, Year %in% c(2070) )) +
   geom_density_ridges(scale = 3, 
                       alpha = 0.5,
                       aes(x = Deaths, y = reorder(country_name, -x), fill = scenario, colour = scenario)) + 
-  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
-  scale_color_manual(values = c(magma(5)[c(3,2,1,4)], "black"))+
+  scale_fill_manual(values = c( magma(5)[c(3,2,1,4)], "white"))+
+  scale_color_manual(values = c( magma(5)[c(3,2,1,4)], "black"))+
   theme_ridges()+
   xlab("Deaths") + 
   ylab("Country")+
@@ -463,8 +483,8 @@ ggplot( filter(inf_df, Year %in% c(2050) )) +
     geom_density_ridges(scale = 3, 
                       aes(x = Deaths/total_pop, y = reorder(country_name, -x), fill = scenario, colour = scenario),
                       alpha = 0.5) + 
-  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
-  scale_color_manual(values = c(magma(5)[c(3,2,1,4)], "black"))+
+  scale_fill_manual(values = c( magma(5)[c(3,2,1,4)], "white"))+
+  scale_color_manual(values = c( magma(5)[c(3,2,1,4)], "black"))+
   theme_ridges()+
   xlab("Deaths per capita") + 
   ylab("Country")+
@@ -481,8 +501,8 @@ ggplot( filter(inf_df, Year %in% c(2070) )) +
     geom_density_ridges(scale = 3, 
                       aes(x = Deaths/total_pop, y = reorder(country_name, -x), fill = scenario, colour = scenario),
                       alpha = 0.5) + 
-  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
-  scale_color_manual(values = c(magma(5)[c(3,2,1,4)], "black"))+
+  scale_fill_manual(values = c( magma(5)[c(3,2,1,4)], "white"))+
+  scale_color_manual(values = c( magma(5)[c(3,2,1,4)], "black"))+
   theme_ridges()+
   xlab("Deaths per capita") + 
   ylab("Country")+
@@ -518,7 +538,7 @@ kableExtra::kable(out_df, caption = "Deaths per capita per year in each scenario
 
 ```{r relative_deaths_calc}
 
-tmp = inf_df %>% filter( scenario == "current")
+tmp = inf_df %>% filter( scenario == "baseline")
 tmp %<>% dplyr::rename(Deaths_now = Deaths) %>% select("adm0", "Year", "Deaths_now", "sample")
 
 inf_df %<>% left_join( tmp, by = c("adm0", "Year", "sample"))
@@ -597,8 +617,8 @@ ggplot( filter(inf_df, Year %in% c(2050, 2070) )) +
     geom_density_ridges(scale = 1, 
                       aes(x = Deaths/total_pop, y = reorder(WE, Deaths/total_pop), fill = scenario, colour = scenario),
                       alpha = 0.5) + 
-  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
-  scale_color_manual(values = c(magma(5)[c(3,2,1,4)], "black"))+
+  scale_fill_manual(values = c( magma(5)[c(3,2,1,4)], "white"))+
+  scale_color_manual(values = c( magma(5)[c(3,2,1,4)], "black"))+
   theme_ridges()+
   xlab("Deaths per capita") + 
   ylab("Area")+
@@ -613,7 +633,7 @@ ggplot( filter(inf_df, Year %in% c(2050, 2070) )) +
 
 ggplot(inf_df, aes(x = Year, y = Deaths, fill = scenario)) + 
   geom_violin( position="dodge", draw_quantiles = 0.5) +
-  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
+  scale_fill_manual(values = c( magma(5)[c(3,2,1,4)], "white"))+
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   ylab("Deaths")+
@@ -628,11 +648,11 @@ ggplot(inf_df, aes(x = Year, y = Deaths, fill = scenario)) +
 ```{r deaths_percap_by_region2, fig.width=10, fig.height=8}
 
 
-ggplot( filter(inf_df, scenario != "current")) + 
+ggplot( filter(inf_df, scenario != "baseline")) + 
   geom_density_ridges(scale = 0.9, 
                       aes(x = Deaths_percap, y = WE, fill = scenario, alpha = Year)) + 
   facet_wrap(~scenario) +
-  scale_fill_manual(values = c(magma(5)[c(3,2,1,4)], "white"))+
+  scale_fill_manual(values = c( magma(5)[c(3,2,1,4)]))+
   scale_alpha_manual(values = c(0.1,0.5, 0.8))+
   theme_ridges()+
   xlab("Deaths per capita") + 
@@ -658,7 +678,7 @@ fun_positive = function(vec, ind){
 propn_pos = NULL
 
 
-scen_vec = c(26, 45, 60, 85)
+scen_vec = c("RCP 2.6", "RCP 4.5", "RCP 6.0", "RCP 8.5")
 
 for(s in 1:4){
   for(year_ind in c(2050, 2070)){
@@ -707,7 +727,7 @@ mycols =   viridis::magma(length(mybreaks)-1)
 
 tmp_df = filter(median_deaths, Year %in% 2050)
 
-for(s in c(26, 45, 60, 85)){
+for(s in c("RCP 2.6", "RCP 4.5", "RCP 6.0", "RCP 8.5")){
   
   tmp_df2 = filter(tmp_df, scenario %in% s)
   vcols = findInterval(log10(tmp_df2$sum_deaths), mybreaks)
@@ -734,7 +754,7 @@ for(s in c(26, 45, 60, 85)){
 
 tmp_df = filter(median_deaths, Year %in% 2070)
 
-for(s in c(26, 45, 60, 85)){
+for(s in c("RCP 2.6", "RCP 4.5", "RCP 6.0", "RCP 8.5")){
   
   tmp_df2 = filter(tmp_df, scenario %in% s)
   vcols = findInterval(log10(tmp_df2$sum_deaths), mybreaks)

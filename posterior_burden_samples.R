@@ -84,11 +84,11 @@ GAVI_vac = montagu_coverage_data("IC-Garske", touchstone_version,  "yf-preventiv
 GAVI_vac_fix = filter(GAVI_vac, year< 2019)
 
 fix_tmp = NULL
-# for(i in 2019:2070){
-#   tmp = filter(GAVI_vac, year == 2018 & activity_type == "routine")
-#   tmp$year = i
-#   fix_tmp = bind_rows(fix_tmp, tmp)
-# }
+for(i in 2019:2070){
+  tmp = filter(GAVI_vac, year == 2018 & activity_type == "routine")
+  tmp$year = i
+  fix_tmp = bind_rows(fix_tmp, tmp)
+}
 
 GAVI_vac_fix = bind_rows(GAVI_vac_fix, fix_tmp)
 
@@ -195,5 +195,5 @@ for(i in i:(nrow(param_samples_interp)/1e3)){
   infections_out = bind_rows(infections_out_l)
   
   
-  write.csv(infections_out, paste0("infections_stop/infections_per_scenario_year_country_sample_", i, ".csv"), row.names = FALSE)
+  write.csv(infections_out, paste0("infections_routine/infections_per_scenario_year_country_sample_", i, ".csv"), row.names = FALSE)
 }
