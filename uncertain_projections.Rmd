@@ -478,7 +478,7 @@ rm(pop_all)
 
 
 
-```{r deaths_percap_country_2050, fig.height=12, fig.width=10, fig.cap="Deaths per capita per country."}
+```{r deaths_percap_country_2050, fig.height=12, fig.width=10, fig.cap="Deaths per capita per country 2050."}
 ggplot( filter(inf_df, Year %in% c(2050) )) + 
     geom_density_ridges(scale = 3, 
                       aes(x = Deaths/total_pop, y = reorder(country_name, -x), fill = scenario, colour = scenario),
@@ -487,16 +487,17 @@ ggplot( filter(inf_df, Year %in% c(2050) )) +
   scale_color_manual(values = c( magma(5)[c(3,2,1,4)], "black"))+
   theme_ridges()+
   xlab("Deaths per capita") + 
-  ylab("Country")+
+  ylab("")+
   scale_y_discrete(expand = c(0.01, 0)) +
   geom_vline(xintercept = 0)+
-  #facet_wrap(Year~., nrow = 1)+
   scale_x_log10()+
-  theme(text = element_text(size = 20))
+  theme(text = element_text(size = 20),
+        legend.position = "bottom") +
+  guides(fill = guide_legend(nrow = 4))
 
 ```
 
-```{r deaths_percap_country_2070, fig.height=12, fig.width=10, fig.cap="Deaths per capita per country."}
+```{r deaths_percap_country_2070, fig.height=12, fig.width=8, fig.cap="Deaths per capita per country 2070."}
 ggplot( filter(inf_df, Year %in% c(2070) )) + 
     geom_density_ridges(scale = 3, 
                       aes(x = Deaths/total_pop, y = reorder(country_name, -x), fill = scenario, colour = scenario),
@@ -505,15 +506,43 @@ ggplot( filter(inf_df, Year %in% c(2070) )) +
   scale_color_manual(values = c( magma(5)[c(3,2,1,4)], "black"))+
   theme_ridges()+
   xlab("Deaths per capita") + 
-  ylab("Country")+
+  ylab("")+
   scale_y_discrete(expand = c(0.01, 0)) +
   geom_vline(xintercept = 0)+
-  #facet_wrap(Year~., nrow = 1)+
   scale_x_log10()+
-  theme(text = element_text(size = 20))
+  theme(text = element_text(size = 20),
+        legend.position = "bottom") +
+  guides(fill = guide_legend(nrow = 4))
 
 ```
 
+```{r deaths_percap_country_2070_poster, fig.height=12, fig.width=8, fig.cap="Deaths per capita per country 2070."}
+inf_df %>% 
+  filter(Year %in% c(2070)) %>% 
+  mutate(country_name = as.character(country_name)) %>%
+  mutate(country_name = ifelse(country_name == "Democratic Republic of the Congo", "DRC**", country_name)) %>%
+  mutate(country_name = ifelse(country_name == "Central African Republic", "CAR*", country_name)) %>%
+ggplot( ) + 
+    geom_density_ridges(scale = 3, 
+                      aes(x = Deaths/total_pop, y = reorder(country_name, -x), fill = scenario, colour = scenario),
+                      alpha = 0.5) + 
+  scale_fill_manual(values = c( magma(5)[c(3,2,1,4)], "white"))+
+  scale_color_manual(values = c( magma(5)[c(3,2,1,4)], "black"))+
+  theme_ridges()+
+  xlab("Deaths per capita") + 
+  ylab("")+
+  scale_y_discrete(expand = c(0.01, 0)) +
+  scale_x_log10()+
+  theme(axis.text.x  = element_text(size = 20),
+        axis.text.y  = element_text(size = 20),
+        axis.title.x = element_text(size = 20),
+        legend.position = "bottom",
+        legend.margin = margin(l = 40, b=10),
+        plot.margin = margin(l=20, t=10 )) +
+  guides(fill = guide_legend(nrow = 1))+
+  scale_y_discrete(position = "right")
+
+```
 
 
 ```{r deaths_percap_table, fig.cap="Deaths per capita per year in each scenario"}
@@ -710,7 +739,7 @@ kableExtra::kable(propn_pos, caption = "Proportion of death change that are posi
 
 Lastly, we map the median burden (deaths per year) in each country for each scenario in year 2050 and year 2070.
 
-```{r map_death_2050, fig.width=10, fig.height=8}
+```{r map_death_2050, fig.width=10, fig.height=8, eval = F}
 
 median_deaths = inf_df %>% 
   group_by( Year, scenario, sample, adm0) %>% 
@@ -750,7 +779,7 @@ for(s in c("RCP 2.6", "RCP 4.5", "RCP 6.0", "RCP 8.5")){
 
 ```
 
-```{r map_death_2070, fig.width=10, fig.height=8}
+```{r map_death_2070, fig.width=10, fig.height=8, eval=F}
 
 tmp_df = filter(median_deaths, Year %in% 2070)
 
