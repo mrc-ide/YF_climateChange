@@ -487,13 +487,13 @@ ggplot( filter(inf_df, Year %in% c(2050) )) +
   scale_color_manual(values = c( magma(5)[c(3,2,1,4)], "black"))+
   theme_ridges()+
   xlab("Deaths per capita") + 
-  ylab("")+
+  ylab("Country")+
   scale_y_discrete(expand = c(0.01, 0)) +
   geom_vline(xintercept = 0)+
   scale_x_log10()+
   theme(text = element_text(size = 20),
         legend.position = "bottom") +
-  guides(fill = guide_legend(nrow = 4))
+  guides(fill = guide_legend(nrow = 2))
 
 ```
 
@@ -506,13 +506,13 @@ ggplot( filter(inf_df, Year %in% c(2070) )) +
   scale_color_manual(values = c( magma(5)[c(3,2,1,4)], "black"))+
   theme_ridges()+
   xlab("Deaths per capita") + 
-  ylab("")+
+  ylab("Country")+
   scale_y_discrete(expand = c(0.01, 0)) +
   geom_vline(xintercept = 0)+
   scale_x_log10()+
   theme(text = element_text(size = 20),
         legend.position = "bottom") +
-  guides(fill = guide_legend(nrow = 4))
+  guides(fill = guide_legend(nrow = 2))
 
 ```
 
@@ -739,7 +739,7 @@ kableExtra::kable(propn_pos, caption = "Proportion of death change that are posi
 
 Lastly, we map the median burden (deaths per year) in each country for each scenario in year 2050 and year 2070.
 
-```{r map_death_2050, fig.width=10, fig.height=8, eval = F}
+```{r map_death_2050, fig.width=10, fig.height=8}
 
 median_deaths = inf_df %>% 
   group_by( Year, scenario, sample, adm0) %>% 
@@ -779,7 +779,7 @@ for(s in c("RCP 2.6", "RCP 4.5", "RCP 6.0", "RCP 8.5")){
 
 ```
 
-```{r map_death_2070, fig.width=10, fig.height=8, eval=F}
+```{r map_death_2070, fig.width=10, fig.height=8}
 
 tmp_df = filter(median_deaths, Year %in% 2070)
 
