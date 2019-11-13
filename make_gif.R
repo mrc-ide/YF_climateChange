@@ -42,11 +42,11 @@ tp$scenario[tp$year == "now"] = "now"
 
 #------------------------------#
 #get files in infections directory
-fil = list.files("infections_stop")
+fil = list.files("infections_routine")
 
 inf_df = NULL
 for(i in 1:length(fil)){
-  inf_df[[i]] = mutate_all( read.csv(paste0("infections_stop/", fil[i]), stringsAsFactors = FALSE), as.character)
+  inf_df[[i]] = mutate_all( read.csv(paste0("infections_routine/", fil[i]), stringsAsFactors = FALSE), as.character)
 }
 
 inf_df = bind_rows(inf_df)

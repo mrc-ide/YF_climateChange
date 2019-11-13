@@ -36,6 +36,7 @@ library(mvtnorm)
 library(RColorBrewer)
 library(truncdist)
 library(tibble)
+library(magrittr)
 
 library(ggmcmc)
 library(mcmcplots)
@@ -49,7 +50,7 @@ library(KsetupR)
 ### SETTING THE WORKING DIRECTORY ###
 #########################################################################################################
 
-shpdir = paste0("../","shapefiles/gadm2/")
+shpdir = paste0("//fi--didenas1/YF/DATA/","shapefiles/gadm2/")
 
 #########################################################################################################
 ### LOADING SHAPEFILES AND COUNTRIES ###
@@ -278,8 +279,8 @@ for (colIndex in 3:ncol(vc2d)){
 vc2d = vc2d[vc2d[,"adm0_adm1"] %in% envdat$dat[,"adm0_adm1"],]
 
 #vc3d
-vc3d = transform_into_vc3d(vc2d,  adm="adm1")
-
+vc3d = transform_into_vc3d(vc2d %>%select(-adm0),  adm="adm1")
+class(vc3d) = "numeric"
 # t0_vac_africa #
 t0_vac_africa = calc_t0_vac_africa(vc3d)
 
@@ -297,15 +298,16 @@ pop_moments_whole = calc_pop_moments(p_prop_3d,
 #########################################################################################################
 
 #aggregate
-list_aggregate_pop_vc =Make_aggregate_pop_vc_3d(pop1=pop1, 
-                                                vc2d=vc2d, 
+list_aggregate_pop_vc =Make_aggregate_pop_vc_3d(pop1=pop1 %>% select(-adm0), 
+                                                vc2d=vc2d %>% select(-adm0), 
                                                 sero_studies=seroout$sero_studies, 
                                                 adm1s=seroout$adm1s)
 pop_agg3d = list_aggregate_pop_vc$pop_agg3d
 vc_agg3d = list_aggregate_pop_vc$vc_agg3d
-
+class(vc_agg3d) = "numeric"
+class(pop_agg3d) = "numeric"
 #calculate aggregated incidence (same function as before)
-inc_v3d_agg = calc_incidence_vac_general(vc_agg3d);dim(inc_v3d_agg)
+inc_v3d_agg = calc_incidence_vac_general(vc_agg3d)
 
 #calculate aggregated moments (different fucntion before)
 pop_moments_agg = calc_pop_moments_agg(pop_agg3d,
@@ -544,7 +546,7 @@ for(y in c(2050, 2070)){
 
 ```{r plot_transmission_diff_2050, fig.height=10, fig.width=10, fig.cap="Force of infection, percentage difference 2050.", echo=TRUE}
 
-colours = (snapalette("Stavanger", 100, type = "continuous"))
+colours = viridis::magma(100)#(snapalette("Stavanger", 100, type = "continuous"))
 
 
 

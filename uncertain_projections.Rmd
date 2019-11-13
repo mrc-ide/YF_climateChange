@@ -532,15 +532,19 @@ ggplot( ) +
   xlab("Deaths per capita") + 
   ylab("")+
   scale_y_discrete(expand = c(0.01, 0)) +
-  scale_x_log10()+
+  scale_x_log10(labels = latex2exp::TeX(c("$10^{-6}$", "$10^{-5}$","$10^{-4}$", "$10^{-3}$")),
+                breaks = c(1e-6, 1e-5, 1e-4, 1e-3) )+
   theme(axis.text.x  = element_text(size = 20),
         axis.text.y  = element_text(size = 20),
         axis.title.x = element_text(size = 20),
+        legend.text = element_text(size = 16),
+        legend.title = element_text(size = 16),
+        legend.title.align = 0,
         legend.position = "bottom",
-        legend.margin = margin(l = 40, b=10),
+        legend.margin = margin(l = 120, b=10),
         plot.margin = margin(l=20, t=10 )) +
   guides(fill = guide_legend(nrow = 1))+
-  scale_y_discrete(position = "right")
+  scale_y_discrete(position = "right") 
 
 ```
 
