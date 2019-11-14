@@ -617,3 +617,37 @@ for(s in c("26", "45", "60", "85")){
   }
 
 ```
+
+```{r plot_transmission_diff_2070_poster, fig.height=10, fig.width=10, fig.cap="Force of infection, percentage difference 2070.", echo=TRUE}
+
+
+par(mfrow = c(2, 2), mar = c(2,2,2,2))
+
+for(s in c("26", "45", "60", "85")){
+
+    df_subs = filter(df, scenario == s & year == 2070)
+    runs = 100*(df_subs$runs - df_subs$runs_now) / df_subs$runs_now
+    
+    print(min(runs))
+    print(max(runs))
+    
+    mybreaks= seq(-17, 111, length.out=101)
+    mm = match(shp1$adm0_adm1,envdat$dat$adm0_adm1)
+    vcols = findInterval(runs, mybreaks)
+    
+    plot(shp0, xlim=c(-15,50),ylim=c(-20,30), main = paste0( "RCP ",  sub( '(?<=.{1})', '.', s, perl=TRUE )) ,
+         cex.main=2)
+    
+    mm0 = match(shp0$ISO, Countries$c34) #
+    plot(shp0[is.na(mm0),],col="black",add=T)
+    plot(shp1[!is.na(mm),],col=colours[vcols], xlim=c(-15,50),ylim=c(-20,30) , lty=0, add=T)
+    
+    plot(shp0, lwd=2, add=T)
+    
+    
+    image.plot(legend.only=TRUE, breaks=mybreaks, col=colours, zlim=c(0,1), horizontal = TRUE,
+               legend.mar = 3.5, legend.cex = 2, lab.cex = 2)
+    
+  }
+
+```
