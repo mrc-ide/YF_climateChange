@@ -61,7 +61,7 @@ library(KsetupR)
 ### SETTING THE WORKING DIRECTORY ###
 #########################################################################################################
 
-shpdir = paste0("../","shapefiles/gadm2/")
+shpdir = paste0("//fi--didenas1/YF/DATA/","shapefiles/gadm2/")
 
 #########################################################################################################
 ### LOADING SHAPEFILES AND COUNTRIES ###
@@ -331,7 +331,41 @@ x = object_glm[[2]]
 Est_beta =  apply(mcmc_out[,1:21], 2, median) #as.numeric(mcmc_out[ind, 1:21])#
 
 
-plot_glm_map(shp0, shp1, c34, envdat$dat, Est_beta, x, snapalette(snapal, 1000, type="continuous"))
+
+
+colours <- snapalette(snapal, 1000, type="continuous")
+par(mfrow=c(1,2))
+
+### data ###
+plot(shp0,  xlim=c(-15,50),ylim=c(-20,35))
+mm0 = match(shp0$ISO,c34) #
+plot(shp0[is.na(mm0),],col="black",add=TRUE)
+
+pres= envdat$dat$adm0_adm1[envdat$dat$cas.or.out>0]
+
+mm1<-match(pres, shp1$adm0_adm1)
+
+
+plot(shp1[mm1,], col=colours[750], add=TRUE)
+plot(shp0,lwd=2, add=TRUE)
+plot(shp1,lwd=1, add=TRUE)
+
+
+### model ###
+glmpreds_tmp = fun_calcPred( Est_beta,x,type="response")
+
+mybreaks = seq(0, 1.0001, length.out=1001)
+mycols =  colours
+mm = match(shp1$adm0_adm1, envdat$dat$adm0_adm1)
+vcols = findInterval(glmpreds_tmp, mybreaks)
+
+
+plot(shp0,  xlim=c(-15,50),ylim=c(-20,35))
+mm0 = match(shp0$ISO,c34) #
+plot(shp0[is.na(mm0),], col="black",add=TRUE)
+plot(shp1[!is.na(mm),], col=mycols[vcols], xlim=c(-15,45), ylim=c(-20,30) , lty=0, add=TRUE)
+plot(shp0, xlim=c(-15,50),ylim=c(-20,35), add=TRUE)
+fields::image.plot(legend.only=TRUE, breaks=mybreaks, col=mycols, zlim=c(0,1), horizontal = TRUE)
 ```
 
 

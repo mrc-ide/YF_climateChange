@@ -411,77 +411,79 @@ for(year in c(2050, 2070, "now")){
   
   for(scenario in c(26, 45, 60, 85)){
     
-    # ------------------------------------------------------------------------------------#
-    ### prepare data ###
-    
-    dat_tmp = prepare_climate_dat(dat_full, year , scenario)
-    ### TEMP SUITABILITY ###
-    dat_full_temp = cbind(dat_tmp,
-                          temp_suitability(dat_tmp[,temp_type] , 
-                                           apply(mcmc_out[,22:30], 2 ,"median")) )
-    names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
-    
-    envdat = YFestimation::launch_env_dat(filepath = NA, dat_full= dat_full_temp , c34 = c34)  
-    
-    ### GET x ###
-    
-    object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
-    x = object_glm[[2]]
-    
-    varsin_nc=ii[-grep("adm0",colnames(x))] - 1 
-    
-    mcmc_out_f = filter(mcmc_out_sero, model_chain == 0)
-    
-    adjusted_params = c(exp(median(mcmc_out_f[,1])), 
-                        apply(mcmc_out[,1:21], 2, median, na.rm = T), # as.numeric(mcmc_out[ind,1:21]), #
-                        exp(apply(mcmc_out_f[,c(2:41)], 2, median, na.rm = T)),
-                        exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
-    
-    names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
-    
-    # ------------------------------------------------------------------------------------#
-    ### get calculating ###
-    
-    #glm predictions
-    mypreds_nc  = fun_calcPred(coefs = as.numeric(adjusted_params)[ii],
-                               newdata=x,
-                               type="link",
-                               varsin=varsin_nc)
-    
-    #calculating number of infections over the observation period for the whole region
-    Ninf_whole = exp( mypreds_nc - p_detect_link)
-    
-    pop_vc_moments = aggout$pop_vc_moments
-    
-    if(polydeg>ncol(pop_vc_moments)) error("fun_calc_transmission_Africa: invalid value for polydeg.\n")
-    
-    z = -Ninf_whole
-    
-    if(polydeg>0) for(i in 1:polydeg) {
-      z = cbind(z,(-1)^(i+1)*pop_vc_moments[,i+1]/factorial(i-1))
+    for(rainfall_temp in c("both", "rainfall", "temp")){
+      # ------------------------------------------------------------------------------------#
+      ### prepare data ###
+      
+      dat_tmp = prepare_climate_dat(dat_full, year , scenario, rainfall_temp)
+      ### TEMP SUITABILITY ###
+      dat_full_temp = cbind(dat_tmp,
+                            temp_suitability(dat_tmp[,temp_type] , 
+                                             apply(mcmc_out[,22:30], 2 ,"median")) )
+      names(dat_full_temp)[ncol(dat_full_temp)] = "temp_suitability"
+      
+      envdat = YFestimation::launch_env_dat(filepath = NA, dat_full= dat_full_temp , c34 = c34)  
+      
+      ### GET x ###
+      
+      object_glm = fit_glm(dat =envdat$dat, depi = envdat$depi, modelVec ) 
+      x = object_glm[[2]]
+      
+      varsin_nc=ii[-grep("adm0",colnames(x))] - 1 
+      
+      mcmc_out_f = filter(mcmc_out_sero, model_chain == 0)
+      
+      adjusted_params = c(exp(median(mcmc_out_f[,1])), 
+                          apply(mcmc_out[,1:21], 2, median, na.rm = T), # as.numeric(mcmc_out[ind,1:21]), #
+                          exp(apply(mcmc_out_f[,c(2:41)], 2, median, na.rm = T)),
+                          exp(median(mcmc_out_f[,ncol(mcmc_out_f)])) )
+      
+      names(adjusted_params)[c(1,length(adjusted_params))] = c("vac_eff", "vc_factor_CMRs")
+      
+      # ------------------------------------------------------------------------------------#
+      ### get calculating ###
+      
+      #glm predictions
+      mypreds_nc  = fun_calcPred(coefs = as.numeric(adjusted_params)[ii],
+                                 newdata=x,
+                                 type="link",
+                                 varsin=varsin_nc)
+      
+      #calculating number of infections over the observation period for the whole region
+      Ninf_whole = exp( mypreds_nc - p_detect_link)
+      
+      pop_vc_moments = aggout$pop_vc_moments
+      
+      if(polydeg>ncol(pop_vc_moments)) error("fun_calc_transmission_Africa: invalid value for polydeg.\n")
+      
+      z = -Ninf_whole
+      
+      if(polydeg>0) for(i in 1:polydeg) {
+        z = cbind(z,(-1)^(i+1)*pop_vc_moments[,i+1]/factorial(i-1))
+      }
+      
+      transmission_whole = sapply(1:nrow(x), function(i) polyroot(z[i,]))
+      transmission_whole[abs(Arg(transmission_whole))<=1e-10] = Re(transmission_whole)[abs(Arg(transmission_whole))<=1e-10]
+      transmission_whole[abs(Arg(transmission_whole))>1e-10] = NA
+      
+      dt = dim(transmission_whole)
+      transmission_whole = as.numeric(transmission_whole)
+      dim(transmission_whole) = dt
+      transmission_whole = apply(transmission_whole,2,min,na.rm=T)
+      # ------------------------------------------------------------------------------------#
+      
+      runs = transmission_whole
+      
+      #names(runs) = envdat$dat$adm0_adm1
+      
+      runs_clim_change = rbind(runs_clim_change, cbind(runs, data.frame("year" = year, "scenario" = scenario, "adm0_adm1" = envdat$dat$adm0_adm1, "rainfall_temp" = rainfall_temp)))
     }
-    
-    transmission_whole = sapply(1:nrow(x), function(i) polyroot(z[i,]))
-    transmission_whole[abs(Arg(transmission_whole))<=1e-10] = Re(transmission_whole)[abs(Arg(transmission_whole))<=1e-10]
-    transmission_whole[abs(Arg(transmission_whole))>1e-10] = NA
-    
-    dt = dim(transmission_whole)
-    transmission_whole = as.numeric(transmission_whole)
-    dim(transmission_whole) = dt
-    transmission_whole = apply(transmission_whole,2,min,na.rm=T)
-    # ------------------------------------------------------------------------------------#
-    
-    runs = transmission_whole
-    
-    #names(runs) = envdat$dat$adm0_adm1
-    
-    runs_clim_change = rbind(runs_clim_change, cbind(runs, data.frame("year" = year, "scenario" = scenario, "adm0_adm1" = envdat$dat$adm0_adm1)))
   }
 }
 colours = (snapalette("Camden", 100, type = "continuous"))
 
 
-write.csv(runs_clim_change, "transmission_intensity_med.csv")
+write.csv(runs_clim_change, "transmission_intensity_med_rainfall_temp.csv")
 ```
 
 
