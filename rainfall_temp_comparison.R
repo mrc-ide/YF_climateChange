@@ -10,7 +10,7 @@ df %<>% mutate(adm0 = substr(adm0_adm1, 1, 3))
 
 
 df %>%
-  filter(year != "now") %>%
+  filter(year != "now", scenario == 85) %>%
   group_by(year, rainfall_temp, adm0) %>%
   summarise(mean_runs = mean(runs)) %>%
   ggplot() +
